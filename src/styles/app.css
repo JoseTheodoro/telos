@@ -69,3 +69,15 @@
 .decision-id{display:inline-block;font-size:9px;font-weight:800;color:#b3261e;background:#ffe9e7;border-radius:4px;padding:1px 5px;margin-right:3px;vertical-align:1px}
 .decision-links{display:block;font-size:10px;color:#5d7467;margin:-2px 0 8px;line-height:1.45}
 .decision-links.is-loose{color:#a0786f;font-style:italic}
+
+/* v1.6 · #5 Gramática Event Storming nas setas */
+.edge-caption.off-grammar{fill:#a15c07;font-weight:800}
+.grammar{margin:0 0 14px;padding:10px 11px;border-radius:10px;border:1px solid;font-size:11px;line-height:1.5}
+.grammar b{display:block;font-size:10px;letter-spacing:.4px;margin-bottom:6px}
+.grammar small{display:block;color:#5d6f64;margin:6px 0 8px}
+.grammar.ok{background:#f2faf4;border-color:#cfe6d6;color:#1d6e3f}
+.grammar.warn{background:#fff7eb;border-color:#f3d6a8;color:#8a4b06}
+.grammar.exception{background:#f6f7f6;border-color:#dfe5e1;color:#56665e}
+.grammar.ok .btn{margin-top:8px}
+.grammar-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:#56665e;font-size:10px}
+.es-chip{display:inline-block;border:1px solid;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:800}

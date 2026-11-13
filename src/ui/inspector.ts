@@ -6,9 +6,20 @@ import {
   HOTSPOT_STATUS_OPTIONS,
   PL,
 } from "../domain/constants";
-import { esStyle } from "../domain/es";
+import { ES_STYLES, esStyle, type EsCategory } from "../domain/es";
+import { categoryLabel } from "../domain/grammar";
 import { keyKind, newId, nodeKey } from "../domain/keys";
-import { collection, colorForEdge, defaultEdgeName, edgeFor, isTableLink, syncMaps, validColor } from "../domain/model";
+import {
+  collection,
+  colorForEdge,
+  defaultEdgeName,
+  edgeFor,
+  edgeVerdict,
+  isEventDomain,
+  isTableLink,
+  syncMaps,
+  validColor,
+} from "../domain/model";
 import type { AnyEntity, Edge, NodeKind, RegistryOption } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
@@ -43,6 +54,32 @@ function emptyInspector(): string {
   return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
+function chip(c: EsCategory): string {
+  const s = ES_STYLES.find((x) => x.id === c)!;
+  return `<span class="es-chip" style="background:${s.bg};border-color:${s.outline};color:${s.accent}">${esc(s.label)}</span>`;
+}
+
+/** #5 Bloco da gramática Event Storming no inspetor da seta. */
+function grammarBlock(e: Edge): string {
+  const v = edgeVerdict(state.ws, e.from, e.to);
+  if (!v.applies) return "";
+  if (v.ok) {
+    const useLabel =
+      e.label !== v.label
+        ? `<button type="button" class="btn sm" data-use-label="${esc(v.label)}">Usar “${esc(v.label)}”</button>`
+        : "";
+    return `<div class="grammar ok"><b>✓ Fluxo Event Storming</b><div class="grammar-flow">${chip(v.from)}<span>→ ${esc(v.label)} →</span>${chip(v.to)}</div>${useLabel}</div>`;
+  }
+  if (e.grammarException)
+    return `<div class="grammar exception"><b>Exceção consciente</b><div class="grammar-flow">${chip(v.from)}<span>→</span>${chip(v.to)}</div><small>Fora do padrão Event Storming, aceita pelo time.</small><button type="button" class="btn sm" data-grammar-exception="off">Voltar a avisar</button></div>`;
+  const hint = v.bridge
+    ? `Normalmente há ${esc(categoryLabel(v.bridge))} entre eles: <b>${esc(categoryLabel(v.from))} → ${esc(categoryLabel(v.bridge))} → ${esc(categoryLabel(v.to))}.</b>`
+    : v.expected.length
+      ? `A partir de ${esc(categoryLabel(v.from))}, o esperado é: ${v.expected.map((c) => esc(categoryLabel(c))).join(", ")}.`
+      : `${esc(categoryLabel(v.from))} normalmente não origina setas no fluxo Event Storming.`;
+  return `<div class="grammar warn"><b>⚠ Fora do padrão Event Storming</b><div class="grammar-flow">${chip(v.from)}<span>→</span>${chip(v.to)}</div><small>${hint}</small><button type="button" class="btn sm" data-grammar-exception="on">Aceitar como exceção</button></div>`;
+}
+
 function edgeInspector(e: Edge): string {
   const access = e.accessMode || "";
   const automatic = access === "READ" || access === "WRITE";
@@ -63,7 +100,15 @@ function edgeInspector(e: Edge): string {
     : "10 cores prontas, seletor visual (arraste para escolher) e HEX. Clique em Auto para usar a cor padrão.";
   return (
     `<div class="hint"><b>${esc(label(e.from))}</b><br>↓ ${esc(e.label)}<br><b>${esc(label(e.to))}</b></div>` +
+    grammarBlock(e) +
     field("Significado da relação", "edge.label", e.label) +
+    (isEventDomain(e)
+      ? options("Papel do domínio", "edge.role", e.role || "", [
+          ["owner", "Responsável pelo evento"],
+          ["consumer", "Consome o evento"],
+          ["", "Não classificado"],
+        ])
+      : "") +
     options("Estado da relação", "edge.status", e.status, EDGE_STATUS_OPTIONS) +
     accessField +
     `<div class="field"><label for="f-edge.color">Cor da conexão</label><div class="palette-swatches" role="group" aria-label="Escolher uma das dez cores">${swatches}</div><div class="color-field"><label class="color-label" for="f-edge.color"><input type="color" class="color-input" data-field="edge.color" id="f-edge.color" value="${current}" title="Escolher cor com mouse"></label><div class="hex-wrap"><label for="edgeHexInput">HEX</label><input id="edgeHexInput" class="input hex-input" maxlength="7" value="${current}" spellcheck="false" placeholder="#RRGGBB"></div><button type="button" class="btn sm" id="edgeAutoColor" title="Voltar para a cor automática">↺ Auto</button></div><small class="help">${help}</small></div>` +
@@ -201,7 +246,7 @@ function nodeInspector(k: string, o: AnyEntity): string {
       return `<div class="rel"><span title="${esc(label(neighbor))}">${e.from === k ? "→" : "←"} ${esc(label(neighbor))}<br><small style="color:${colorForEdge(e)};font-weight:700">${esc(e.accessMode ? e.accessMode + " · " : "")}${esc(e.label)} · ${esc(e.status)}</small></span><button title="Inspecionar relação" data-inspect-edge="${esc(e.id)}">↗</button></div>`;
     })
     .join("");
-  const next = nextLabel(kind);
+  const next = nextLabel(kind, o.semanticType);
   content +=
     `<div class="sectionlabel">Criar em sequência</div><div class="rowbtn">` +
     (next
@@ -293,7 +338,7 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
       ws.graph.edges = ws.graph.edges.filter((e) => !(e.to === k && keyKind(e.from) === rule.parent));
       if (value) {
         const from = nodeKey(rule.parent, value);
-        ws.graph.edges.push(edgeFor(ws, from, k, defaultEdgeName(from, k), "Hipótese", "Inspetor"));
+        ws.graph.edges.push(edgeFor(ws, from, k, defaultEdgeName(ws, from, k), "Hipótese", "Inspetor"));
       }
     }
   });
@@ -375,6 +420,9 @@ export function bindInspector(): void {
     if (sel.kind === "edge" && path.startsWith("edge.")) {
       const o = findEdge(sel.id) as unknown as Record<string, unknown> | undefined;
       if (o) o[path.slice(5)] = v;
+      // Bloco da gramática acompanha o rótulo (mostra/oculta "Usar rótulo sugerido").
+      const g = body.querySelector(".grammar");
+      if (o && g && path === "edge.label") g.outerHTML = grammarBlock(o as unknown as Edge);
     } else if (sel.kind === "node") {
       const o = getByKey(sel.id);
       if (o) o[path] = path === "questions" || path === "answers" ? v.split(/\r?\n/) : v;
@@ -423,6 +471,21 @@ export function bindInspector(): void {
     const add = el.closest<HTMLElement>("[data-add-choice]");
     if (add) {
       addCustomChoice(add.dataset.addChoice as string);
+      return;
+    }
+    const useLabel = el.closest<HTMLElement>("[data-use-label]");
+    const edgeSel = findEdge(state.selected?.kind === "edge" ? state.selected.id : undefined);
+    if (useLabel && edgeSel) {
+      change(() => {
+        edgeSel.label = useLabel.dataset.useLabel as string;
+      });
+      return;
+    }
+    const exception = el.closest<HTMLElement>("[data-grammar-exception]");
+    if (exception && edgeSel) {
+      change(() => {
+        edgeSel.grammarException = exception.dataset.grammarException === "on";
+      });
       return;
     }
     const quick = el.closest<HTMLElement>("[data-quick]");

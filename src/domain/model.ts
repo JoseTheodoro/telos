@@ -9,8 +9,9 @@ import {
   TYPES,
   UNDEFINED_SEMANTIC,
 } from "./constants";
+import { grammarFor, type End, type Verdict } from "./grammar";
 import { keyId, keyKind, newId, nodeKey } from "./keys";
-import type { AnyEntity, Edge, NodeKey, NodeKind, Table, Workspace } from "./types";
+import type { AnyEntity, DomainRole, Edge, NodeKey, NodeKind, Table, Workspace } from "./types";
 
 export const deep = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 
@@ -88,7 +89,7 @@ export function edgeFor(
       : keyKind(b) === "table"
         ? (getEntityByKey(ws, b) as Table | undefined)
         : undefined;
-  return {
+  const edge: Edge = {
     id: "r" + newId(),
     from: a,
     to: b,
@@ -99,6 +100,29 @@ export function edgeFor(
     color: "",
     accessMode: tab?.defaultAccess || "",
   };
+  if (isEventDomain(edge)) edge.role = roleFromLabel(rel) || "owner";
+  return edge;
+}
+
+/** Seta evento → domínio (a única que carrega papel de domínio). */
+export const isEventDomain = (e: Pick<Edge, "from" | "to">): boolean =>
+  keyKind(e.from) === "event" && keyKind(e.to) === "domain";
+
+/** Papel inferido do rótulo legado (só para migração e criação). */
+function roleFromLabel(label: string): DomainRole {
+  if (label.includes("consumido")) return "consumer";
+  if (label.includes("responsável")) return "owner";
+  return "";
+}
+
+/** Ponta da seta para a gramática ES. */
+function endOf(ws: Workspace, k: NodeKey): End {
+  return { kind: keyKind(k), semanticType: getEntityByKey(ws, k)?.semanticType };
+}
+
+/** Veredito da gramática Event Storming para uma seta (ou par de nós). */
+export function edgeVerdict(ws: Workspace, from: NodeKey, to: NodeKey): Verdict {
+  return grammarFor(endOf(ws, from), endOf(ws, to));
 }
 
 const DEFAULT_EDGE_NAMES: Record<string, string> = {
@@ -123,9 +147,12 @@ const DEFAULT_EDGE_NAMES: Record<string, string> = {
   "semantic:event": "aciona evento",
 };
 
-export function defaultEdgeName(a: NodeKey, b: NodeKey): string {
+/** Rótulo sugerido: gramática ES quando ela se aplica; senão, padrão por tipo estrutural. */
+export function defaultEdgeName(ws: Workspace, a: NodeKey, b: NodeKey): string {
   if (keyKind(b) === "hotspot") return "levanta dúvida";
   if (keyKind(a) === "hotspot") return "questiona";
+  const verdict = edgeVerdict(ws, a, b);
+  if (verdict.applies && verdict.ok) return verdict.label;
   return DEFAULT_EDGE_NAMES[keyKind(a) + ":" + keyKind(b)] || "relaciona com";
 }
 
@@ -140,17 +167,14 @@ export function isContainment(a: NodeKind, b: NodeKind): boolean {
   return CONTAINMENT.some(([p, c]) => p === a && c === b);
 }
 
-/**
- * Deriva sceneMappings/eventMappings a partir das setas.
- * TODO(dívida #5/#12): eliminar heurística por texto do rótulo ("responsável"/"consumido").
- */
+/** Deriva sceneMappings/eventMappings a partir das setas (papel do domínio via `role`). */
 export function syncMaps(ws: Workspace): void {
   for (const e of ws.events) {
     const m = ws.eventMappings[e.id] || ({} as Workspace["eventMappings"][string]);
     const edges = ws.graph.edges.filter((x) => x.from === nodeKey("event", e.id));
-    m.domainId = keyIdOr(edges.find((x) => keyKind(x.to) === "domain" && x.label.includes("responsável"))?.to);
+    m.domainId = keyIdOr(edges.find((x) => keyKind(x.to) === "domain" && x.role === "owner")?.to);
     m.consumerDomainIds = edges
-      .filter((x) => keyKind(x.to) === "domain" && x.label.includes("consumido"))
+      .filter((x) => keyKind(x.to) === "domain" && x.role === "consumer")
       .map((x) => keyId(x.to));
     m.systemId = keyIdOr(edges.find((x) => keyKind(x.to) === "system")?.to);
     m.screenIds = edges.filter((x) => keyKind(x.to) === "screen").map((x) => keyId(x.to));
@@ -257,6 +281,8 @@ export function upgradeWorkspace(data: any): Workspace {
   for (const e of data.graph.edges) {
     oFill(e, "color", "");
     oFill(e, "accessMode", "");
+    // v1.6 · #5: papel do domínio deixa de depender do texto do rótulo.
+    if (isEventDomain(e) && e.role === undefined) e.role = roleFromLabel(String(e.label ?? ""));
   }
   const hasContainment = (a: NodeKey, b: NodeKey) =>
     data.graph.edges.some((e: Edge) => e.from === a && e.to === b && e.label === "contém");

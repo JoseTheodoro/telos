@@ -2,7 +2,7 @@
 import { ARR, DRAWING_TYPES, NATURE_BASE, NODE_W, PL, PORT_Y } from "../domain/constants";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
-import { colorForEdge, isTableLink, semanticLabel } from "../domain/model";
+import { colorForEdge, edgeVerdict, isTableLink, semanticLabel } from "../domain/model";
 import type {
   AnyEntity,
   Chapter,
@@ -56,8 +56,12 @@ export function renderEdges(): void {
     const my = (a.y + b.y) / 2 + 36;
     const cls = active ? "selected" : e.status === "Validado" ? "valid" : e.status === "Hipótese" ? "proposed" : "";
     const color = colorForEdge(e);
-    const caption = e.accessMode ? e.accessMode + " · " + e.label : e.label || "relaciona";
-    out += `<g data-edge="${esc(e.id)}"><path class="edge-hit" d="${p}" data-edge="${esc(e.id)}"/><path class="edge-line ${cls}" style="stroke:${color};stroke-width:${active ? 3.6 : 2.3}" d="${p}" marker-end="url(#head-${esc(e.id)})"/><text class="edge-caption" x="${mx}" y="${my}" text-anchor="middle">${esc(caption)}</text></g>`;
+    // #5: ligação fora da gramática ES ganha só um ⚠ discreto na legenda da seta.
+    const verdict = edgeVerdict(ws, e.from, e.to);
+    const offGrammar = verdict.applies && !verdict.ok && !e.grammarException;
+    const caption =
+      (offGrammar ? "⚠ " : "") + (e.accessMode ? e.accessMode + " · " + e.label : e.label || "relaciona");
+    out += `<g data-edge="${esc(e.id)}"><path class="edge-hit" d="${p}" data-edge="${esc(e.id)}"/><path class="edge-line ${cls}" style="stroke:${color};stroke-width:${active ? 3.6 : 2.3}" d="${p}" marker-end="url(#head-${esc(e.id)})"/><text class="edge-caption${offGrammar ? " off-grammar" : ""}" x="${mx}" y="${my}" text-anchor="middle">${offGrammar ? "<title>Fora do padrão Event Storming — veja no inspetor</title>" : ""}${esc(caption)}</text></g>`;
   }
   $("#edgePaths").innerHTML = out;
 }

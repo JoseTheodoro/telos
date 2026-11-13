@@ -130,7 +130,7 @@ function makeNew(): void {
         ws.graph.edges.push(edgeFor(ws, nodeKey(from, String(obj[PARENT_FIELD[t] as string])), k, CONTAINMENT_LABEL, "Registrado", "Cadastro manual"));
     initMappings(ws, t, id);
     if (parent && parent !== k && getByKey(parent) && !ws.graph.edges.some((e) => e.from === parent && e.to === k))
-      ws.graph.edges.push(edgeFor(ws, parent, k, defaultEdgeName(parent, k), "Hipótese", "Cadastro manual"));
+      ws.graph.edges.push(edgeFor(ws, parent, k, defaultEdgeName(ws, parent, k), "Hipótese", "Cadastro manual"));
     syncMaps(ws);
     state.selected = { kind: "node", id: k };
     // Leva o recorte até o elemento recém-criado.

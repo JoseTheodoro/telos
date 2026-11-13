@@ -120,7 +120,13 @@ export interface Edge {
   evidence: string;
   color: string;
   accessMode: AccessMode | string;
+  /** Evento → domínio: papel explícito do domínio (substitui a heurística pelo rótulo). */
+  role?: DomainRole;
+  /** Ligação fora da gramática ES aceita conscientemente (oculta o aviso). */
+  grammarException?: boolean;
 }
+
+export type DomainRole = "" | "owner" | "consumer";
 
 /** Hotspot / dúvida da oficina. Armazenado em `ws.decisions` (compatível com a v1.5). */
 export interface Decision extends BaseEntity {

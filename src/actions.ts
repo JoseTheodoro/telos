@@ -1,6 +1,17 @@
 // Ações do usuário sobre o grafo (seleção, conexão, exclusão, duplicação, foco).
 import { keyId, keyKind, newId, nodeKey } from "./domain/keys";
-import { childCount, collection, deep, defaultEdgeName, edgeFor, isContainment, nameField, syncMaps } from "./domain/model";
+import {
+  childCount,
+  collection,
+  deep,
+  defaultEdgeName,
+  edgeFor,
+  edgeVerdict,
+  isContainment,
+  nameField,
+  syncMaps,
+} from "./domain/model";
+import { categoryLabel } from "./domain/grammar";
 import { newEntityId } from "./domain/factory";
 import type { AnyEntity, Chapter, EventItem, NodeKey, Scene } from "./domain/types";
 import { change, refreshUndo } from "./core/history";
@@ -99,7 +110,7 @@ export function linkCreate(a: NodeKey, b: NodeKey): void {
       ws,
       a,
       b,
-      defaultEdgeName(a, b),
+      defaultEdgeName(ws, a, b),
       containment ? "Registrado" : "Hipótese",
       "Criada manualmente no canvas",
     );
@@ -107,7 +118,12 @@ export function linkCreate(a: NodeKey, b: NodeKey): void {
     state.selected = { kind: "edge", id: relation.id };
     syncMaps(ws);
   });
-  notify("Seta criada. Escolha acesso, cor e evidência no inspetor.");
+  const verdict = edgeVerdict(ws, a, b);
+  if (verdict.applies && !verdict.ok)
+    notify(
+      `Seta criada fora do padrão Event Storming (${categoryLabel(verdict.from)} → ${categoryLabel(verdict.to)}). Veja a sugestão no inspetor.`,
+    );
+  else notify("Seta criada. Escolha acesso, cor e evidência no inspetor.");
 }
 
 export function beginConnect(k: NodeKey): void {

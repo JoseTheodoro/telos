@@ -5,6 +5,7 @@ import { NODE_H, NODE_W, PL } from "../domain/constants";
 import { DEFAULT_NAME, PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
 import { keyKind, nodeKey } from "../domain/keys";
 import { collection, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
+import { nextSemanticType } from "../domain/grammar";
 import type { AnyEntity, NodeKey, NodeKind } from "../domain/types";
 import { change } from "../core/history";
 import { getByKey, setFocus, state } from "../core/state";
@@ -40,6 +41,8 @@ interface Plan {
   linkStatus?: string;
   /** Herda tipo semântico / natureza do elemento de origem. */
   inherit: boolean;
+  /** Tipo semântico explícito (caixa livre segue a gramática ES). */
+  semanticType?: string;
   direction: "right" | "below";
 }
 
@@ -56,7 +59,17 @@ function planFor(origin: NodeKey, mode: QuickMode): Plan | null {
   if (!next) return null;
   if (next === kind) {
     // Mesma linha do tempo: mesmo pai + seta de sequência.
-    return { kind, parent: ownParent, linkFrom: origin, linkStatus: "Registrado", inherit: true, direction: "right" };
+    // Caixa livre avança no fluxo ES (Ação → Estado, Comando → Agregado, Evento → Política…).
+    const semanticType = kind === "semantic" ? (nextSemanticType(o.semanticType, kind) ?? o.semanticType) : undefined;
+    return {
+      kind,
+      parent: ownParent,
+      linkFrom: origin,
+      linkStatus: kind === "semantic" ? "Hipótese" : "Registrado",
+      inherit: true,
+      semanticType,
+      direction: "right",
+    };
   }
   const childField = PARENT_FIELD[next];
   if (childField) return { kind: next, parent: { field: childField, id: o.id }, inherit: false, direction: "right" };
@@ -99,7 +112,7 @@ export function quickCreate(mode: QuickMode): void {
 
   const ws = state.ws;
   const src = getByKey(origin) as AnyEntity;
-  const semantic = plan.inherit ? src.semanticType : "Não definido";
+  const semantic = plan.semanticType ?? (plan.inherit ? src.semanticType : "Não definido");
   const name = plan.kind === "semantic" && plan.inherit && semantic !== "Não definido" ? semantic : DEFAULT_NAME[plan.kind];
   const id = newEntityId(ws, plan.kind);
   const k = nodeKey(plan.kind, id);
@@ -118,7 +131,7 @@ export function quickCreate(mode: QuickMode): void {
     }
     if (plan.linkFrom)
       ws.graph.edges.push(
-        edgeFor(ws, plan.linkFrom, k, defaultEdgeName(plan.linkFrom, k), plan.linkStatus, "Criação rápida"),
+        edgeFor(ws, plan.linkFrom, k, defaultEdgeName(ws, plan.linkFrom, k), plan.linkStatus, "Criação rápida"),
       );
     syncMaps(ws);
     widenUntilVisible(k);
@@ -132,9 +145,13 @@ export function quickCreate(mode: QuickMode): void {
 }
 
 /** Rótulo do que Tab criaria a partir do tipo (para botões e dicas). */
-export function nextLabel(kind: NodeKind): string | null {
+export function nextLabel(kind: NodeKind, semanticType?: string): string | null {
   const next = NEXT_OF[kind];
   if (!next) return null;
+  if (kind === "semantic") {
+    const t = nextSemanticType(semanticType, kind);
+    if (t) return `Próximo: ${t}`;
+  }
   if (next === "event" && kind === "event") return "Próximo evento";
   if (next === "semantic") return "Próxima caixa";
   return DEFAULT_NAME[next];
