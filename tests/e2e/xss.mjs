@@ -16,6 +16,8 @@ poisoned.view = { layoutMode: "layers", journey: poisoned.journeys[0]?.id ?? "",
 
 const STORE = "pep-atlas-studio-v4";
 const poisonedJson = JSON.stringify(poisoned);
+const TITLE_PAYLOAD = '<img src=x onerror="window.__xss=(window.__xss||0)+1">Mapa da oficina';
+const titled = { ...JSON.parse(fs.readFileSync(path.join(here, "fixtures/with-hotspot-box.json"), "utf8")), title: TITLE_PAYLOAD };
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
@@ -28,9 +30,12 @@ page.on("dialog", (d) => { dialogs.push({ type: d.type(), message: d.message() }
 const xssCount = () => page.evaluate(() => window.__xss);
 const importFile = (name, content) => page.setInputFiles("#importFile", { name, mimeType: "application/json", buffer: Buffer.from(content) });
 const leaksContent = (message) => message.includes("onerror") || message.includes("<img");
+const headerTitle = () => page.locator("#workspaceTitle").textContent({ timeout: 2000 });
 try {
   await page.goto(appUrl()); await page.waitForSelector(".node");
   const countsBefore = await page.textContent("#counts");
+  r.seedTitle = await headerTitle();
+  if (r.seedTitle !== "Da jornada à arquitetura") fail(`o cabeçalho deveria mostrar o título do mapa: ${r.seedTitle}`);
 
   await importFile("poc.json", poisonedJson);
   await page.waitForTimeout(600);
@@ -49,6 +54,14 @@ try {
   const brokenAlert = dialogs.find((d) => d.type === "alert")?.message ?? "";
   r.brokenAlert = brokenAlert;
   if (!brokenAlert.startsWith("Falha na importação") || leaksContent(brokenAlert)) fail(`JSON quebrado deveria falhar sem trecho do conteúdo: ${brokenAlert}`);
+
+  dialogs.length = 0;
+  await importFile("titulo.json", JSON.stringify(titled));
+  await page.waitForTimeout(400);
+  r.importedTitle = await headerTitle();
+  if (r.importedTitle !== TITLE_PAYLOAD) fail(`o cabeçalho deveria mostrar o título importado como texto: ${r.importedTitle}`);
+  r.xssAfterTitle = await xssCount();
+  if (r.xssAfterTitle !== undefined) fail(`o título do mapa executou HTML (${r.xssAfterTitle}x)`);
 
   dialogs.length = 0;
   // O beforeunload do app regrava o mapa atual: o dado envenenado entra já no documento novo, uma única vez.

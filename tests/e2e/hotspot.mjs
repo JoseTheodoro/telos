@@ -1,12 +1,16 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { appUrl } from "./target.mjs";
-const [ROOT, SHOTS] = process.argv.slice(2);
+const FIXTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures/with-hotspot-box.json");
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("dialog", (d) => d.accept());
 await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
+const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 try {
 let w = await ws();
 r.migrated = { flag: w.graph.hotspotsLinked, linked: w.decisions.filter((d) => w.graph.edges.some((e) => e.to === "hotspot:" + d.id)).length, total: w.decisions.length };
@@ -71,15 +75,17 @@ await page.fill("#confirmWipeInput", "APAGAR"); await page.click("#executeWipe")
 w = await ws();
 r.afterWipe = { decisions: w.decisions.length, edges: w.graph.edges.length, emptyVisible: await page.locator("#emptyStage").isVisible(), hotspotCards: await page.locator('.node[data-kind="hotspot"]').count() };
 await page.screenshot({ path: `${SHOTS}/hotspot-3.png` });
-// importar o JSON v1.5 da oficina → migração
-await page.setInputFiles("#importFile", `${ROOT}/atlas-exemplo.json`);
+// importar um JSON v1.5 com hotspots ainda sem seta → migração
+await page.setInputFiles("#importFile", FIXTURE);
 await page.waitForTimeout(400);
 w = await ws();
 r.importMigrated = { flag: w.graph.hotspotsLinked, linked: w.decisions.filter((d) => w.graph.edges.some((e) => e.to === "hotspot:" + d.id)).length, total: w.decisions.length };
+if (!r.importMigrated.flag || !r.importMigrated.total || r.importMigrated.linked !== r.importMigrated.total) fail(`import deveria ligar cada hotspot da v1.5 por seta: ${JSON.stringify(r.importMigrated)}`);
 // recarregar: migração não duplica
 await page.reload(); await page.waitForSelector(".node");
 const w2 = await ws();
 r.noDuplicateOnReload = w2.graph.edges.length === w.graph.edges.length;
+if (!r.noDuplicateOnReload) fail("recarregar duplicou as setas da migração de hotspots");
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
 console.log(r, "\nerrors:", errors);
 await browser.close();

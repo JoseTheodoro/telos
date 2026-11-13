@@ -293,6 +293,13 @@ function nodeHtml(k: NodeKey): string {
   return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${px(p.x)};top:${px(p.y)};${esCssVars(es)}">${portsHtml(k)}<div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
 }
 
+const UNTITLED_WORKSPACE = "Mapa sem título";
+
+function renderWorkspaceTitle(): void {
+  const title = typeof state.ws.title === "string" ? state.ws.title.trim() : "";
+  $("#workspaceTitle").textContent = title || UNTITLED_WORKSPACE;
+}
+
 /** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
 function renderCounters(): void {
   const { ws, visibleKeys } = state;
@@ -363,6 +370,7 @@ export function renderGraph(): void {
   pruneMultiSelection(visibleKeys);
   $("#emptyStage").hidden = TYPES.some((t) => ((ws[ARR[t]] as AnyEntity[] | undefined)?.length || 0) > 0);
   renderLegend();
+  renderWorkspaceTitle();
   renderCounters();
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";

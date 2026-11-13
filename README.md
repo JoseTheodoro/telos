@@ -21,8 +21,6 @@ npm run typecheck  # só o TypeScript
 cd tests/e2e && npm install && node run-all.mjs   # testes e2e (Chrome do sistema)
 ```
 
-> Handoff para quem vai continuar: **`ONDAS_E_PROXIMOS_PASSOS.md`** reúne arquitetura, convenções, o que foi feito em cada onda e o backlog especificado.
-
 > O `index.html` da raiz é a entrada do Vite e **não abre via `file://`**. Use `npm run dev` ou o `dist/index.html`.
 >
 > O `localStorage` é separado por origem: `localhost:5173` e `file://` têm dados diferentes. Para mover um mapa entre eles, use **Backup JSON** e depois **Importar**.
@@ -46,10 +44,9 @@ src/
     rich.ts              destaque de código (highlight.js) e Markdown sanitizado (marked + DOMPurify)
     docs.ts              caderno de notas Markdown (#21)
   io/files.ts            importar/exportar JSON, CSV, SVG
-  data/seed.json         mapa de exemplo
+  data/seed.json         mapa de exemplo com persona sintética
   styles/app.css
 tests/e2e/               roteiros Playwright + run-all.mjs
-legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referência)
 ```
 
 ## Histórico
@@ -81,7 +78,7 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 - **#2 Edição inline do nome.** Duplo clique no card (ou `F2` com o card selecionado) transforma o nome num campo de texto. `Enter` ou clicar fora salva, `Esc` cancela. Nome vazio é recusado e `Ctrl/Cmd+Z` desfaz. Junto vieram duas correções no inspetor: o título acompanha a digitação, e focar um campo sem alterar nada não cria mais um "desfazer" vazio.
 - **Correção:** os contadores de nós, setas e relações zeram depois de "Limpar canvas".
 - **#3 Criação encadeada ("tempestade rápida").** Segue a convenção de mapas mentais. Com um card selecionado, **`Tab`** cria o próximo passo à direita, já conectado: jornada → capítulo → cena → evento, e um evento leva ao próximo evento da cena com seta de sequência. Uma caixa livre leva a outra do mesmo tipo, também com seta. **`Enter`** cria um irmão abaixo, do mesmo tipo e com o mesmo pai. O card nasce em modo de edição: dentro do editor, `Tab` salva e encadeia o próximo, `Enter` só salva, e `Esc` ou nome vazio descartam a criação. Criar e nomear contam como um passo só de desfazer. Se o card novo não couber no recorte atual, o recorte se abre (cena → capítulo → jornada). Os mesmos comandos aparecem como botões no inspetor.
-- **#4 Hotspot no canvas.** Os hotspots da oficina viraram post-its vermelhos no canvas, conectáveis a qualquer card. Com um card selecionado, **`H`** ou **＋ Hotspot** cria a dúvida ao lado dele, já ligada ("levanta dúvida") e em modo de edição. Sem seleção, ela nasce solta no centro da tela. O inspetor do hotspot tem título, descrição, status, prioridade, responsável e resolução. Hotspot resolvido fica esmaecido e riscado. A aba **Hotspots** mostra o total em aberto e a que cards cada um está ligado, e **Ver no canvas** abre a cena do hotspot. Os dados continuam em `decisions`, compatíveis com a v1.5: na primeira carga, cada hotspot com `sceneId` vira uma seta "cena → hotspot". "Limpar canvas" continua preservando os hotspots.
+- **#4 Hotspot no canvas.** Os hotspots da oficina viraram post-its vermelhos no canvas, conectáveis a qualquer card. Com um card selecionado, **`H`** ou **＋ Hotspot** cria a dúvida ao lado dele, já ligada ("levanta dúvida") e em modo de edição. Sem seleção, ela nasce solta no centro da tela. O inspetor do hotspot tem título, descrição, status, prioridade, responsável e resolução. Hotspot resolvido fica esmaecido e riscado. A aba **Hotspots** mostra o total em aberto e a que cards cada um está ligado, e **Ver no canvas** abre a cena do hotspot. Os dados continuam em `decisions`, compatíveis com a v1.5: na primeira carga, cada hotspot com `sceneId` vira uma seta "cena → hotspot". Nesta onda, "Limpar canvas" ainda preservava os hotspots; desde a Onda 3, eles saem junto com o resto do canvas.
 - **#5 Gramática de Event Storming nas setas.** Ao ligar elementos do fluxo, o rótulo vem sugerido: Ator → *executa* → Comando → *é tratado por* → Agregado → *emite* → Evento → *dispara* → Política → *aciona* → Comando. Também valem Evento → *atualiza* → Read model, Read model → *informa* → Ator, Evento → *precede* → Evento, e o fluxo de estados da oficina: Estado → *habilita* → Ação → *leva a* → Estado. Uma ligação fora do padrão nunca é bloqueada. Ela ganha um ⚠ discreto na legenda da seta, e o inspetor sugere a "ponte" que falta (ex.: Evento → **Política** → Comando). A seta pode ser marcada como **exceção consciente**. Se o rótulo divergir do sugerido, o inspetor oferece "Usar 'emite'". Numa caixa livre, `Tab` avança no fluxo (Comando → Agregado → Evento → Política → Comando; Ação ⇄ Estado). A gramática vale só para setas com caixa livre ou entre eventos: as setas de rastreabilidade técnica (evento → sistema, tela ou tabela; cena → domínio) ficam de fora. A gramática fica em `src/domain/grammar.ts`.
 - **Dívida paga:** o papel do domínio numa seta evento → domínio virou o campo explícito `role` (responsável ou consumidor), editável no inspetor. Antes era deduzido do texto do rótulo, e renomear a seta quebrava o mapeamento sem aviso. Backups antigos são migrados pelo rótulo na carga.
 - **Correção:** atalhos de uma tecla (`N`, `H`, `C`, `V`) não deixam mais a letra vazar para o campo que acabaram de abrir. O bug vinha da v1.5: `N` abria o modal com "n" no nome.
@@ -115,9 +112,8 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 - Registre os eventos e associe-os a domínio, sistema, tela e tabela por conexões.
 - Para desenhar estados, ações, decisões ou fluxos que não pertencem a uma cena, use **Caixa livre**.
 - Clique em cada seta para definir significado, evidência, READ/WRITE e cor.
-- Registre dúvidas e riscos como **hotspots** (tecla `H` no card selecionado). Eles ficam no canvas, ligados ao que questionam, e também na aba **Hotspots**. Reiniciar o canvas não os apaga.
+- Registre dúvidas e riscos como **hotspots** (tecla `H` no card selecionado). Eles ficam no canvas, ligados ao que questionam, e também na aba **Hotspots**. "Limpar canvas" também os apaga: faça o Backup JSON antes.
 
 ## Limites
 
 - O app é um arquivo HTML estático: não abre shell, não executa binários locais e não acessa bancos de dados por conta própria.
-- Para executar Claude Code dentro do app e criar elementos por IA, consulte `PROPOSTA_v2_TERMINAL_E_AGENTES.md`.
