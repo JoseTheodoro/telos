@@ -1,12 +1,13 @@
 import { chromium } from "playwright-core";
+import { appUrl } from "./target.mjs";
 import fs from "node:fs";
-const [ROOT, SHOTS] = process.argv.slice(2);
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 const dialogs = []; page.on("dialog", (d) => { dialogs.push(d.message()); d.accept(); });
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const last = async () => { const w = await ws(); return w.canvasNotes[w.canvasNotes.length - 1]; };
 const r = {};

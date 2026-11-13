@@ -1,9 +1,9 @@
 import { chromium } from "playwright-core";
-const [ROOT] = process.argv.slice(2);
+import { appUrl } from "./target.mjs";
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message));
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 await page.click('[data-focus-chapter="consulta"]'); await page.keyboard.press("Escape");
 let w = await ws(); const C = () => (w.graph.layouts["lanes|chapter:consulta"] ?? w.graph.layouts["timeline|chapter:consulta"]);

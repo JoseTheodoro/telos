@@ -1,4 +1,4 @@
-// Roda todos os roteiros contra ../../dist/index.html (faça `npm run build` na raiz antes).
+// Roda todos os roteiros contra ../../dist/index.html (faça `npm run build` na raiz antes) ou contra E2E_BASE_URL.
 // Cada roteiro imprime um JSON de verificações; falha = linha "FAILED" ou erros de console.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -13,7 +13,7 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const only = process.argv.slice(2);
 const scripts = fs
   .readdirSync(here)
-  .filter((f) => f.endsWith(".mjs") && f !== "run-all.mjs")
+  .filter((f) => f.endsWith(".mjs") && f !== "run-all.mjs" && f !== "target.mjs")
   .filter((f) => !only.length || only.includes(f.replace(".mjs", "")));
 
 let bad = 0;
@@ -28,7 +28,9 @@ for (const f of scripts) {
     out = String(e.stdout || "") + String(e.stderr || "") + String(e.message);
   }
   // Erro esperado: notes.mjs injeta <img src=x> para testar a sanitização (imagem quebrada).
-  const consoleErrors = (out.match(/errors: \[(.*?)\]/s)?.[1] || "").replace(/'Failed to load resource: net::ERR_FILE_NOT_FOUND',?/g, "").trim();
+  const consoleErrors = (out.match(/errors: \[(.*?)\]/s)?.[1] || "")
+    .replace(/'Failed to load resource: (net::ERR_FILE_NOT_FOUND|the server responded with a status of 404 \(Not Found\))',?/g, "")
+    .trim();
   const failed = crashed || /FAILED|Error:/.test(out) || consoleErrors.length > 0;
   if (failed) bad++;
   console.log(`${failed ? "✗" : "✓"} ${f}`);

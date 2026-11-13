@@ -1,12 +1,13 @@
 // #13 Seleção múltipla: laço com Shift, Shift+clique, arraste em grupo, lote no inspetor, exclusão em lote e undo em um passo.
 import { chromium } from "playwright-core";
-const [ROOT, SHOTS] = process.argv.slice(2);
+import { appUrl } from "./target.mjs";
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const LOTE = ["Lote 1", "Lote 2", "Lote 3", "Lote 4", "Lote 5"];
 const r = {};

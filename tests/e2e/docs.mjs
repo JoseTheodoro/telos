@@ -1,12 +1,13 @@
 import { chromium } from "playwright-core";
+import { appUrl } from "./target.mjs";
 import fs from "node:fs";
-const [ROOT, SHOTS] = process.argv.slice(2);
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 try {
@@ -80,7 +81,7 @@ try {
   // persistência da área e da nota aberta
   await page.close();
   const p2 = await ctx.newPage(); p2.on("pageerror", (e) => errors.push(e.message));
-  await p2.goto(`file://${ROOT}/dist/index.html`); await p2.waitForSelector("#docsView:not([hidden])");
+  await p2.goto(appUrl()); await p2.waitForSelector("#docsView:not([hidden])");
   r.reopen = { title: await p2.inputValue("#docTitle"), docs: await p2.textContent("#docsCount") };
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
 console.log(JSON.stringify(r, null, 1), "\nerrors:", errors);

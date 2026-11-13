@@ -1,7 +1,7 @@
 // Roteiro de ponta a ponta no layout em camadas: criar, editar, ligar, desfazer, buscar, recarregar e limpar.
 import { chromium } from "playwright-core";
+import { appUrl } from "./target.mjs";
 
-const ROOT = process.argv[2];
 const SHOTS = process.argv[3];
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
@@ -9,7 +9,8 @@ const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } })
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
-page.on("console", (m) => m.type() === "error" && !m.text().includes("fonts.g") && errors.push("console: " + m.text()));
+const ignoredConsoleError = (m) => m.text().includes("fonts.g") || m.location().url.endsWith("/favicon.ico");
+page.on("console", (m) => m.type() === "error" && !ignoredConsoleError(m) && errors.push("console: " + m.text()));
 page.on("dialog", (d) => d.accept());
 
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
@@ -39,7 +40,7 @@ const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 
 try {
-  await page.goto(`file://${ROOT}/dist/index.html`);
+  await page.goto(appUrl());
   await page.waitForSelector(".node");
   await page.click('[data-layout="layers"]');
   out.push(await snap("inicial"));

@@ -1,13 +1,14 @@
 // #14 Encaixe e alinhamento: grade de 24 px, Alt solta livre, guia vence a grade, grupo encaixa pelo card pego,
 // moldura na seleção leva o conteúdo, alinhar/distribuir com undo, clique com tremida não move, pontilhado segue a câmera.
 import { chromium } from "playwright-core";
-const [ROOT, SHOTS] = process.argv.slice(2);
+import { appUrl } from "./target.mjs";
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };

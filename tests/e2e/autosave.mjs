@@ -1,13 +1,14 @@
 // Passo 0: gravação adiada do caderno (300 ms), gravação pendente salva ao recarregar e aviso de tamanho perto do limite.
 import { chromium } from "playwright-core";
-const [ROOT, SHOTS] = process.argv.slice(2);
+import { appUrl } from "./target.mjs";
+const [, SHOTS] = process.argv.slice(2);
 const STORE = "pep-atlas-studio-v4";
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-const URL = `file://${ROOT}/dist/index.html`;
+const URL = appUrl();
 await page.goto(URL); await page.waitForSelector(".node");
 const savedBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k)).docs[0]?.body ?? null, STORE);
 const r = {};

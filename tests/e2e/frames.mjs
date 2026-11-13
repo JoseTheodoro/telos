@@ -1,14 +1,15 @@
 // #11 Moldura: criar com F em volta da seleção, renomear, redimensionar, arrastar levando os cards,
 // fundo transparente ao mouse, inspetor, SVG, recorte, Organizar, Camadas, reload, excluir e desfazer.
 import { chromium } from "playwright-core";
+import { appUrl } from "./target.mjs";
 import fs from "node:fs";
-const [ROOT, SHOTS] = process.argv.slice(2);
+const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
+await page.goto(appUrl()); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const layout = (w) => w.graph.layouts["lanes|scene:preconsulta"] ?? w.graph.layouts["timeline|scene:preconsulta"];
 const camera = () => page.$eval("#world", (el) => el.style.transform);
