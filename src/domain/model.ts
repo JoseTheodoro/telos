@@ -343,6 +343,7 @@ export function upgradeWorkspace(data: any): Workspace {
   const hasContainment = (a: NodeKey, b: NodeKey) =>
     data.graph.edges.some((e: Edge) => e.from === a && e.to === b && e.label === "contém");
   for (const c of data.chapters) {
+    if (!c.journeyId) continue;
     const a = "journey:" + c.journeyId;
     const b = "chapter:" + c.id;
     if (!hasContainment(a, b))

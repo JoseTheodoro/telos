@@ -591,7 +591,7 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
     if (!rule) return;
     if (rule.containment) {
       ws.graph.edges = ws.graph.edges.filter((e) => !(e.to === k && keyKind(e.from) === rule.parent && e.label === "contém"));
-      ws.graph.edges.push(edgeFor(ws, nodeKey(rule.parent, value), k, "contém", "Registrado", "Inspetor"));
+      if (value) ws.graph.edges.push(edgeFor(ws, nodeKey(rule.parent, value), k, "contém", "Registrado", "Inspetor"));
     } else {
       ws.graph.edges = ws.graph.edges.filter((e) => !(e.to === k && keyKind(e.from) === rule.parent));
       if (value) {

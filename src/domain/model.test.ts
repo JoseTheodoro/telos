@@ -41,6 +41,7 @@ describe("upgradeWorkspace", () => {
 
     expect(workspace.journeys).toEqual([]);
     expect(workspace.chapters[0].journeyId).toBe("");
+    expect(workspace.graph.edges.filter((edge) => edge.from.endsWith(":"))).toEqual([]);
   });
 
   it("upgradeWorkspace creates the default journey for saves that predate journeys", () => {
