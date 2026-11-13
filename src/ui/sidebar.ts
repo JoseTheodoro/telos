@@ -4,9 +4,9 @@ import { nodeKey } from "../domain/keys";
 import { childCount, collection } from "../domain/model";
 import type { Chapter, Journey, NodeKind, SidebarTab } from "../domain/types";
 import { queueViewPersist } from "../core/persistence";
-import { get, label, setFocus, state } from "../core/state";
+import { get, label, related, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
-import { ensureVisible, selectDecision, selectNode } from "../actions";
+import { ensureVisible, selectNode } from "../actions";
 import { ensurePositions } from "../canvas/layout";
 import { createModal } from "./modal";
 import { $, $$, esc, target } from "./dom";
@@ -55,15 +55,25 @@ function inventory(): string {
   return `<input class="lookup" id="search" value="${esc(search)}" placeholder="Pesquisar qualquer elemento...">${groups}`;
 }
 
+/** Aba Hotspots: mesma fonte dos post-its vermelhos do canvas. */
 function decisions(): string {
+  const list = state.ws.decisions;
+  const open = list.filter((d) => d.status !== "Resolvida").length;
+  const cards = list
+    .map((d) => {
+      const k = nodeKey("hotspot", d.id);
+      const links = related(k).map((e) => label(e.from === k ? e.to : e.from));
+      const where = links.length
+        ? `<small class="decision-links">↳ ${links.map(esc).join(" · ")}</small>`
+        : `<small class="decision-links is-loose">Sem vínculo no canvas</small>`;
+      const selected = state.selected?.kind === "node" && state.selected.id === k;
+      return `<div class="decision-card ${selected ? "active" : ""}" data-status="${esc(d.status)}"><b><span class="decision-id">${esc(d.id)}</span> ${esc(d.title)}</b><p>${esc(d.description)}</p>${where}<span class="chip">${esc(d.status)}</span> <span class="chip">${esc(d.priority || "Média")}</span><button class="btn sm" data-select-node="${esc(k)}">Ver no canvas ↗</button></div>`;
+    })
+    .join("");
   return (
-    `<p class="sub">Questões pendentes e decisões da descoberta. Não são relações automaticamente validadas.</p>` +
-    state.ws.decisions
-      .map(
-        (d) =>
-          `<div class="decision-card"><b>${esc(d.title)}</b><p>${esc(d.description)}</p><span class="chip">${esc(d.status)}</span><button class="btn sm" data-decision="${esc(d.id)}">Discutir ↗</button></div>`,
-      )
-      .join("")
+    `<p class="sub">Dúvidas, riscos e decisões da oficina: <b>${open} em aberto</b> de ${list.length}. Cada hotspot é um post-it vermelho no canvas; ligue-o aos cards que ele questiona.</p>` +
+    `<button class="tree-add" data-create="hotspot">＋ Novo hotspot</button>` +
+    cards
   );
 }
 
@@ -158,8 +168,7 @@ export function bindSidebar(): void {
       ensureVisible(k.dataset.selectNode as string);
       return;
     }
-    const d = el.closest<HTMLElement>("[data-decision]");
-    if (d) selectDecision(d.dataset.decision as string);
+
   });
 
   $("#sidebarBody").addEventListener("input", (e) => {

@@ -2,16 +2,16 @@
 //   Tab   → próximo passo / filho, conectado, à direita
 //   Enter → irmão (mesmo tipo e mesmo pai), abaixo
 import { NODE_H, NODE_W, PL } from "../domain/constants";
-import { DEFAULT_NAME, PARENT_FIELD, buildEntity, initMappings } from "../domain/factory";
-import { keyKind, newId, nodeKey } from "../domain/keys";
+import { DEFAULT_NAME, PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
+import { keyKind, nodeKey } from "../domain/keys";
 import { collection, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
-import type { AnyEntity, NodeKey, NodeKind, Point } from "../domain/types";
+import type { AnyEntity, NodeKey, NodeKind } from "../domain/types";
 import { change } from "../core/history";
 import { getByKey, setFocus, state } from "../core/state";
 import { notify } from "../ui/dom";
 import { bringIntoView } from "./camera";
 import { startInlineEdit } from "./inline-edit";
-import { activePositions, pos } from "./layout";
+import { activePositions, freeSpot, pos } from "./layout";
 import { visible } from "./visibility";
 
 export type QuickMode = "next" | "sibling";
@@ -64,20 +64,6 @@ function planFor(origin: NodeKey, mode: QuickMode): Plan | null {
   return { kind: next, linkFrom: origin, linkStatus: "Hipótese", inherit: false, direction: "right" };
 }
 
-/** Primeira posição livre a partir de `start`, descendo até não colidir. */
-function freeSpot(start: Point, ignore: NodeKey): Point {
-  const positions = activePositions();
-  const keys = [...visible()].filter((k) => k !== ignore);
-  const collides = (p: Point) =>
-    keys.some((k) => {
-      const q = positions[k];
-      return q && Math.abs(q.x - p.x) < NODE_W - 10 && Math.abs(q.y - p.y) < NODE_H + 10;
-    });
-  const p = { ...start };
-  for (let i = 0; i < 40 && collides(p); i++) p.y += NODE_H + GAP_Y;
-  return p;
-}
-
 /** Abre o recorte (cena → capítulo → jornada → mapa completo) até o nó aparecer. */
 function widenUntilVisible(k: NodeKey): void {
   for (let i = 0; i < 3 && !visible().has(k); i++) {
@@ -115,7 +101,7 @@ export function quickCreate(mode: QuickMode): void {
   const src = getByKey(origin) as AnyEntity;
   const semantic = plan.inherit ? src.semanticType : "Não definido";
   const name = plan.kind === "semantic" && plan.inherit && semantic !== "Não definido" ? semantic : DEFAULT_NAME[plan.kind];
-  const id = "u" + newId();
+  const id = newEntityId(ws, plan.kind);
   const k = nodeKey(plan.kind, id);
   const inheritVal = (field: string) => (plan.inherit ? String(src[field] ?? "") : "");
   // Pai vem do plano; natureza/destino/acesso são herdados do irmão de origem.

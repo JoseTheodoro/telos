@@ -164,6 +164,7 @@ export const KIND_TO_ES: Partial<Record<NodeKind, EsCategory>> = {
   event: "evento",
   system: "externo",
   screen: "leitura",
+  hotspot: "hotspot",
 };
 
 /** Categoria ES do nó: tipo semântico tem prioridade sobre o tipo estrutural. */

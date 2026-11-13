@@ -10,7 +10,8 @@ export type NodeKind =
   | "system"
   | "screen"
   | "table"
-  | "semantic";
+  | "semantic"
+  | "hotspot";
 
 /** Chave de nó no grafo: `${kind}:${id}` (ex.: "scene:preconsulta"). */
 export type NodeKey = string;
@@ -97,7 +98,17 @@ export interface SemanticNode extends BaseEntity {
   name: string;
 }
 
-export type AnyEntity = Journey | Chapter | Scene | EventItem | Domain | SystemItem | Screen | Table | SemanticNode;
+export type AnyEntity =
+  | Journey
+  | Chapter
+  | Scene
+  | EventItem
+  | Domain
+  | SystemItem
+  | Screen
+  | Table
+  | SemanticNode
+  | Decision;
 
 export interface Edge {
   id: string;
@@ -111,16 +122,16 @@ export interface Edge {
   accessMode: AccessMode | string;
 }
 
-export interface Decision {
-  id: string;
+/** Hotspot / dúvida da oficina. Armazenado em `ws.decisions` (compatível com a v1.5). */
+export interface Decision extends BaseEntity {
   title: string;
   description: string;
+  /** Legado da v1.5: cena de origem (migrado para uma seta na primeira carga). */
   sceneId?: string;
   priority?: string;
   status: string;
   owner: string;
   resolution: string;
-  [extra: string]: unknown;
 }
 
 export interface EventMapping {
@@ -175,6 +186,8 @@ export interface Graph {
   edges: Edge[];
   /** Posições por recorte: "all" | "journey:x" | "chapter:x" | "scene:x". */
   layouts: Record<string, Positions>;
+  /** Migração v1.6: hotspots com `sceneId` já viraram setas. */
+  hotspotsLinked?: boolean;
 }
 
 export interface Workspace {
@@ -211,9 +224,10 @@ export type CollectionName =
   | "systems"
   | "screens"
   | "tables"
-  | "semanticNodes";
+  | "semanticNodes"
+  | "decisions";
 
 export type SidebarTab = "journey" | "inventory" | "decisions";
 export type ToolMode = "pointer" | "connect";
 
-export type Selection = { kind: "node" | "edge" | "decision"; id: string } | null;
+export type Selection = { kind: "node" | "edge"; id: string } | null;

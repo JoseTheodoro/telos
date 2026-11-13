@@ -1,5 +1,11 @@
 // Inspetor lateral: edição de nós, setas e hotspots.
-import { EDGE_PALETTE, EDGE_STATUS_OPTIONS, PL } from "../domain/constants";
+import {
+  EDGE_PALETTE,
+  EDGE_STATUS_OPTIONS,
+  HOTSPOT_PRIORITY_OPTIONS,
+  HOTSPOT_STATUS_OPTIONS,
+  PL,
+} from "../domain/constants";
 import { esStyle } from "../domain/es";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import { collection, colorForEdge, defaultEdgeName, edgeFor, isTableLink, syncMaps, validColor } from "../domain/model";
@@ -34,7 +40,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
 function edgeInspector(e: Edge): string {
@@ -146,6 +152,16 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
         options("Acesso padrão nas novas setas", "defaultAccess", v("defaultAccess") || "", ACCESS_OPTIONS) +
         `<div class="hint"><b>Acesso por seta</b><br>Uma mesma tabela pode receber WRITE de um sistema e READ de outros. Edite cada conexão para descrever quem lê e quem escreve.</div>`
       );
+    case "hotspot":
+      return (
+        field("Dúvida / título", "title", o.title) +
+        field("Descrição / contexto", "description", o.description, true) +
+        options("Status", "status", o.status || "Aberta", HOTSPOT_STATUS_OPTIONS) +
+        options("Prioridade", "priority", v("priority") || "Média", HOTSPOT_PRIORITY_OPTIONS) +
+        field("Responsável", "owner", v("owner")) +
+        field("Resolução / evidência", "resolution", v("resolution"), true) +
+        `<div class="hint"><b>Hotspot no canvas</b><br>Ligue este post-it aos cards que ele questiona. Com um card selecionado, a tecla <span class="hotkey">H</span> cria um hotspot já conectado.</div>`
+      );
   }
 }
 
@@ -170,11 +186,13 @@ function nodeInspector(k: string, o: AnyEntity): string {
       field("Evidência de origem", "origin", o.origin || "", true) +
       field("Notas", "notes", o.notes || "", true);
   }
-  content +=
-    `<div class="sectionlabel">Classificação do elemento</div>` +
-    options("Tipo semântico", "semanticType", o.semanticType || "Não definido", semOptions(o.semanticType)) +
-    `<button class="btn sm add-choice" data-add-choice="semantic">＋ Cadastrar novo tipo</button>` +
-    esHint(kind, o.semanticType);
+  // Hotspot é sempre o post-it vermelho: sem troca de tipo semântico.
+  if (kind !== "hotspot")
+    content +=
+      `<div class="sectionlabel">Classificação do elemento</div>` +
+      options("Tipo semântico", "semanticType", o.semanticType || "Não definido", semOptions(o.semanticType)) +
+      `<button class="btn sm add-choice" data-add-choice="semantic">＋ Cadastrar novo tipo</button>` +
+      esHint(kind, o.semanticType);
   const rels = related(k);
   const relRows = rels
     .slice(0, 70)
@@ -218,33 +236,14 @@ export function renderInspector(): void {
     body.innerHTML = edgeInspector(e);
     return;
   }
-  if (sel.kind === "decision") {
-    const d = state.ws.decisions.find((x) => x.id === sel.id);
-    if (!d) {
-      state.selected = null;
-      return renderInspector();
-    }
-    title.textContent = d.title;
-    sub.textContent = "Hotspot · " + d.id;
-    body.innerHTML =
-      field("Título", "decision.title", d.title) +
-      field("Descrição", "decision.description", d.description, true) +
-      options("Status", "decision.status", d.status, [
-        ["Aberta", "Aberta"],
-        ["Em validação", "Em validação"],
-        ["Resolvida", "Resolvida"],
-      ]) +
-      field("Responsável", "decision.owner", d.owner) +
-      field("Resolução / evidência", "decision.resolution", d.resolution, true);
-    return;
-  }
   const o = getByKey(sel.id);
   if (!o) {
     state.selected = null;
     return renderInspector();
   }
   title.textContent = label(sel.id);
-  sub.textContent = `${PL[keyKind(sel.id)]} · ${degree(sel.id)} conexões`;
+  const kindLabel = keyKind(sel.id) === "hotspot" ? `Hotspot ${o.id}` : PL[keyKind(sel.id)];
+  sub.textContent = `${kindLabel} · ${degree(sel.id)} conexões`;
   body.innerHTML = nodeInspector(sel.id, o);
 }
 
@@ -273,14 +272,6 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
     change(() => {
       e[prop] = value;
       syncMaps(ws);
-    });
-    return;
-  }
-  if (sel.kind === "decision") {
-    const d = ws.decisions.find((x) => x.id === sel.id) as Record<string, unknown> | undefined;
-    if (!d) return;
-    change(() => {
-      d[path.slice(9)] = value;
     });
     return;
   }
@@ -384,10 +375,6 @@ export function bindInspector(): void {
     if (sel.kind === "edge" && path.startsWith("edge.")) {
       const o = findEdge(sel.id) as unknown as Record<string, unknown> | undefined;
       if (o) o[path.slice(5)] = v;
-    } else if (sel.kind === "decision" && path.startsWith("decision.")) {
-      const o = state.ws.decisions.find((a) => a.id === sel.id) as Record<string, unknown> | undefined;
-      if (o) o[path.slice(9)] = v;
-      if (path === "decision.title") $("#inspectTitle").textContent = v;
     } else if (sel.kind === "node") {
       const o = getByKey(sel.id);
       if (o) o[path] = path === "questions" || path === "answers" ? v.split(/\r?\n/) : v;

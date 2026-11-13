@@ -54,13 +54,13 @@ export function autoLayout(record = true): void {
     positions[k] = { x: COL.journey, y: cs.length ? avgY(cs) : 95 + i * 165 };
   });
 
-  for (const t of ["domain", "system", "screen", "table", "semantic"] as NodeKind[]) {
+  for (const t of ["domain", "system", "screen", "table", "semantic", "hotspot"] as NodeKind[]) {
     const proposals = groups[t]
       .map((k, i) => {
         const linked = ws.graph.edges
           .filter((e) => e.from === k || e.to === k)
           .map((e) => (e.from === k ? e.to : e.from))
-          .filter((x) => positions[x] && ["event", "scene", "chapter"].includes(keyKind(x)));
+          .filter((x) => positions[x] && ["event", "scene", "chapter", "semantic"].includes(keyKind(x)));
         return { k, avg: linked.length ? avgY(linked) : 120 + i * 115 };
       })
       .sort((a, b) => a.avg - b.avg);
@@ -118,3 +118,20 @@ export function calcBounds(): Bounds {
   const maxY = ys.length ? Math.max(...ys) + NODE_H : 800;
   return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
 }
+
+/** Primeira posição livre a partir de `start`, descendo até não colidir. */
+const GAP_Y = 30;
+
+export function freeSpot(start: Point, ignore: NodeKey): Point {
+  const positions = activePositions();
+  const keys = [...visible()].filter((k) => k !== ignore);
+  const collides = (p: Point) =>
+    keys.some((k) => {
+      const q = positions[k];
+      return q && Math.abs(q.x - p.x) < NODE_W - 10 && Math.abs(q.y - p.y) < NODE_H + 10;
+    });
+  const p = { ...start };
+  for (let i = 0; i < 40 && collides(p); i++) p.y += NODE_H + GAP_Y;
+  return p;
+}
+

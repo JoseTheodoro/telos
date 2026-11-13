@@ -1,8 +1,8 @@
 // Modal: criação de elementos, lista de conexões e limpeza do canvas.
-import { ARR, CONTAINMENT_LABEL, COL, PL, TYPES } from "../domain/constants";
-import { keyKind, newId, nodeKey } from "../domain/keys";
+import { ARR, CONTAINMENT_LABEL, COL, DRAWING_TYPES, PL, TYPES } from "../domain/constants";
+import { keyKind, nodeKey } from "../domain/keys";
 import { CONTAINMENT, colorForEdge, deep, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
-import { PARENT_FIELD, buildEntity, initMappings } from "../domain/factory";
+import { PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
 import type { AnyEntity, Chapter, NodeKind, Scene } from "../domain/types";
 import { change } from "../core/history";
 import { cancelViewPersist, persist, persistViewNow } from "../core/persistence";
@@ -107,7 +107,7 @@ function makeNew(): void {
     return;
   }
   const semantic = $<HTMLInputElement>("#newCustomSemantic")?.value.trim() || val("semanticType") || "Não definido";
-  const id = "u" + newId();
+  const id = newEntityId(state.ws, t);
   const obj = buildEntity(t, id, name, semantic, val);
   const k = nodeKey(t, id);
   const positions = activePositions();
@@ -173,7 +173,7 @@ export function listConnections(): void {
 // Limpar canvas: apaga só o desenho; preserva hotspots, taxonomia e contexto do projeto.
 export function confirmWipe(): void {
   const ws = state.ws;
-  const nodes = TYPES.reduce((n, t) => n + (ws[ARR[t]] as AnyEntity[]).length, 0);
+  const nodes = DRAWING_TYPES.reduce((n, t) => n + (ws[ARR[t]] as AnyEntity[]).length, 0);
   const arrows = ws.graph.edges.length;
   const hotspots = ws.decisions?.length || 0;
   if (!nodes && !arrows) {

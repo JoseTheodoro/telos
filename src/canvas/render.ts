@@ -1,5 +1,5 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { NATURE_BASE, NODE_W, PL, PORT_Y, TYPES, ARR } from "../domain/constants";
+import { ARR, DRAWING_TYPES, NATURE_BASE, NODE_W, PL, PORT_Y } from "../domain/constants";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
 import { colorForEdge, isTableLink, semanticLabel } from "../domain/model";
@@ -81,6 +81,8 @@ function nodeSummary(k: NodeKey, o: AnyEntity): string | undefined {
       return (o as Table).physicalName || "Tabela a identificar";
     case "screen":
       return (o as Screen).route || "Interface a investigar";
+    case "hotspot":
+      return `${o.id} · ${o.status || "Aberta"} · ${String(o.priority || "Média")}`;
     default:
       return o.status || "A investigar";
   }
@@ -98,10 +100,11 @@ function nodeHtml(k: NodeKey): string {
   const o = getByKey(k) as AnyEntity;
   const p = pos(k);
   const t = keyKind(k);
-  const sem = semanticLabel(o);
+  // Não repete o tipo quando o semântico diz o mesmo (ex.: "Hotspot · Hotspot").
+  const sem = semanticLabel(o).toLowerCase() === PL[t].toLowerCase() ? "" : semanticLabel(o);
   const isSelected = state.selected?.kind === "node" && state.selected.id === k;
   const es = esStyle(t, o.semanticType);
-  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}" style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
+  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
 }
 
 /** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
@@ -121,7 +124,7 @@ export function renderGraph(): void {
   const { ws } = state;
   state.visibleKeys = visible();
   const visibleKeys = state.visibleKeys;
-  $("#emptyStage").hidden = !TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
+  $("#emptyStage").hidden = !DRAWING_TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
   renderLegend();
   renderCounters();
   if (!visibleKeys.size) {

@@ -30,7 +30,7 @@ export function getEntityByKey(ws: Workspace, k: NodeKey): AnyEntity | undefined
 
 /** Campo que guarda o nome exibido no card de cada tipo. */
 export function nameField(kind: NodeKind): "label" | "title" | "name" {
-  return kind === "chapter" ? "label" : kind === "scene" ? "title" : "name";
+  return kind === "chapter" ? "label" : kind === "scene" || kind === "hotspot" ? "title" : "name";
 }
 
 export function entityLabel(ws: Workspace, k: NodeKey): string {
@@ -49,9 +49,15 @@ export function validColor(c: string | undefined | null): string {
   return /^#[0-9a-fA-F]{6}$/.test(c || "") ? (c as string).toLowerCase() : "";
 }
 
+/** Cor padrão das setas que tocam um hotspot (mesmo vermelho do post-it). */
+const HOTSPOT_EDGE = "#b3261e";
+const touchesHotspot = (e: Partial<Edge>) =>
+  (!!e.from && keyKind(e.from) === "hotspot") || (!!e.to && keyKind(e.to) === "hotspot");
+
 export function colorForEdge(e: Partial<Edge>): string {
   return (
     validColor(e.color) ||
+    (touchesHotspot(e) ? HOTSPOT_EDGE : "") ||
     (e.accessMode === "WRITE"
       ? TABLE_COLORS.WRITE
       : e.accessMode === "READ"
@@ -118,6 +124,8 @@ const DEFAULT_EDGE_NAMES: Record<string, string> = {
 };
 
 export function defaultEdgeName(a: NodeKey, b: NodeKey): string {
+  if (keyKind(b) === "hotspot") return "levanta dúvida";
+  if (keyKind(a) === "hotspot") return "questiona";
   return DEFAULT_EDGE_NAMES[keyKind(a) + ":" + keyKind(b)] || "relaciona com";
 }
 
@@ -238,10 +246,10 @@ export function upgradeWorkspace(data: any): Workspace {
     : DEST_BASE.map((x) => ({ id: x[0], label: x[1] }));
   for (const t of TYPES) {
     if (!Array.isArray(data[ARR[t]])) data[ARR[t]] = [];
-    for (const o of data[ARR[t]]) if (!o.semanticType) o.semanticType = UNDEFINED_SEMANTIC;
+    const fallback = t === "hotspot" ? "Hotspot" : UNDEFINED_SEMANTIC;
+    for (const o of data[ARR[t]]) if (!o.semanticType) o.semanticType = fallback;
   }
   for (const t of data.tables) oFill(t, "defaultAccess", "");
-  data.decisions = Array.isArray(data.decisions) ? data.decisions : [];
   data.sceneMappings = data.sceneMappings || {};
   data.eventMappings = data.eventMappings || {};
   data.graph = data.graph || { positions: {}, edges: [] };
@@ -269,8 +277,36 @@ export function upgradeWorkspace(data: any): Workspace {
       });
   }
   data.graph.layouts = data.graph.layouts || {};
+  linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;
+}
+
+/**
+ * v1.5 → v1.6: hotspot ligado a uma cena (`sceneId`) passa a ter uma seta
+ * "cena → hotspot". Roda uma única vez por workspace (para respeitar setas
+ * que o usuário apagar depois).
+ */
+function linkLegacyHotspots(ws: Workspace): void {
+  if (ws.graph.hotspotsLinked) return;
+  for (const d of ws.decisions) {
+    const hk = nodeKey("hotspot", d.id);
+    const sk = nodeKey("scene", d.sceneId || "");
+    if (!d.sceneId || !ws.scenes.some((s) => s.id === d.sceneId)) continue;
+    if (ws.graph.edges.some((e) => e.from === hk || e.to === hk)) continue;
+    ws.graph.edges.push({
+      id: "r" + newId(),
+      from: sk,
+      to: hk,
+      label: "levanta dúvida",
+      status: "Registrado",
+      source: "Hotspot da oficina (v1.5)",
+      evidence: "",
+      color: "",
+      accessMode: "",
+    });
+  }
+  ws.graph.hotspotsLinked = true;
 }
 
 /** Quantidade de filhos diretos na hierarquia narrativa. */

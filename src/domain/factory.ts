@@ -1,4 +1,5 @@
 // Fábrica de entidades: campos padrão de cada tipo ao criar um elemento.
+import { newId } from "./keys";
 import type { AnyEntity, NodeKind, Workspace } from "./types";
 
 /** Campo que aponta para o pai na hierarquia narrativa. */
@@ -19,7 +20,17 @@ export const DEFAULT_NAME: Record<NodeKind, string> = {
   screen: "Nova tela",
   table: "Nova tabela",
   semantic: "Nova caixa",
+  hotspot: "Nova dúvida",
 };
+
+/** Id de um elemento novo; hotspots ganham código legível sequencial (H-01, H-02…). */
+export function newEntityId(ws: Workspace, kind: NodeKind): string {
+  if (kind !== "hotspot") return "u" + newId();
+  const used = new Set(ws.decisions.map((d) => d.id));
+  let n = ws.decisions.length + 1;
+  while (used.has("H-" + String(n).padStart(2, "0"))) n++;
+  return "H-" + String(n).padStart(2, "0");
+}
 
 /** Monta a entidade nova com os campos padrão do tipo. */
 export function buildEntity(t: NodeKind, id: string, name: string, semantic: string, val: (k: string) => string): AnyEntity {
@@ -63,6 +74,17 @@ export function buildEntity(t: NodeKind, id: string, name: string, semantic: str
       };
     case "semantic":
       return { ...base, name, description: "", status: "Em descoberta", notes: "", origin: "Criado no Atlas Studio" };
+    case "hotspot":
+      return {
+        ...base,
+        semanticType: semantic === "Não definido" ? "Hotspot" : semantic,
+        title: name,
+        description: "",
+        priority: "Média",
+        status: "Aberta",
+        owner: "",
+        resolution: "",
+      };
   }
 }
 

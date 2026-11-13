@@ -10,6 +10,7 @@ import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
 import { startInlineEdit } from "./canvas/inline-edit";
 import { quickCreate } from "./canvas/quick-create";
+import { addHotspot } from "./canvas/hotspot";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
@@ -53,6 +54,7 @@ function bindToolbar(): void {
   $("#addBtn").onclick = () => createModal(null, null, null, sel()?.kind === "node" ? sel()!.id : null);
   $("#quickStateBtn").onclick = () => createModal("semantic", null, null, null, "Estado");
   $("#quickActionBtn").onclick = () => createModal("semantic", null, null, null, "Ação");
+  $("#quickHotspotBtn").onclick = () => addHotspot();
   $("#clearCanvasBtn").onclick = confirmWipe;
   $("#startFreshJourney").onclick = () => createModal("journey");
   $("#layoutBtn").onclick = () => autoLayout();
@@ -101,9 +103,19 @@ function bindKeyboard(): void {
       e.preventDefault();
       safeRemoveSelection();
     }
-    if (key === "n") createModal();
-    if (key === "c") setMode("connect");
-    if (key === "v") setMode("pointer");
+    // Atalhos de uma tecla consomem a tecla: sem isso a letra vazava para o
+    // campo que o atalho acabou de focar (ex.: "n" no nome do modal, "h" no hotspot).
+    const single: Record<string, () => void> = {
+      n: () => createModal(),
+      h: () => addHotspot(),
+      c: () => setMode("connect"),
+      v: () => setMode("pointer"),
+    };
+    if (!mod && !e.altKey && single[key]) {
+      e.preventDefault();
+      single[key]();
+      return;
+    }
     if (e.key === "Escape") {
       state.connectStart = null;
       state.selected = null;

@@ -10,6 +10,7 @@ export const TYPES: NodeKind[] = [
   "screen",
   "table",
   "semantic",
+  "hotspot",
 ];
 
 /** Tipos da hierarquia narrativa (jornada → capítulo → cena → evento). */
@@ -26,6 +27,7 @@ export const PL: Record<NodeKind, string> = {
   screen: "Tela",
   table: "Tabela",
   semantic: "Caixa livre",
+  hotspot: "Hotspot",
 };
 
 /** Coleção do workspace onde cada tipo é armazenado. */
@@ -39,6 +41,7 @@ export const ARR: Record<NodeKind, CollectionName> = {
   screen: "screens",
   table: "tables",
   semantic: "semanticNodes",
+  hotspot: "decisions",
 };
 
 export const COLORS: Record<NodeKind, string> = {
@@ -51,6 +54,7 @@ export const COLORS: Record<NodeKind, string> = {
   screen: "#39886f",
   table: "#67768e",
   semantic: "#466e7d",
+  hotspot: "#b3261e",
 };
 
 export const TABLE_COLORS = { READ: "#ed8b23", WRITE: "#d84343" } as const;
@@ -159,6 +163,21 @@ export const DEST_BASE: [string, string][] = [
   ["open", "A definir"],
 ];
 
+export const HOTSPOT_STATUS_OPTIONS: [string, string][] = [
+  ["Aberta", "Aberta"],
+  ["Em validação", "Em validação"],
+  ["Resolvida", "Resolvida"],
+];
+
+export const HOTSPOT_PRIORITY_OPTIONS: [string, string][] = [
+  ["Alta", "Alta"],
+  ["Média", "Média"],
+  ["Baixa", "Baixa"],
+];
+
+/** Hotspots não contam como "desenho" para canvas vazio e Limpar canvas. */
+export const DRAWING_TYPES = TYPES.filter((t) => t !== "hotspot");
+
 export const EDGE_STATUS_OPTIONS: [string, string][] = [
   ["Registrado", "Registrado na narrativa"],
   ["Hipótese", "Hipótese"],
@@ -183,6 +202,7 @@ export const COL: Record<NodeKind, number> = {
   screen: 1885,
   table: 2195,
   semantic: 2510,
+  hotspot: 2825,
 };
 
 export const STORE = "pep-atlas-studio-v4";

@@ -55,3 +55,17 @@
 .node.editing .name{max-height:none;overflow:visible}
 .name-editor{display:block;width:100%;margin:0;padding:3px 5px;border:1.5px solid var(--accent);border-radius:6px;background:#fff;color:#2c4036;font:inherit;font-size:13px;font-weight:800;line-height:1.3;resize:none;overflow:hidden;user-select:text;cursor:text;box-shadow:0 0 0 3px rgba(52,129,90,.15)}
 .name-editor:focus{outline:none}
+
+/* v1.6 · #4 Hotspot no canvas */
+.tool-hotspot{background:#fff1f0;border-color:#f3c2bf;color:#a32a22}
+.tool-hotspot:hover{background:#ffe4e2}
+.node[data-kind='hotspot']{transform:rotate(-.7deg)}
+.node[data-kind='hotspot'] .kind:before{content:'⚠ '}
+.node[data-kind='hotspot'][data-status='Resolvida']{opacity:.62;transform:none}
+.node[data-kind='hotspot'][data-status='Resolvida'] .name{text-decoration:line-through;text-decoration-color:#b3261e88}
+.node[data-kind='hotspot'][data-status='Resolvida'] .kind:before{content:'✓ '}
+.decision-card.active{outline:2px solid #e8a19c;outline-offset:1px}
+.decision-card[data-status='Resolvida']{opacity:.7}
+.decision-id{display:inline-block;font-size:9px;font-weight:800;color:#b3261e;background:#ffe9e7;border-radius:4px;padding:1px 5px;margin-right:3px;vertical-align:1px}
+.decision-links{display:block;font-size:10px;color:#5d7467;margin:-2px 0 8px;line-height:1.45}
+.decision-links.is-loose{color:#a0786f;font-style:italic}

@@ -1,9 +1,10 @@
 // Ações do usuário sobre o grafo (seleção, conexão, exclusão, duplicação, foco).
 import { keyId, keyKind, newId, nodeKey } from "./domain/keys";
-import { childCount, collection, deep, defaultEdgeName, edgeFor, isContainment, syncMaps } from "./domain/model";
+import { childCount, collection, deep, defaultEdgeName, edgeFor, isContainment, nameField, syncMaps } from "./domain/model";
+import { newEntityId } from "./domain/factory";
 import type { AnyEntity, Chapter, EventItem, NodeKey, Scene } from "./domain/types";
 import { change, refreshUndo } from "./core/history";
-import { get, getByKey, setFocus, state } from "./core/state";
+import { get, getByKey, related, setFocus, state } from "./core/state";
 import { refreshAll, refreshTools } from "./app";
 import { centerOn } from "./canvas/camera";
 import { activePositions, pos } from "./canvas/layout";
@@ -32,10 +33,7 @@ export function selectEdge(id: string): void {
   openInspectorOnMobile();
 }
 
-export function selectDecision(id: string): void {
-  state.selected = { kind: "decision", id };
-  renderInspector();
-}
+
 
 /** Ajusta o recorte para que o nó apareça, seleciona e centraliza. */
 export function ensureVisible(k: NodeKey): void {
@@ -53,6 +51,18 @@ export function ensureVisible(k: NodeKey): void {
     const s = get("scene", ev.sceneId) as Scene | undefined;
     const c = get("chapter", s?.chapter) as Chapter | undefined;
     setFocus(c?.journeyId || "", s?.chapter || "", ev.sceneId);
+  } else if (kind === "hotspot") {
+    // Hotspot abre no recorte do card narrativo que ele questiona (se houver).
+    const anchor = related(k)
+      .map((e) => (e.from === k ? e.to : e.from))
+      .find((n) => ["scene", "event", "chapter", "journey"].includes(keyKind(n)));
+    if (anchor) {
+      ensureVisible(anchor);
+      selectNode(k);
+      centerOn(k);
+      return;
+    }
+    setFocus("", "", "");
   } else setFocus("", "", "");
   refreshAll(true);
   selectNode(k);
@@ -162,7 +172,9 @@ export function duplicateSelection(): void {
   }
   const copy = deep(o);
   copy.id = "u" + newId();
-  copy.name = (o.name || "") + " (cópia)";
+  const nf = nameField(t);
+  copy[nf] = String(o[nf] ?? "") + " (cópia)";
+  if (t === "hotspot") copy.id = newEntityId(state.ws, t);
   const nk = nodeKey(t, copy.id);
   change(() => {
     collection(state.ws, t).push(copy);

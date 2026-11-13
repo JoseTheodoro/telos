@@ -51,6 +51,8 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 - **#2 Edição inline do nome.** Duplo clique no card (ou `F2` com o card selecionado) transforma o nome num campo de texto. `Enter` ou clicar fora salva, `Esc` cancela. Nome vazio é recusado e `Ctrl/Cmd+Z` desfaz. Junto vieram duas correções no inspetor: o título acompanha a digitação, e focar um campo sem alterar nada não cria mais um "desfazer" vazio.
 - **Correção:** os contadores de nós, setas e relações zeram depois de "Limpar canvas".
 - **#3 Criação encadeada ("tempestade rápida").** Segue a convenção de mapas mentais. Com um card selecionado, **`Tab`** cria o próximo passo à direita, já conectado: jornada → capítulo → cena → evento, e um evento leva ao próximo evento da cena com seta de sequência. Uma caixa livre leva a outra do mesmo tipo, também com seta. **`Enter`** cria um irmão abaixo, do mesmo tipo e com o mesmo pai. O card nasce em modo de edição: dentro do editor, `Tab` salva e encadeia o próximo, `Enter` só salva, e `Esc` ou nome vazio descartam a criação. Criar e nomear contam como um passo só de desfazer. Se o card novo não couber no recorte atual, o recorte se abre (cena → capítulo → jornada). Os mesmos comandos aparecem como botões no inspetor.
+- **#4 Hotspot no canvas.** Os hotspots da oficina viraram post-its vermelhos no canvas, conectáveis a qualquer card. Com um card selecionado, **`H`** ou **＋ Hotspot** cria a dúvida ao lado dele, já ligada ("levanta dúvida") e em modo de edição. Sem seleção, ela nasce solta no centro da tela. O inspetor do hotspot tem título, descrição, status, prioridade, responsável e resolução. Hotspot resolvido fica esmaecido e riscado. A aba **Hotspots** mostra o total em aberto e a que cards cada um está ligado, e **Ver no canvas** abre a cena do hotspot. Os dados continuam em `decisions`, compatíveis com a v1.5: na primeira carga, cada hotspot com `sceneId` vira uma seta "cena → hotspot". "Limpar canvas" continua preservando os hotspots.
+- **Correção:** atalhos de uma tecla (`N`, `H`, `C`, `V`) não deixam mais a letra vazar para o campo que acabaram de abrir. O bug vinha da v1.5: `N` abria o modal com "n" no nome.
 
 ### v1.6: migração técnica, sem mudança funcional
 
@@ -81,7 +83,7 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 - Registre os eventos e associe-os a domínio, sistema, tela e tabela por conexões.
 - Para desenhar estados, ações, decisões ou fluxos que não pertencem a uma cena, use **Caixa livre**.
 - Clique em cada seta para definir significado, evidência, READ/WRITE e cor.
-- Na aba **Hotspots**, faça o registro de dúvidas e decisões sem perder esse conhecimento ao reiniciar o canvas.
+- Registre dúvidas e riscos como **hotspots** (tecla `H` no card selecionado). Eles ficam no canvas, ligados ao que questionam, e também na aba **Hotspots**. Reiniciar o canvas não os apaga.
 
 ## Limites
 
