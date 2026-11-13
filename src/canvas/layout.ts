@@ -7,11 +7,17 @@ import { undoPush } from "../core/history";
 import { state } from "../core/state";
 import { notify } from "../ui/dom";
 import { renderGraph } from "./render";
+import { timelineAppend, timelineLayout } from "./timeline";
 import { scopeKey, visible } from "./visibility";
+
+/** Chave das posições: recorte + modo (cada modo guarda seu próprio arranjo). */
+export const positionsKey = (): string => (state.layoutMode === "timeline" ? "timeline|" : "") + scopeKey();
+
+export const isTimeline = (): boolean => state.layoutMode === "timeline";
 
 export function activePositions(): Positions {
   const layouts = (state.ws.graph.layouts = state.ws.graph.layouts || {});
-  const key = scopeKey();
+  const key = positionsKey();
   return layouts[key] || (layouts[key] = {});
 }
 
@@ -21,6 +27,21 @@ export function pos(k: NodeKey): Point {
 
 export function autoLayout(record = true): void {
   if (record) undoPush();
+  if (isTimeline()) {
+    timelineLayout(visible(), activePositions());
+    persist();
+    renderGraph();
+    if (record) notify("Linha do tempo reorganizada");
+    return;
+  }
+  layersLayout();
+  persist();
+  renderGraph();
+  if (record) notify("Mapa reorganizado em oito camadas");
+}
+
+/** Layout clássico da v1.5: uma coluna por tipo, y pela ordem narrativa. */
+function layersLayout(): void {
   const { ws } = state;
   const keys = visible();
   const positions = activePositions();
@@ -71,9 +92,6 @@ export function autoLayout(record = true): void {
       next = yy + 112;
     }
   }
-  persist();
-  renderGraph();
-  if (record) notify("Mapa reorganizado em oito camadas");
 }
 
 /** Garante posição para todo nó visível (layout automático se o recorte for novo). */
@@ -82,6 +100,10 @@ export function ensurePositions(): void {
   const positions = activePositions();
   if (!Object.keys(positions).length) {
     autoLayout(false);
+    return;
+  }
+  if (isTimeline()) {
+    for (const k of keys) if (!positions[k]) timelineAppend(k, positions, keys);
     return;
   }
   const lanes = {} as Record<NodeKind, number>;
@@ -119,10 +141,10 @@ export function calcBounds(): Bounds {
   return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
 }
 
-/** Primeira posição livre a partir de `start`, descendo até não colidir. */
 const GAP_Y = 30;
 
-export function freeSpot(start: Point, ignore: NodeKey): Point {
+/** Primeira posição livre a partir de `start`, andando para baixo (dir=1) ou para cima (dir=-1). */
+export function freeSpot(start: Point, ignore: NodeKey, dir: 1 | -1 = 1): Point {
   const positions = activePositions();
   const keys = [...visible()].filter((k) => k !== ignore);
   const collides = (p: Point) =>
@@ -131,7 +153,7 @@ export function freeSpot(start: Point, ignore: NodeKey): Point {
       return q && Math.abs(q.x - p.x) < NODE_W - 10 && Math.abs(q.y - p.y) < NODE_H + 10;
     });
   const p = { ...start };
-  for (let i = 0; i < 40 && collides(p); i++) p.y += NODE_H + GAP_Y;
+  for (let i = 0; i < 40 && collides(p); i++) p.y += dir * (NODE_H + GAP_Y);
   return p;
 }
 

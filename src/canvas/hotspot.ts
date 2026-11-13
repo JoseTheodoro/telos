@@ -9,7 +9,7 @@ import { getByKey, state } from "../core/state";
 import { $ } from "../ui/dom";
 import { bringIntoView, localPoint } from "./camera";
 import { startInlineEdit } from "./inline-edit";
-import { activePositions, freeSpot, pos } from "./layout";
+import { activePositions, freeSpot, isTimeline, pos } from "./layout";
 import { visible } from "./visibility";
 
 /**
@@ -37,13 +37,14 @@ export function addHotspot(): void {
     let start;
     if (target) {
       const t = pos(target);
-      start = { x: t.x + NODE_W + 50, y: t.y - NODE_H * 0.6 };
+      // Timeline: hotspots ficam acima do card (linha de hotspots); camadas: ao lado.
+      start = isTimeline() ? { x: t.x + 24, y: t.y - NODE_H - 50 } : { x: t.x + NODE_W + 50, y: t.y - NODE_H * 0.6 };
     } else {
       const r = $("#stage").getBoundingClientRect();
       const c = localPoint({ clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 });
       start = { x: c.x - NODE_W / 2, y: c.y - NODE_H / 2 };
     }
-    activePositions()[k] = freeSpot(start, k);
+    activePositions()[k] = freeSpot(start, k, isTimeline() && target ? -1 : 1);
     state.selected = { kind: "node", id: k };
   });
   bringIntoView(k, 0.7);

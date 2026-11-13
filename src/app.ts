@@ -1,7 +1,7 @@
 // Orquestração: render completo, carga inicial, barra de ferramentas e teclado.
 import { NODE_H } from "./domain/constants";
 import { deep } from "./domain/model";
-import type { ToolMode } from "./domain/types";
+import type { LayoutMode, ToolMode } from "./domain/types";
 import { redo, refreshUndo, undo } from "./core/history";
 import { loadInitialWorkspace, persist, persistViewNow } from "./core/persistence";
 import { setFocus, state } from "./core/state";
@@ -18,7 +18,7 @@ import { bindImport, csvExport, exportJson, svgExport } from "./io/files";
 import { bindInspector, renderInspector } from "./ui/inspector";
 import { bindModal, confirmWipe, createModal, listConnections } from "./ui/modal";
 import { bindSidebar, renderFilters, renderSidebar } from "./ui/sidebar";
-import { $, $$, target } from "./ui/dom";
+import { $, $$, notify, target } from "./ui/dom";
 
 export function refreshAll(autoFit = false): void {
   ensurePositions();
@@ -33,6 +33,11 @@ export function refreshAll(autoFit = false): void {
 
 export function refreshTools(): void {
   $$("[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === state.mode));
+  $$("[data-layout]").forEach((b) => {
+    const on = b.dataset.layout === state.layoutMode;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
   $("#stage").style.cursor = state.mode === "connect" ? "crosshair" : "grab";
 }
 
@@ -42,7 +47,18 @@ function setMode(mode: ToolMode): void {
   refreshTools();
 }
 
+/** #6 Alterna Timeline ⇄ Camadas (cada modo guarda as próprias posições). */
+function setLayoutMode(mode: LayoutMode): void {
+  if (state.layoutMode === mode) return;
+  state.layoutMode = mode;
+  refreshTools();
+  refreshAll(true);
+  persistViewNow();
+  notify(mode === "timeline" ? "Timeline: o tempo corre da esquerda para a direita" : "Camadas: uma coluna por tipo");
+}
+
 function bindToolbar(): void {
+  $$("[data-layout]").forEach((b) => (b.onclick = () => setLayoutMode(b.dataset.layout as LayoutMode)));
   $$("[data-mode]").forEach((x) =>
     x.addEventListener("click", () => {
       state.mode = x.dataset.mode as ToolMode;
@@ -153,6 +169,11 @@ export function startApp(): void {
   const v = state.ws.view;
   if (v.journey !== undefined) setFocus(v.journey || "", v.chapter || "", v.scene || "");
   state.legendCollapsed = v.legendCollapsed ?? window.innerWidth < 930;
+  // Mapas que já têm arranjo em camadas abrem em Camadas; mapas novos abrem na Timeline.
+  const hasLayers = Object.entries(state.ws.graph.layouts || {}).some(
+    ([key, pos]) => !key.startsWith("timeline|") && Object.keys(pos).length > 0,
+  );
+  state.layoutMode = v.layoutMode ?? (hasLayers ? "layers" : "timeline");
 
   bindCanvas();
   bindLegend();

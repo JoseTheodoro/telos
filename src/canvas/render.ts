@@ -1,5 +1,5 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { ARR, DRAWING_TYPES, NATURE_BASE, NODE_W, PL, PORT_Y } from "../domain/constants";
+import { ARR, DRAWING_TYPES, NATURE_BASE, NODE_H, NODE_W, PL, PORT_Y } from "../domain/constants";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
 import { colorForEdge, edgeVerdict, isTableLink, semanticLabel } from "../domain/model";
@@ -15,28 +15,57 @@ import type {
 } from "../domain/types";
 import { degree, getByKey, label, state } from "../core/state";
 import { $, esc } from "../ui/dom";
-import { calcBounds, pos } from "./layout";
+import { activePositions, calcBounds, isTimeline, pos } from "./layout";
+import { chapterBands } from "./timeline";
 import { renderLegend } from "./legend";
 import { visible } from "./visibility";
 
 const NATURE_LABEL = Object.fromEntries(NATURE_BASE);
 
-/** Curva bezier da saída (direita) de `a` até a entrada (esquerda) de `b`. */
-export function pathFor(a: NodeKey, b: NodeKey): string {
+export interface EdgeGeometry {
+  d: string;
+  /** Ponto da legenda da seta. */
+  mx: number;
+  my: number;
+}
+
+/**
+ * Curva da seta escolhendo os lados pela posição relativa:
+ * destino à direita → sai pela direita; empilhado abaixo/acima → sai por baixo/cima;
+ * destino atrás e na mesma altura → contorna por cima (comportamento da v1.5).
+ */
+export function edgeGeometry(a: NodeKey, b: NodeKey): EdgeGeometry {
   const p = pos(a);
   const q = pos(b);
+  if (q.x >= p.x + NODE_W + 20) {
+    const x1 = p.x + NODE_W;
+    const y1 = p.y + PORT_Y;
+    const x2 = q.x;
+    const y2 = q.y + PORT_Y;
+    const m = Math.max(65, (x2 - x1) * 0.48);
+    return { d: `M ${x1} ${y1} C ${x1 + m} ${y1}, ${x2 - m} ${y2}, ${x2} ${y2}`, mx: (x1 + x2) / 2, my: (p.y + q.y) / 2 + 36 };
+  }
+  const below = q.y >= p.y + NODE_H + 20;
+  const above = q.y + NODE_H + 20 <= p.y;
+  if (below || above) {
+    const x1 = p.x + NODE_W / 2;
+    const x2 = q.x + NODE_W / 2;
+    const y1 = below ? p.y + NODE_H : p.y;
+    const y2 = below ? q.y : q.y + NODE_H;
+    const m = Math.max(40, Math.abs(y2 - y1) * 0.48) * (below ? 1 : -1);
+    return { d: `M ${x1} ${y1} C ${x1} ${y1 + m}, ${x2} ${y2 - m}, ${x2} ${y2}`, mx: (x1 + x2) / 2 + 8, my: (y1 + y2) / 2 };
+  }
   const x1 = p.x + NODE_W;
   const y1 = p.y + PORT_Y;
   const x2 = q.x;
   const y2 = q.y + PORT_Y;
-  if (x2 < x1 + 40) {
-    // Destino à esquerda da origem: contorna por cima.
-    const cy = Math.min(y1, y2) - 105;
-    const dx = 130;
-    return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x1 + dx} ${cy}, ${(x1 + x2) / 2} ${cy} S ${x2 - 80} ${y2}, ${x2} ${y2}`;
-  }
-  const m = Math.max(65, (x2 - x1) * 0.48);
-  return `M ${x1} ${y1} C ${x1 + m} ${y1}, ${x2 - m} ${y2}, ${x2} ${y2}`;
+  const cy = Math.min(y1, y2) - 105;
+  const dx = 130;
+  return {
+    d: `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x1 + dx} ${cy}, ${(x1 + x2) / 2} ${cy} S ${x2 - 80} ${y2}, ${x2} ${y2}`,
+    mx: (p.x + NODE_W + q.x) / 2,
+    my: (p.y + q.y) / 2 + 36,
+  };
 }
 
 export function renderEdges(): void {
@@ -48,12 +77,8 @@ export function renderEdges(): void {
   }
   out += "</defs>";
   for (const e of shown) {
-    const p = pathFor(e.from, e.to);
+    const { d: p, mx, my } = edgeGeometry(e.from, e.to);
     const active = selected?.kind === "edge" && selected.id === e.id;
-    const a = pos(e.from);
-    const b = pos(e.to);
-    const mx = (a.x + NODE_W + b.x) / 2;
-    const my = (a.y + b.y) / 2 + 36;
     const cls = active ? "selected" : e.status === "Validado" ? "valid" : e.status === "Hipótese" ? "proposed" : "";
     const color = colorForEdge(e);
     // #5: ligação fora da gramática ES ganha só um ⚠ discreto na legenda da seta.
@@ -124,6 +149,21 @@ function renderCounters(): void {
     `${edges.length} relações · ${count((e) => e.status === "Validado")} validadas · ${count((e) => e.accessMode === "WRITE")} WRITE · ${count((e) => e.accessMode === "READ")} READ`;
 }
 
+/** Faixas de capítulo atrás dos cards (só na timeline). */
+function renderBands(): void {
+  const el = $("#bands");
+  if (!isTimeline()) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = chapterBands(state.visibleKeys, activePositions())
+    .map(
+      (b, i) =>
+        `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
+    )
+    .join("");
+}
+
 export function renderGraph(): void {
   const { ws } = state;
   state.visibleKeys = visible();
@@ -133,10 +173,12 @@ export function renderGraph(): void {
   renderCounters();
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";
+    $("#bands").innerHTML = "";
     renderEdges();
     return;
   }
   $("#nodes").innerHTML = [...visibleKeys].map(nodeHtml).join("");
+  renderBands();
   const bounds = calcBounds();
   $("#world").style.width = Math.max(2800, bounds.maxX + 500) + "px";
   $("#world").style.height = Math.max(2500, bounds.maxY + 500) + "px";

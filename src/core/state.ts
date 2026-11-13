@@ -3,6 +3,7 @@ import { entityLabel, getEntity, getEntityByKey } from "../domain/model";
 import type {
   AnyEntity,
   Camera,
+  LayoutMode,
   Edge,
   NodeKey,
   NodeKind,
@@ -36,6 +37,7 @@ export const state = {
   focusScene: "preconsulta",
   sidebarTab: "journey" as SidebarTab,
   legendCollapsed: false,
+  layoutMode: "timeline" as LayoutMode,
   search: "",
   collapsed: new Set<string>(),
   mode: "pointer" as ToolMode,

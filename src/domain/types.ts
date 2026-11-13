@@ -180,7 +180,11 @@ export interface ViewState {
   camera?: Camera;
   sidebarTab?: SidebarTab;
   legendCollapsed?: boolean;
+  layoutMode?: LayoutMode;
 }
+
+/** "layers": colunas por tipo (v1.5) · "timeline": tempo da esquerda para a direita (v1.6). */
+export type LayoutMode = "layers" | "timeline";
 
 export interface RegistryOption {
   id: string;
@@ -190,7 +194,7 @@ export interface RegistryOption {
 export interface Graph {
   positions: Positions;
   edges: Edge[];
-  /** Posições por recorte: "all" | "journey:x" | "chapter:x" | "scene:x". */
+  /** Posições por recorte e modo: "all" | "scene:x"… (camadas) e "timeline|all" | "timeline|scene:x"… */
   layouts: Record<string, Positions>;
   /** Migração v1.6: hotspots com `sceneId` já viraram setas. */
   hotspotsLinked?: boolean;

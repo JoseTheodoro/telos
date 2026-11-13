@@ -8,8 +8,9 @@ import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
-import { calcBounds, ensurePositions, pos } from "../canvas/layout";
-import { pathFor } from "../canvas/render";
+import { activePositions, calcBounds, ensurePositions, isTimeline, pos } from "../canvas/layout";
+import { edgeGeometry } from "../canvas/render";
+import { chapterBands } from "../canvas/timeline";
 import { $, esc, notify, saveFile } from "../ui/dom";
 
 export function exportJson(): void {
@@ -100,12 +101,20 @@ export function svgExport(): void {
   const shown = ws.graph.edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to));
   const paths = shown
     .map((e) => {
-      const a = pos(e.from);
-      const b = pos(e.to);
+      const g = edgeGeometry(e.from, e.to);
       const color = colorForEdge(e);
-      return `<path d="${pathFor(e.from, e.to)}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#svg-arrow-${esc(e.id)})"/><text x="${(a.x + NODE_W + b.x) / 2}" y="${(a.y + b.y) / 2 + 36}" fill="${color}" font-size="11" text-anchor="middle">${esc(e.accessMode ? e.accessMode + " · " + e.label : e.label)}</text>`;
+      return `<path d="${g.d}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#svg-arrow-${esc(e.id)})"/><text x="${g.mx}" y="${g.my}" fill="${color}" font-size="11" text-anchor="middle">${esc(e.accessMode ? e.accessMode + " · " + e.label : e.label)}</text>`;
     })
     .join("");
+  // Faixas de capítulo da timeline (fundo).
+  const bands = isTimeline()
+    ? chapterBands(visibleKeys, activePositions())
+        .map(
+          (b, i) =>
+            `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="16" fill="${i % 2 ? "#f1f6f2" : "#f6f9f6"}" stroke="#dbe6dd"/><text x="${b.x + 14}" y="${b.y + 22}" font-size="12" font-weight="800" fill="#2a6e50">${esc(b.label)}${b.date ? " · " + esc(b.date) : ""}</text>`,
+        )
+        .join("")
+    : "";
   const markers = shown
     .map(
       (e) =>
@@ -126,7 +135,7 @@ export function svgExport(): void {
     .join("");
   saveFile(
     "pep-atlas-mapa.svg",
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(W)}" height="${Math.ceil(H)}" viewBox="${X} ${Y} ${W} ${H}"><defs>${markers}</defs><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fbfdfb"/>${paths}${cards}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(W)}" height="${Math.ceil(H)}" viewBox="${X} ${Y} ${W} ${H}"><defs>${markers}</defs><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fbfdfb"/>${bands}${paths}${cards}</svg>`,
     "image/svg+xml;charset=utf-8",
   );
   notify("SVG exportado com setas coloridas");

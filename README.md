@@ -47,6 +47,7 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 
 ### Onda 2 · É uma jornada
 
+- **#6 Timeline horizontal da jornada.** Novo layout, **Timeline**, em que o tempo corre da esquerda para a direita. Cada evento ocupa uma coluna, e cada capítulo vira uma faixa de fundo com número, título e data. As linhas, de cima para baixo: hotspots, jornada, capítulos, cenas, **eventos**, fluxo de Event Storming (caixas livres abaixo do evento a que se ligam) e, por fim, domínios, sistemas, telas e tabelas, alinhados aos eventos que os usam. Um seletor **Timeline | Camadas** alterna entre os modos, e cada modo guarda as próprias posições. Mapas novos abrem na Timeline, e mapas que já tinham arranjo em camadas continuam abrindo em Camadas. Na Timeline, `Tab` e `Enter` inserem eventos, cenas e capítulos **na sequência**, empurrando o resto para a direita. O evento paralelo (`Enter` num evento) fica abaixo, e `H` põe o hotspot acima do card. As setas escolhem o lado de saída pela posição: com o destino empilhado, saem por baixo ou por cima, em vez do laço de antes. Quando o mapa não cabe na tela, "Enquadrar" começa pelo início da jornada. O SVG exportado inclui as faixas de capítulo.
 - **Ajuste da #4:** "Hotspot" deixou de ser tipo semântico de caixa livre, e o hotspot de verdade (tecla `H`) passou a ser o único caminho. Caixas livres antigas com esse tipo são promovidas a hotspot na carga, com as mesmas setas e posições.
 
 ### Onda 1 · Parece Event Storming

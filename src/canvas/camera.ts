@@ -22,8 +22,9 @@ export function fit(): void {
   const z = Math.min(1.1, (w - 100) / Math.max(400, b.w), (h - 95) / Math.max(250, b.h));
   const cam = state.cam;
   cam.z = Math.max(0.22, z);
-  cam.x = (w - b.w * cam.z) / 2 - b.minX * cam.z;
-  cam.y = (h - b.h * cam.z) / 2 - b.minY * cam.z;
+  // Se não couber nem no zoom mínimo, começa pelo início (esquerda/topo) — como se lê uma timeline.
+  cam.x = b.w * cam.z > w - 60 ? 40 - b.minX * cam.z : (w - b.w * cam.z) / 2 - b.minX * cam.z;
+  cam.y = b.h * cam.z > h - 60 ? 40 - b.minY * cam.z : (h - b.h * cam.z) / 2 - b.minY * cam.z;
   cameraApply();
 }
 

@@ -81,3 +81,15 @@
 .grammar.ok .btn{margin-top:8px}
 .grammar-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:#56665e;font-size:10px}
 .es-chip{display:inline-block;border:1px solid;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:800}
+
+/* v1.6 · #6 Timeline horizontal */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;background:#fff;padding:2px;gap:2px}
+.seg-btn{border:0;background:none;border-radius:7px;padding:6px 9px;font:inherit;font-size:10.5px;font-weight:700;color:#5d7467;cursor:pointer;white-space:nowrap}
+.seg-btn:hover{background:#eef5ef}
+.seg-btn.active{background:#24644d;color:#fff}
+.seg-btn:focus-visible{outline:2px solid #2a6e50;outline-offset:1px}
+.bands{position:absolute;inset:0;pointer-events:none}
+.chapter-band{position:absolute;border:1px solid #dde8df;border-radius:18px;background:#f5f9f5cc}
+.chapter-band.alt{background:#eef5f0cc}
+.chapter-band-label{position:absolute;left:14px;top:10px;font-size:12px;font-weight:800;color:#2a6e50;letter-spacing:.2px;white-space:nowrap}
+.chapter-band-label small{margin-left:9px;font-size:10px;font-weight:700;color:#7d978a;letter-spacing:.8px}

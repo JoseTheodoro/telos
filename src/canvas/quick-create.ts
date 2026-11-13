@@ -3,16 +3,17 @@
 //   Enter → irmão (mesmo tipo e mesmo pai), abaixo
 import { NODE_H, NODE_W, PL } from "../domain/constants";
 import { DEFAULT_NAME, PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
-import { keyKind, nodeKey } from "../domain/keys";
+import { keyId, keyKind, nodeKey } from "../domain/keys";
 import { collection, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
 import { nextSemanticType } from "../domain/grammar";
-import type { AnyEntity, NodeKey, NodeKind } from "../domain/types";
+import type { AnyEntity, NodeKey, NodeKind, Point } from "../domain/types";
 import { change } from "../core/history";
 import { getByKey, setFocus, state } from "../core/state";
 import { notify } from "../ui/dom";
 import { bringIntoView } from "./camera";
 import { startInlineEdit } from "./inline-edit";
-import { activePositions, freeSpot, pos } from "./layout";
+import { activePositions, freeSpot, isTimeline, pos } from "./layout";
+import { TL, makeRoom } from "./timeline";
 import { visible } from "./visibility";
 
 export type QuickMode = "next" | "sibling";
@@ -77,6 +78,59 @@ function planFor(origin: NodeKey, mode: QuickMode): Plan | null {
   return { kind: next, linkFrom: origin, linkStatus: "Hipótese", inherit: false, direction: "right" };
 }
 
+function layersSpot(origin: NodeKey, k: NodeKey, direction: "right" | "below"): Point {
+  const o = pos(origin);
+  const start = direction === "right" ? { x: o.x + NODE_W + GAP_X, y: o.y } : { x: o.x, y: o.y + NODE_H + GAP_Y };
+  return freeSpot(start, k);
+}
+
+/** Descendentes narrativos (para achar a última coluna ocupada por um capítulo/cena). */
+function narrativeDescendants(k: NodeKey): NodeKey[] {
+  const ws = state.ws;
+  const kind = keyKind(k);
+  const id = keyId(k);
+  const eventsOf = (sceneIds: string[]) =>
+    ws.events.filter((e) => sceneIds.includes(e.sceneId)).map((e) => nodeKey("event", e.id));
+  if (kind === "scene") return eventsOf([id]);
+  if (kind === "chapter") {
+    const scenes = ws.scenes.filter((s) => s.chapter === id).map((s) => s.id);
+    return [...scenes.map((s) => nodeKey("scene", s)), ...eventsOf(scenes)];
+  }
+  if (kind === "journey")
+    return ws.chapters
+      .filter((c) => c.journeyId === id)
+      .flatMap((c) => [nodeKey("chapter", c.id), ...narrativeDescendants(nodeKey("chapter", c.id))]);
+  return [];
+}
+
+/**
+ * Timeline: capítulos, cenas e eventos entram NA SEQUÊNCIA (depois da última coluna da
+ * origem), empurrando o resto para a direita. Evento paralelo (Enter) e caixas livres/
+ * ativos técnicos ficam abaixo, sem empurrar ninguém.
+ */
+function timelineSpot(origin: NodeKey, k: NodeKey, kind: NodeKind, mode: QuickMode): Point {
+  const positions = activePositions();
+  const o = pos(origin);
+  const originKind = keyKind(origin);
+  const sequence = (["journey", "chapter", "scene", "event"] as NodeKind[]).includes(kind);
+  const parallelEvent = kind === "event" && originKind === "event" && mode === "sibling";
+  if (!sequence || parallelEvent) {
+    const start =
+      kind === originKind && mode === "next" ? { x: o.x + TL.COLW, y: o.y } : { x: o.x, y: o.y + TL.STACK };
+    return freeSpot(start, k);
+  }
+  const lastX = (from: NodeKey) =>
+    Math.max(...[from, ...narrativeDescendants(from)].map((d) => positions[d]?.x ?? -Infinity));
+  let x: number;
+  if (kind === originKind) x = lastX(origin) + TL.COLW + (kind === "chapter" ? TL.CHAPTER_GAP : 0);
+  else {
+    const hasChildren = narrativeDescendants(origin).some((d) => keyKind(d) === kind && positions[d]);
+    x = hasChildren ? lastX(origin) + TL.COLW : o.x;
+  }
+  makeRoom(positions, x, k);
+  return { x, y: TL.ROW[kind] ?? o.y };
+}
+
 /** Abre o recorte (cena → capítulo → jornada → mapa completo) até o nó aparecer. */
 function widenUntilVisible(k: NodeKey): void {
   for (let i = 0; i < 3 && !visible().has(k); i++) {
@@ -135,9 +189,7 @@ export function quickCreate(mode: QuickMode): void {
       );
     syncMaps(ws);
     widenUntilVisible(k);
-    const o = pos(origin);
-    const start = plan.direction === "right" ? { x: o.x + NODE_W + GAP_X, y: o.y } : { x: o.x, y: o.y + NODE_H + GAP_Y };
-    activePositions()[k] = freeSpot(start, k);
+    activePositions()[k] = isTimeline() ? timelineSpot(origin, k, plan.kind, mode) : layersSpot(origin, k, plan.direction);
     state.selected = { kind: "node", id: k };
   });
   bringIntoView(k, 0.7);

@@ -48,6 +48,7 @@ export function persistViewNow(): void {
     camera: { ...state.cam },
     sidebarTab: state.sidebarTab,
     legendCollapsed: state.legendCollapsed,
+    layoutMode: state.layoutMode,
   };
   persist();
 }
