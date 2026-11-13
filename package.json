@@ -1,0 +1,18 @@
+{
+  "name": "pep-atlas-studio",
+  "version": "1.6.0",
+  "private": true,
+  "description": "Atlas Studio — Event Storming guiado por jornadas de usuário. Build gera um único HTML estático.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vite-plugin-singlefile": "^2.3.4"
+  }
+}

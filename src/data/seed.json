@@ -1,0 +1,2815 @@
+{
+  "schema": "pep-discovery-atlas-v1",
+  "sourceName": "oficina-sintetica.json",
+  "sourceGeneratedAt": "2026-11-13T00:00:00.000Z",
+  "title": "Da jornada à arquitetura",
+  "chapters": [
+    {
+      "id": "cadastro",
+      "date": "D-10",
+      "label": "O início",
+      "title": "Alguém chega à jornada.",
+      "deck": "Antes do primeiro atendimento existe um cadastro e um vínculo com a clínica.",
+      "mood": "Identificar",
+      "tone": "mint"
+    },
+    {
+      "id": "consulta",
+      "date": "D0",
+      "label": "A consulta",
+      "title": "O primeiro atendimento acontece.",
+      "deck": "As etapas operacionais preparam o encontro com o profissional de saúde.",
+      "mood": "Compreender",
+      "tone": "paper"
+    },
+    {
+      "id": "hemograma",
+      "date": "D+3",
+      "label": "O exame laboratorial",
+      "title": "Uma amostra percorre o seu caminho.",
+      "deck": "Da identificação à coleta, o que garante a rastreabilidade da amostra?",
+      "mood": "Rastrear",
+      "tone": "pearl"
+    },
+    {
+      "id": "endoscopia",
+      "date": "A definir",
+      "label": "O procedimento",
+      "title": "Um procedimento gera evidência.",
+      "deck": "Equipe, preparo e registro de imagens trazem perguntas de segurança.",
+      "mood": "Evidenciar",
+      "tone": "sand"
+    },
+    {
+      "id": "retorno",
+      "date": "D+15",
+      "label": "O retorno",
+      "title": "Os registros viram continuidade.",
+      "deck": "O que foi registrado antes precisa fazer sentido no próximo encontro.",
+      "mood": "Conectar",
+      "tone": "paper"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "identidade",
+      "chapter": "cadastro",
+      "time": "D-10 · cadastro",
+      "title": "Um cadastro é criado",
+      "story": "A pessoa é cadastrada e passa a ter vínculo com a clínica. Ainda não existe fato assistencial.",
+      "actor": "Recepção / cadastro",
+      "questions": [
+        "Criar a pessoa e criar o paciente são o mesmo evento?",
+        "Que dados mínimos o cadastro exige?"
+      ],
+      "answers": [
+        "A validar com a equipe de cadastro.",
+        "Identificação e contato, a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "evq5cm6eutcmwdlhryn",
+          "sceneId": "identidade",
+          "name": "Cadastro criado",
+          "type": "operational",
+          "destination": "audit",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "agenda-consulta",
+      "chapter": "cadastro",
+      "time": "D-10 · agenda",
+      "title": "Um horário é reservado",
+      "story": "Um horário é reservado para uma especialidade. Por enquanto existe só a intenção de atendimento.",
+      "actor": "Agendamento",
+      "questions": [
+        "A agenda guarda o motivo da consulta?",
+        "Remarcar o horário gera um novo evento?"
+      ],
+      "answers": [
+        "Não está claro.",
+        "Hipótese: sim, a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "evqigj6g0vhmwdm5ugc",
+          "sceneId": "agenda-consulta",
+          "name": "Prontuário aberto",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Hipótese: o prontuário nasce vazio, ligado ao cadastro."
+        },
+        {
+          "id": "ehpmuchv40umwdm6bfw",
+          "sceneId": "agenda-consulta",
+          "name": "Consulta marcada",
+          "type": "operational",
+          "destination": "open",
+          "note": "Guarda só a intenção: especialidade e horário."
+        }
+      ]
+    },
+    {
+      "id": "totem-12",
+      "chapter": "consulta",
+      "time": "D0 · chegada",
+      "title": "A chegada é registrada",
+      "story": "No dia da consulta, o paciente registra a chegada no autoatendimento e entra na fila.",
+      "actor": "Totem de autoatendimento",
+      "questions": [
+        "A chegada já abre o atendimento?",
+        "O que acontece se o autoatendimento estiver indisponível?"
+      ],
+      "answers": [
+        "Marco candidato, em discussão.",
+        "A recepção registra a chegada."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "e6fia85ibi7mwdnxh2q",
+          "sceneId": "totem-12",
+          "name": "Chegada registrada",
+          "type": "operational",
+          "destination": "open",
+          "note": "Marco candidato para o início do atendimento."
+        }
+      ]
+    },
+    {
+      "id": "recepcao-12",
+      "chapter": "consulta",
+      "time": "D0 · recepção",
+      "title": "A recepção confere os dados",
+      "story": "A recepção confirma o cadastro, registra o pagamento e encaminha o paciente para a pré-consulta.",
+      "actor": "Recepção",
+      "questions": [
+        "O fim da recepção abre o encontro clínico?",
+        "Pagamento pendente bloqueia o fluxo?"
+      ],
+      "answers": [
+        "Marco candidato, em discussão.",
+        "Depende do produto, a confirmar."
+      ],
+      "discussed": false,
+      "events": [
+        {
+          "id": "e6ciz7agjpsmwdo3ttd",
+          "sceneId": "recepcao-12",
+          "name": "Recepção iniciada",
+          "type": "operational",
+          "destination": "open",
+          "note": ""
+        },
+        {
+          "id": "e4due8lxyr7mwdo43b3",
+          "sceneId": "recepcao-12",
+          "name": "Recepção concluída",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Marco candidato para o início do encontro clínico."
+        },
+        {
+          "id": "e5mg23akbx4mwdo44yc",
+          "sceneId": "recepcao-12",
+          "name": "Pagamento confirmado",
+          "type": "operational",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "preconsulta",
+      "chapter": "consulta",
+      "time": "D0 · pré-consulta",
+      "title": "A enfermagem acolhe e afere",
+      "story": "A enfermagem ouve o motivo da visita, afere os sinais vitais e registra o que encontrou.",
+      "actor": "Enfermagem",
+      "questions": [
+        "Os sinais vitais vão para o prontuário?",
+        "Quem pode corrigir um registro da pré-consulta?",
+        "Como registrar uma informação que o paciente nega?"
+      ],
+      "answers": [
+        "Sim, como registro da pré-consulta.",
+        "Quem registrou, com histórico da correção.",
+        "Em aberto; ver o hotspot E-03."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "elaxauekq51mwdoau4r",
+          "sceneId": "preconsulta",
+          "name": "Pré-consulta iniciada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        },
+        {
+          "id": "eabywm2k610mwdob1l0",
+          "sceneId": "preconsulta",
+          "name": "Pré-consulta concluída",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "chamada-medico",
+      "chapter": "consulta",
+      "time": "D0 · chamada",
+      "title": "O paciente é chamado",
+      "story": "O profissional chama o próximo paciente da fila e o atendimento médico começa.",
+      "actor": "Médico",
+      "questions": [
+        "A chamada marca o início do atendimento médico?",
+        "O painel de chamada mostra dados do paciente?"
+      ],
+      "answers": [
+        "Marco candidato.",
+        "Só o necessário para a chamada."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ew29df4ehgcmwdologn",
+          "sceneId": "chamada-medico",
+          "name": "Atendimento médico iniciado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Disparado quando o profissional chama o próximo da fila."
+        }
+      ]
+    },
+    {
+      "id": "queixa",
+      "chapter": "consulta",
+      "time": "D0 · consulta",
+      "title": "O paciente conta o motivo da visita",
+      "story": "O paciente descreve, com as próprias palavras, o que o trouxe à consulta.",
+      "actor": "Paciente",
+      "questions": [
+        "A fala do paciente é registrada literalmente?",
+        "Onde fica o motivo da consulta?"
+      ],
+      "answers": [
+        "A validar com a equipe médica.",
+        "No registro da consulta, a confirmar."
+      ],
+      "discussed": false,
+      "events": []
+    },
+    {
+      "id": "anamneses",
+      "chapter": "consulta",
+      "time": "D0 · histórico",
+      "title": "O histórico é registrado",
+      "story": "O médico pergunta sobre hábitos, histórico e informações de risco, e registra o que ouviu.",
+      "actor": "Médico",
+      "questions": [
+        "O histórico é único ou um por consulta?",
+        "Informação de risco tem campo próprio?"
+      ],
+      "answers": [
+        "Em discussão.",
+        "Hipótese: sim."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ezyh06ehdhxmwdoprh0",
+          "sceneId": "anamneses",
+          "name": "Histórico registrado",
+          "type": "clinical",
+          "destination": "open",
+          "note": ""
+        },
+        {
+          "id": "ewqym6jf5mwdoq4lx",
+          "sceneId": "anamneses",
+          "name": "Evolução atualizada",
+          "type": "unknown",
+          "destination": "open",
+          "note": ""
+        },
+        {
+          "id": "ezax5cdpzpxmwdoqwtg",
+          "sceneId": "anamneses",
+          "name": "Informação de risco registrada",
+          "type": "unknown",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "exame-fisico",
+      "chapter": "consulta",
+      "time": "D0 · exame físico",
+      "title": "O exame físico acontece",
+      "story": "O médico examina o paciente e anota os achados.",
+      "actor": "Médico",
+      "questions": [
+        "Os achados têm estrutura ou são texto livre?",
+        "O exame físico gera evento próprio?"
+      ],
+      "answers": [
+        "Texto livre hoje, a validar.",
+        "Não registrado na oficina."
+      ],
+      "discussed": true,
+      "events": []
+    },
+    {
+      "id": "hipotese",
+      "chapter": "consulta",
+      "time": "D0 · avaliação",
+      "title": "Surge uma hipótese",
+      "story": "Com o que ouviu e examinou, o médico registra uma hipótese a confirmar.",
+      "actor": "Médico",
+      "questions": [
+        "Hipótese e conclusão são o mesmo registro?",
+        "Quem pode ver a hipótese?"
+      ],
+      "answers": [
+        "Não; a conclusão vem no retorno.",
+        "A equipe assistencial, a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "erawv0qrpshmwdotvb9",
+          "sceneId": "hipotese",
+          "name": "Avaliação documentada",
+          "type": "clinical",
+          "destination": "open",
+          "note": ""
+        },
+        {
+          "id": "ew5owcz9x0tmwdotvpg",
+          "sceneId": "hipotese",
+          "name": "Hipótese registrada",
+          "type": "clinical",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "prescricao-12",
+      "chapter": "consulta",
+      "time": "D0 · conduta",
+      "title": "Uma conduta é definida",
+      "story": "O médico registra a conduta e as orientações para os próximos dias.",
+      "actor": "Médico",
+      "questions": [
+        "Onde a conduta é publicada?",
+        "A conduta tem versão?"
+      ],
+      "answers": [
+        "Em aberto; ver o hotspot E-07.",
+        "A confirmar."
+      ],
+      "discussed": false,
+      "events": [
+        {
+          "id": "elps7zio7jwmwdouk90",
+          "sceneId": "prescricao-12",
+          "name": "Conduta emitida",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Destino a decidir: serviço próprio ou barramento de eventos."
+        }
+      ]
+    },
+    {
+      "id": "exames-solicitados",
+      "chapter": "consulta",
+      "time": "D0 · pedidos",
+      "title": "Dois exames são pedidos",
+      "story": "Para confirmar a hipótese, o médico pede um exame laboratorial e um procedimento.",
+      "actor": "Médico",
+      "questions": [
+        "Cada pedido é um evento separado?",
+        "O pedido já reserva horário?",
+        "O fim da consulta fecha o encontro?"
+      ],
+      "answers": [
+        "Sim, um por exame.",
+        "Não; o agendamento vem depois.",
+        "Hipótese: sim."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "e3xaxdbtccomwdoxci6",
+          "sceneId": "exames-solicitados",
+          "name": "Orientações emitidas",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Destino a decidir: serviço próprio ou barramento de eventos."
+        },
+        {
+          "id": "eewm7gsrnpumwdoxxgl",
+          "sceneId": "exames-solicitados",
+          "name": "Pedido de exame emitido",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Destino a decidir: serviço de exames ou barramento de eventos."
+        },
+        {
+          "id": "ej8qigm8obvmwdp0xpf",
+          "sceneId": "exames-solicitados",
+          "name": "Consulta concluída",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Fecha o encontro clínico."
+        },
+        {
+          "id": "ekove99vk8smwdp9rbh",
+          "sceneId": "exames-solicitados",
+          "name": "Documento emitido",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        },
+        {
+          "id": "erwuft0x5hmmwdp9v8p",
+          "sceneId": "exames-solicitados",
+          "name": "Encaminhamento emitido",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "pos-consulta",
+      "chapter": "consulta",
+      "time": "D0 · pós-consulta",
+      "title": "Os pedidos ganham data",
+      "story": "Depois da consulta, o paciente agenda o exame laboratorial e o procedimento.",
+      "actor": "Paciente / pós-consulta",
+      "questions": [
+        "Quem agenda os exames?",
+        "O agendamento fica ligado ao pedido?"
+      ],
+      "answers": [
+        "O próprio paciente, com apoio da recepção.",
+        "Deveria; a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "erbvumszj0wmwdp2e7e",
+          "sceneId": "pos-consulta",
+          "name": "Exame laboratorial agendado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Destino a decidir: serviço de exames ou barramento de eventos."
+        },
+        {
+          "id": "evrl7ylq633mwdp3nod",
+          "sceneId": "pos-consulta",
+          "name": "Procedimento agendado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Destino a decidir: serviço de exames ou barramento de eventos."
+        }
+      ]
+    },
+    {
+      "id": "hema-recepcao",
+      "chapter": "hemograma",
+      "time": "D+3 · recepção",
+      "title": "Um novo encontro para a coleta",
+      "story": "Dias depois, o paciente volta para a coleta e passa de novo pela recepção.",
+      "actor": "Recepção",
+      "questions": [
+        "A coleta abre um novo encontro?",
+        "Como ligar este encontro à consulta?"
+      ],
+      "answers": [
+        "Hipótese: sim.",
+        "Em aberto; ver o hotspot E-09."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ejtgtjk6xj9mwdp6oap",
+          "sceneId": "hema-recepcao",
+          "name": "Recepção da coleta iniciada",
+          "type": "operational",
+          "destination": "open",
+          "note": ""
+        },
+        {
+          "id": "etkxrizxwc2mwdp7q9f",
+          "sceneId": "hema-recepcao",
+          "name": "Recepção da coleta concluída",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Abre um novo encontro."
+        },
+        {
+          "id": "e0f1nfpcx94mwdp85r8",
+          "sceneId": "hema-recepcao",
+          "name": "Pagamento da coleta confirmado",
+          "type": "unknown",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "hema-identificacao",
+      "chapter": "hemograma",
+      "time": "D+3 · identificação",
+      "title": "A identidade é conferida",
+      "story": "Antes da coleta, a enfermagem confirma quem é o paciente e qual exame será feito.",
+      "actor": "Enfermagem",
+      "questions": [
+        "Como a identidade é conferida?",
+        "A conferência gera registro?"
+      ],
+      "answers": [
+        "Documento e pergunta direta, a validar.",
+        "Não registrado na oficina."
+      ],
+      "discussed": false,
+      "events": []
+    },
+    {
+      "id": "hema-coleta",
+      "chapter": "hemograma",
+      "time": "D+3 · coleta",
+      "title": "A amostra é coletada",
+      "story": "A enfermagem coleta a amostra, identifica o tubo e libera o paciente.",
+      "actor": "Enfermagem",
+      "questions": [
+        "A etiqueta liga a amostra ao pedido?",
+        "O que encerra o encontro da coleta?"
+      ],
+      "answers": [
+        "Sim, a confirmar o formato.",
+        "A liberação do paciente."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "e8ibgj8kd3mwdpcy90",
+          "sceneId": "hema-coleta",
+          "name": "Amostra coletada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        },
+        {
+          "id": "ef3phbv8hwdmwdpcyp3",
+          "sceneId": "hema-coleta",
+          "name": "Coleta encerrada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Fecha o encontro da coleta."
+        }
+      ]
+    },
+    {
+      "id": "hema-laudo",
+      "chapter": "hemograma",
+      "time": "Depois da coleta · momento não descrito",
+      "title": "O caminho até o laudo",
+      "story": "A história não conta como a amostra é analisada nem como o laudo é liberado.",
+      "actor": "Laboratório / a validar",
+      "questions": [
+        "Quem libera o laudo?",
+        "O que acontece quando a amostra precisa ser refeita?"
+      ],
+      "answers": [
+        "A validar com o laboratório.",
+        "Um novo pedido de coleta, a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ecb5644j0w4mwdphyd3",
+          "sceneId": "hema-laudo",
+          "name": "Laudo liberado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Fim do fluxo do exame."
+        },
+        {
+          "id": "eq6yr4pp39xmwdpiweh",
+          "sceneId": "hema-laudo",
+          "name": "Nova coleta solicitada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Quando a amostra precisa ser refeita."
+        },
+        {
+          "id": "e2phjlteo1bmwdpkpeu",
+          "sceneId": "hema-laudo",
+          "name": "Achado sinalizado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Quem analisa sinaliza algo que pede atenção."
+        }
+      ]
+    },
+    {
+      "id": "endo-recepcao",
+      "chapter": "endoscopia",
+      "time": "Dia a definir · recepção",
+      "title": "O procedimento começa na recepção",
+      "story": "No dia do procedimento, o paciente passa pela recepção antes de seguir para o preparo.",
+      "actor": "Recepção",
+      "questions": [
+        "O procedimento abre um novo encontro?",
+        "Qual data vale, a pedida ou a confirmada?",
+        "A recepção confere o preparo?"
+      ],
+      "answers": [
+        "Hipótese: sim.",
+        "A confirmada; ver o hotspot E-10.",
+        "Não registrado na oficina."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "e7u6m653japmwdpnpav",
+          "sceneId": "endo-recepcao",
+          "name": "Recepção do procedimento concluída",
+          "type": "unknown",
+          "destination": "open",
+          "note": "Mesmo fluxo da recepção da coleta; novo encontro."
+        }
+      ]
+    },
+    {
+      "id": "endo-preparo",
+      "chapter": "endoscopia",
+      "time": "Preparo",
+      "title": "A equipe prepara o paciente",
+      "story": "A equipe do procedimento recebe o paciente, confere o preparo e explica as etapas.",
+      "actor": "Equipe do procedimento",
+      "questions": [
+        "O preparo segue o mesmo fluxo da pré-consulta?",
+        "Quem confirma que o preparo foi feito?"
+      ],
+      "answers": [
+        "Hipótese: sim.",
+        "A equipe do procedimento."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "efi8g1k1hrtmwdpoel2",
+          "sceneId": "endo-preparo",
+          "name": "Preparo concluído",
+          "type": "unknown",
+          "destination": "open",
+          "note": "Mesmo fluxo da pré-consulta."
+        }
+      ]
+    },
+    {
+      "id": "endo-execucao",
+      "chapter": "endoscopia",
+      "time": "Durante o procedimento",
+      "title": "O procedimento é realizado",
+      "story": "O procedimento acontece e as imagens ficam no sistema do fornecedor.",
+      "actor": "Equipe do procedimento / fornecedor externo",
+      "questions": [
+        "As imagens voltam para o prontuário?",
+        "O que acontece se o fornecedor falhar?",
+        "Quem registra o fim do procedimento?"
+      ],
+      "answers": [
+        "Só a referência, a confirmar.",
+        "O status do procedimento muda.",
+        "A equipe do procedimento."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "eqn495edqr2mwdpovmk",
+          "sceneId": "endo-execucao",
+          "name": "Procedimento executado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Se o fornecedor falhar, o status muda."
+        },
+        {
+          "id": "eiy2qvb37t4mwdpqgo2",
+          "sceneId": "endo-execucao",
+          "name": "Aguardando laudo",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "endo-recuperacao",
+      "chapter": "endoscopia",
+      "time": "Depois do procedimento",
+      "title": "A recuperação é acompanhada",
+      "story": "Depois do procedimento, a equipe acompanha a recuperação até a alta.",
+      "actor": "Equipe assistencial",
+      "questions": [
+        "Quais critérios liberam a alta?",
+        "A alta encerra o encontro?"
+      ],
+      "answers": [
+        "Em aberto; ver o hotspot E-06.",
+        "Hipótese: sim."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "etpnd40klismwdprvk0",
+          "sceneId": "endo-recuperacao",
+          "name": "Alta do procedimento",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Fecha o encontro."
+        }
+      ]
+    },
+    {
+      "id": "endo-resultado",
+      "chapter": "endoscopia",
+      "time": "Antes do retorno · momento não descrito",
+      "title": "Das imagens ao resultado",
+      "story": "A história não conta quem escreve o laudo nem quando ele fica pronto.",
+      "actor": "Equipe de laudo / a validar",
+      "questions": [
+        "O laudo pode ser corrigido depois de liberado?",
+        "Como o laudo chega à clínica?"
+      ],
+      "answers": [
+        "Em aberto; ver o hotspot E-08.",
+        "A validar com o fornecedor."
+      ],
+      "discussed": false,
+      "events": [
+        {
+          "id": "e3g9900grmdmwdpts1s",
+          "sceneId": "endo-resultado",
+          "name": "Laudo recebido",
+          "type": "unknown",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "retorno-agenda",
+      "chapter": "endoscopia",
+      "time": "Depois do procedimento",
+      "title": "O retorno é marcado",
+      "story": "Um acompanhante agenda a consulta de retorno.",
+      "actor": "Acompanhante / agendamento",
+      "questions": [
+        "Quem pode agendar em nome do paciente?",
+        "O retorno fica ligado à primeira consulta?"
+      ],
+      "answers": [
+        "A validar.",
+        "Deveria; a confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "e57xig40u9kmwdpul2h",
+          "sceneId": "retorno-agenda",
+          "name": "Retorno marcado",
+          "type": "operational",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "retorno-recepcao",
+      "chapter": "retorno",
+      "time": "D+15 · recepção",
+      "title": "O paciente volta com a história acumulada",
+      "story": "No retorno, a recepção abre um novo atendimento ligado aos anteriores.",
+      "actor": "Recepção",
+      "questions": [
+        "O retorno abre um novo encontro?",
+        "A recepção vê os exames anteriores?"
+      ],
+      "answers": [
+        "Hipótese: sim.",
+        "Não precisa ver."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ewzw689mq05mwdpvd1e",
+          "sceneId": "retorno-recepcao",
+          "name": "Recepção do retorno concluída",
+          "type": "unknown",
+          "destination": "open",
+          "note": "Mesmo fluxo da recepção; novo encontro."
+        }
+      ]
+    },
+    {
+      "id": "retorno-app",
+      "chapter": "retorno",
+      "time": "D+15 · antes da consulta",
+      "title": "Os laudos já estão no app",
+      "story": "Antes da consulta, o paciente vê os laudos no aplicativo.",
+      "actor": "Aplicativo",
+      "questions": [
+        "Quando o laudo aparece no app?",
+        "O app avisa o paciente?"
+      ],
+      "answers": [
+        "Depois de liberado, a confirmar.",
+        "Não registrado na oficina."
+      ],
+      "discussed": false,
+      "events": [
+        {
+          "id": "ezo4t6m97vemwdpvzry",
+          "sceneId": "retorno-app",
+          "name": "Laudo disponível no app",
+          "type": "operational",
+          "destination": "open",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "retorno-revisao",
+      "chapter": "retorno",
+      "time": "D+15 · retorno",
+      "title": "O médico reúne as evidências",
+      "story": "O médico revê a consulta anterior, os laudos e as anotações da equipe.",
+      "actor": "Médico",
+      "questions": [
+        "O médico vê tudo numa só tela?",
+        "O retorno segue o mesmo fluxo da primeira consulta?"
+      ],
+      "answers": [
+        "Hoje não, a validar.",
+        "Hipótese: sim."
+      ],
+      "discussed": false,
+      "events": [
+        {
+          "id": "eu0lbytljmsmwdpwsk6",
+          "sceneId": "retorno-revisao",
+          "name": "Atendimento de retorno iniciado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": "Mesmo fluxo da primeira consulta."
+        }
+      ]
+    },
+    {
+      "id": "retorno-diagnostico",
+      "chapter": "retorno",
+      "time": "D+15 · conclusão",
+      "title": "A hipótese é revista",
+      "story": "Com as evidências reunidas, o médico confirma ou descarta a hipótese inicial.",
+      "actor": "Médico",
+      "questions": [
+        "A conclusão substitui a hipótese?",
+        "Conduta e plano são registros diferentes?"
+      ],
+      "answers": [
+        "Não; as duas ficam no histórico.",
+        "Hipótese: sim."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "ehmlrggkxxemwdpx568",
+          "sceneId": "retorno-diagnostico",
+          "name": "Conduta revisada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        },
+        {
+          "id": "ebs6f5773evmwdpx83d",
+          "sceneId": "retorno-diagnostico",
+          "name": "Plano atualizado",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        },
+        {
+          "id": "eiteygxsmmymwdpxc77",
+          "sceneId": "retorno-diagnostico",
+          "name": "Conclusão clínica registrada",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "retorno-tratamento",
+      "chapter": "retorno",
+      "time": "D+15 · nova conduta",
+      "title": "O plano é atualizado",
+      "story": "O médico atualiza a conduta e combina o acompanhamento.",
+      "actor": "Médico",
+      "questions": [
+        "A nova conduta substitui a anterior?",
+        "Quem acompanha o plano depois do retorno?",
+        "O paciente recebe a nova conduta no app?"
+      ],
+      "answers": [
+        "Ela gera uma nova versão.",
+        "A validar.",
+        "A confirmar."
+      ],
+      "discussed": true,
+      "events": [
+        {
+          "id": "es47jute0x7mwdpxye6",
+          "sceneId": "retorno-tratamento",
+          "name": "Nova conduta emitida",
+          "type": "clinical",
+          "destination": "pep",
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "evq5cm6eutcmwdlhryn",
+      "sceneId": "identidade",
+      "name": "Cadastro criado",
+      "type": "operational",
+      "destination": "audit",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "evqigj6g0vhmwdm5ugc",
+      "sceneId": "agenda-consulta",
+      "name": "Prontuário aberto",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Hipótese: o prontuário nasce vazio, ligado ao cadastro.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ehpmuchv40umwdm6bfw",
+      "sceneId": "agenda-consulta",
+      "name": "Consulta marcada",
+      "type": "operational",
+      "destination": "open",
+      "note": "Guarda só a intenção: especialidade e horário.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e6fia85ibi7mwdnxh2q",
+      "sceneId": "totem-12",
+      "name": "Chegada registrada",
+      "type": "operational",
+      "destination": "open",
+      "note": "Marco candidato para o início do atendimento.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e6ciz7agjpsmwdo3ttd",
+      "sceneId": "recepcao-12",
+      "name": "Recepção iniciada",
+      "type": "operational",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e4due8lxyr7mwdo43b3",
+      "sceneId": "recepcao-12",
+      "name": "Recepção concluída",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Marco candidato para o início do encontro clínico.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e5mg23akbx4mwdo44yc",
+      "sceneId": "recepcao-12",
+      "name": "Pagamento confirmado",
+      "type": "operational",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "elaxauekq51mwdoau4r",
+      "sceneId": "preconsulta",
+      "name": "Pré-consulta iniciada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eabywm2k610mwdob1l0",
+      "sceneId": "preconsulta",
+      "name": "Pré-consulta concluída",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ew29df4ehgcmwdologn",
+      "sceneId": "chamada-medico",
+      "name": "Atendimento médico iniciado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Disparado quando o profissional chama o próximo da fila.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ezyh06ehdhxmwdoprh0",
+      "sceneId": "anamneses",
+      "name": "Histórico registrado",
+      "type": "clinical",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ewqym6jf5mwdoq4lx",
+      "sceneId": "anamneses",
+      "name": "Evolução atualizada",
+      "type": "unknown",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ezax5cdpzpxmwdoqwtg",
+      "sceneId": "anamneses",
+      "name": "Informação de risco registrada",
+      "type": "unknown",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "erawv0qrpshmwdotvb9",
+      "sceneId": "hipotese",
+      "name": "Avaliação documentada",
+      "type": "clinical",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ew5owcz9x0tmwdotvpg",
+      "sceneId": "hipotese",
+      "name": "Hipótese registrada",
+      "type": "clinical",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "elps7zio7jwmwdouk90",
+      "sceneId": "prescricao-12",
+      "name": "Conduta emitida",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Destino a decidir: serviço próprio ou barramento de eventos.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e3xaxdbtccomwdoxci6",
+      "sceneId": "exames-solicitados",
+      "name": "Orientações emitidas",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Destino a decidir: serviço próprio ou barramento de eventos.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eewm7gsrnpumwdoxxgl",
+      "sceneId": "exames-solicitados",
+      "name": "Pedido de exame emitido",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Destino a decidir: serviço de exames ou barramento de eventos.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ej8qigm8obvmwdp0xpf",
+      "sceneId": "exames-solicitados",
+      "name": "Consulta concluída",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Fecha o encontro clínico.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ekove99vk8smwdp9rbh",
+      "sceneId": "exames-solicitados",
+      "name": "Documento emitido",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "erwuft0x5hmmwdp9v8p",
+      "sceneId": "exames-solicitados",
+      "name": "Encaminhamento emitido",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "erbvumszj0wmwdp2e7e",
+      "sceneId": "pos-consulta",
+      "name": "Exame laboratorial agendado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Destino a decidir: serviço de exames ou barramento de eventos.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "evrl7ylq633mwdp3nod",
+      "sceneId": "pos-consulta",
+      "name": "Procedimento agendado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Destino a decidir: serviço de exames ou barramento de eventos.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ejtgtjk6xj9mwdp6oap",
+      "sceneId": "hema-recepcao",
+      "name": "Recepção da coleta iniciada",
+      "type": "operational",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "etkxrizxwc2mwdp7q9f",
+      "sceneId": "hema-recepcao",
+      "name": "Recepção da coleta concluída",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Abre um novo encontro.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e0f1nfpcx94mwdp85r8",
+      "sceneId": "hema-recepcao",
+      "name": "Pagamento da coleta confirmado",
+      "type": "unknown",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e8ibgj8kd3mwdpcy90",
+      "sceneId": "hema-coleta",
+      "name": "Amostra coletada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ef3phbv8hwdmwdpcyp3",
+      "sceneId": "hema-coleta",
+      "name": "Coleta encerrada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Fecha o encontro da coleta.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ecb5644j0w4mwdphyd3",
+      "sceneId": "hema-laudo",
+      "name": "Laudo liberado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Fim do fluxo do exame.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eq6yr4pp39xmwdpiweh",
+      "sceneId": "hema-laudo",
+      "name": "Nova coleta solicitada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Quando a amostra precisa ser refeita.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e2phjlteo1bmwdpkpeu",
+      "sceneId": "hema-laudo",
+      "name": "Achado sinalizado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Quem analisa sinaliza algo que pede atenção.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e7u6m653japmwdpnpav",
+      "sceneId": "endo-recepcao",
+      "name": "Recepção do procedimento concluída",
+      "type": "unknown",
+      "destination": "open",
+      "note": "Mesmo fluxo da recepção da coleta; novo encontro.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "efi8g1k1hrtmwdpoel2",
+      "sceneId": "endo-preparo",
+      "name": "Preparo concluído",
+      "type": "unknown",
+      "destination": "open",
+      "note": "Mesmo fluxo da pré-consulta.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eqn495edqr2mwdpovmk",
+      "sceneId": "endo-execucao",
+      "name": "Procedimento executado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Se o fornecedor falhar, o status muda.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eiy2qvb37t4mwdpqgo2",
+      "sceneId": "endo-execucao",
+      "name": "Aguardando laudo",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "etpnd40klismwdprvk0",
+      "sceneId": "endo-recuperacao",
+      "name": "Alta do procedimento",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Fecha o encontro.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e3g9900grmdmwdpts1s",
+      "sceneId": "endo-resultado",
+      "name": "Laudo recebido",
+      "type": "unknown",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "e57xig40u9kmwdpul2h",
+      "sceneId": "retorno-agenda",
+      "name": "Retorno marcado",
+      "type": "operational",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ewzw689mq05mwdpvd1e",
+      "sceneId": "retorno-recepcao",
+      "name": "Recepção do retorno concluída",
+      "type": "unknown",
+      "destination": "open",
+      "note": "Mesmo fluxo da recepção; novo encontro.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ezo4t6m97vemwdpvzry",
+      "sceneId": "retorno-app",
+      "name": "Laudo disponível no app",
+      "type": "operational",
+      "destination": "open",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eu0lbytljmsmwdpwsk6",
+      "sceneId": "retorno-revisao",
+      "name": "Atendimento de retorno iniciado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "Mesmo fluxo da primeira consulta.",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ehmlrggkxxemwdpx568",
+      "sceneId": "retorno-diagnostico",
+      "name": "Conduta revisada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "ebs6f5773evmwdpx83d",
+      "sceneId": "retorno-diagnostico",
+      "name": "Plano atualizado",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "eiteygxsmmymwdpxc77",
+      "sceneId": "retorno-diagnostico",
+      "name": "Conclusão clínica registrada",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    },
+    {
+      "id": "es47jute0x7mwdpxye6",
+      "sceneId": "retorno-tratamento",
+      "name": "Nova conduta emitida",
+      "type": "clinical",
+      "destination": "pep",
+      "note": "",
+      "reviewStatus": "Em discussão",
+      "reviewOwner": "",
+      "pepReason": "",
+      "source": "Massa sintética"
+    }
+  ],
+  "domains": [
+    {
+      "id": "pessoas",
+      "name": "Cadastro",
+      "description": "Identidade e vínculo da pessoa com a clínica.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "agenda",
+      "name": "Agenda",
+      "description": "Horários, reservas e confirmações.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "jornada",
+      "name": "Jornada na unidade",
+      "description": "Chegada, fila, recepção e circulação do paciente.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "enfermagem",
+      "name": "Pré-consulta",
+      "description": "Acolhimento, sinais vitais e registros da enfermagem.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "pep",
+      "name": "Prontuário",
+      "description": "Histórico, exame físico, evolução e conclusões.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "prescricoes",
+      "name": "Condutas e documentos",
+      "description": "Condutas, orientações e documentos emitidos.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "pedidos",
+      "name": "Pedidos de exame",
+      "description": "Pedidos, solicitante e vínculo com o encontro.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "laboratorio",
+      "name": "Laboratório",
+      "description": "Identificação da amostra, coleta e análise.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "imagem",
+      "name": "Procedimentos",
+      "description": "Preparo, execução, recuperação e alta.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    },
+    {
+      "id": "laudos",
+      "name": "Laudos",
+      "description": "Assinatura, liberação, versões e correções.",
+      "origin": "Massa sintética",
+      "status": "A validar",
+      "notes": ""
+    }
+  ],
+  "systems": [
+    {
+      "id": "pacientes-api",
+      "name": "API de cadastro",
+      "kind": "API / cadastro",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "agenda-sys",
+      "name": "Sistema de agenda",
+      "kind": "Sistema a identificar",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "totem",
+      "name": "Totem e painel de chamada",
+      "kind": "Canal a validar",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "s2",
+      "name": "Sistema legado",
+      "kind": "Sistema legado a validar",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "prescricao-api",
+      "name": "Serviço de condutas",
+      "kind": "Serviço candidato",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "exames-api",
+      "name": "Serviço de exames",
+      "kind": "Serviço candidato",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "laboratorio-sys",
+      "name": "Sistema de laboratório",
+      "kind": "Sistema a identificar",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "proradis",
+      "name": "Fornecedor de imagem",
+      "kind": "Fornecedor externo",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "app",
+      "name": "App do paciente",
+      "kind": "Canal digital",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    },
+    {
+      "id": "pep-proj",
+      "name": "Prontuário (destino)",
+      "kind": "Destino lógico candidato",
+      "origin": "Massa sintética",
+      "domainId": "",
+      "notes": "",
+      "status": "A validar"
+    }
+  ],
+  "screens": [
+    {
+      "id": "cadastro",
+      "name": "Cadastro",
+      "systemId": "pacientes-api",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "agendamento",
+      "name": "Agenda",
+      "systemId": "agenda-sys",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "totem",
+      "name": "Chegada no totem",
+      "systemId": "totem",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "painel",
+      "name": "Painel de chamada",
+      "systemId": "totem",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "recepcao",
+      "name": "Recepção",
+      "systemId": "s2",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "preconsulta",
+      "name": "Pré-consulta",
+      "systemId": "s2",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "consultorio",
+      "name": "Consulta",
+      "systemId": "s2",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "prescricao",
+      "name": "Emissão de conduta",
+      "systemId": "prescricao-api",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "pedido",
+      "name": "Pedido de exame",
+      "systemId": "exames-api",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "posconsulta",
+      "name": "Pós-consulta",
+      "systemId": "agenda-sys",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "coleta",
+      "name": "Coleta",
+      "systemId": "laboratorio-sys",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "laudo",
+      "name": "Resultado / laudo",
+      "systemId": "laboratorio-sys",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "procedimento",
+      "name": "Registro do procedimento",
+      "systemId": "proradis",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "recuperacao",
+      "name": "Recuperação e alta",
+      "systemId": "s2",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    },
+    {
+      "id": "app-exames",
+      "name": "Exames no app",
+      "systemId": "app",
+      "route": "",
+      "notes": "",
+      "origin": "Massa sintética",
+      "status": "A validar"
+    }
+  ],
+  "tables": [],
+  "sceneMappings": {
+    "identidade": {
+      "domainId": "pessoas",
+      "systemIds": [
+        "pacientes-api"
+      ],
+      "screenIds": [
+        "cadastro"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "agenda-consulta": {
+      "domainId": "agenda",
+      "systemIds": [
+        "agenda-sys"
+      ],
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "totem-12": {
+      "domainId": "jornada",
+      "systemIds": [
+        "totem"
+      ],
+      "screenIds": [
+        "totem"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "recepcao-12": {
+      "domainId": "jornada",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "preconsulta": {
+      "domainId": "enfermagem",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "preconsulta"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "chamada-medico": {
+      "domainId": "jornada",
+      "systemIds": [
+        "totem"
+      ],
+      "screenIds": [
+        "painel"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "queixa": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "anamneses": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "exame-fisico": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "hipotese": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "prescricao-12": {
+      "domainId": "prescricoes",
+      "systemIds": [
+        "prescricao-api"
+      ],
+      "screenIds": [
+        "prescricao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "exames-solicitados": {
+      "domainId": "pedidos",
+      "systemIds": [
+        "exames-api"
+      ],
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "pos-consulta": {
+      "domainId": "agenda",
+      "systemIds": [
+        "agenda-sys"
+      ],
+      "screenIds": [
+        "posconsulta"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "hema-recepcao": {
+      "domainId": "jornada",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "hema-identificacao": {
+      "domainId": "laboratorio",
+      "systemIds": [
+        "laboratorio-sys"
+      ],
+      "screenIds": [
+        "coleta"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "hema-coleta": {
+      "domainId": "laboratorio",
+      "systemIds": [
+        "laboratorio-sys"
+      ],
+      "screenIds": [
+        "coleta"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "hema-laudo": {
+      "domainId": "laudos",
+      "systemIds": [
+        "laboratorio-sys"
+      ],
+      "screenIds": [
+        "laudo"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "endo-recepcao": {
+      "domainId": "jornada",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "endo-preparo": {
+      "domainId": "imagem",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recuperacao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "endo-execucao": {
+      "domainId": "imagem",
+      "systemIds": [
+        "proradis"
+      ],
+      "screenIds": [
+        "procedimento"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "endo-recuperacao": {
+      "domainId": "imagem",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recuperacao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "endo-resultado": {
+      "domainId": "laudos",
+      "systemIds": [
+        "proradis"
+      ],
+      "screenIds": [
+        "procedimento"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-agenda": {
+      "domainId": "agenda",
+      "systemIds": [
+        "agenda-sys"
+      ],
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-recepcao": {
+      "domainId": "jornada",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-app": {
+      "domainId": "laudos",
+      "systemIds": [
+        "app"
+      ],
+      "screenIds": [
+        "app-exames"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-revisao": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-diagnostico": {
+      "domainId": "pep",
+      "systemIds": [
+        "s2"
+      ],
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    },
+    "retorno-tratamento": {
+      "domainId": "prescricoes",
+      "systemIds": [
+        "prescricao-api"
+      ],
+      "screenIds": [
+        "prescricao"
+      ],
+      "tableIds": [],
+      "notes": "Vínculo sugerido; validar no sistema.",
+      "status": "Hipótese"
+    }
+  },
+  "eventMappings": {
+    "evq5cm6eutcmwdlhryn": {
+      "domainId": "pessoas",
+      "consumerDomainIds": [],
+      "systemId": "pacientes-api",
+      "screenIds": [
+        "cadastro"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "evqigj6g0vhmwdm5ugc": {
+      "domainId": "pessoas",
+      "consumerDomainIds": [],
+      "systemId": "pacientes-api",
+      "screenIds": [
+        "cadastro"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ehpmuchv40umwdm6bfw": {
+      "domainId": "agenda",
+      "consumerDomainIds": [],
+      "systemId": "agenda-sys",
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e6fia85ibi7mwdnxh2q": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "totem",
+      "screenIds": [
+        "totem"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e6ciz7agjpsmwdo3ttd": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e4due8lxyr7mwdo43b3": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e5mg23akbx4mwdo44yc": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "elaxauekq51mwdoau4r": {
+      "domainId": "enfermagem",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "preconsulta"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eabywm2k610mwdob1l0": {
+      "domainId": "enfermagem",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "preconsulta"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ew29df4ehgcmwdologn": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "totem",
+      "screenIds": [
+        "painel"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ezyh06ehdhxmwdoprh0": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ewqym6jf5mwdoq4lx": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ezax5cdpzpxmwdoqwtg": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "erawv0qrpshmwdotvb9": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ew5owcz9x0tmwdotvpg": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "elps7zio7jwmwdouk90": {
+      "domainId": "prescricoes",
+      "consumerDomainIds": [],
+      "systemId": "prescricao-api",
+      "screenIds": [
+        "prescricao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e3xaxdbtccomwdoxci6": {
+      "domainId": "prescricoes",
+      "consumerDomainIds": [],
+      "systemId": "exames-api",
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eewm7gsrnpumwdoxxgl": {
+      "domainId": "pedidos",
+      "consumerDomainIds": [],
+      "systemId": "exames-api",
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ej8qigm8obvmwdp0xpf": {
+      "domainId": "pedidos",
+      "consumerDomainIds": [],
+      "systemId": "exames-api",
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ekove99vk8smwdp9rbh": {
+      "domainId": "prescricoes",
+      "consumerDomainIds": [],
+      "systemId": "exames-api",
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "erwuft0x5hmmwdp9v8p": {
+      "domainId": "prescricoes",
+      "consumerDomainIds": [],
+      "systemId": "exames-api",
+      "screenIds": [
+        "pedido"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "erbvumszj0wmwdp2e7e": {
+      "domainId": "agenda",
+      "consumerDomainIds": [],
+      "systemId": "agenda-sys",
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "evrl7ylq633mwdp3nod": {
+      "domainId": "agenda",
+      "consumerDomainIds": [],
+      "systemId": "agenda-sys",
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ejtgtjk6xj9mwdp6oap": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "etkxrizxwc2mwdp7q9f": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e0f1nfpcx94mwdp85r8": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e8ibgj8kd3mwdpcy90": {
+      "domainId": "laboratorio",
+      "consumerDomainIds": [],
+      "systemId": "laboratorio-sys",
+      "screenIds": [
+        "coleta"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ef3phbv8hwdmwdpcyp3": {
+      "domainId": "laboratorio",
+      "consumerDomainIds": [],
+      "systemId": "laboratorio-sys",
+      "screenIds": [
+        "coleta"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ecb5644j0w4mwdphyd3": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "laboratorio-sys",
+      "screenIds": [
+        "laudo"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eq6yr4pp39xmwdpiweh": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "laboratorio-sys",
+      "screenIds": [
+        "laudo"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e2phjlteo1bmwdpkpeu": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "laboratorio-sys",
+      "screenIds": [
+        "laudo"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e7u6m653japmwdpnpav": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "efi8g1k1hrtmwdpoel2": {
+      "domainId": "imagem",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recuperacao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eqn495edqr2mwdpovmk": {
+      "domainId": "imagem",
+      "consumerDomainIds": [],
+      "systemId": "proradis",
+      "screenIds": [
+        "procedimento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eiy2qvb37t4mwdpqgo2": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "proradis",
+      "screenIds": [
+        "procedimento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "etpnd40klismwdprvk0": {
+      "domainId": "imagem",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recuperacao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e3g9900grmdmwdpts1s": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "proradis",
+      "screenIds": [
+        "procedimento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "e57xig40u9kmwdpul2h": {
+      "domainId": "agenda",
+      "consumerDomainIds": [],
+      "systemId": "agenda-sys",
+      "screenIds": [
+        "agendamento"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ewzw689mq05mwdpvd1e": {
+      "domainId": "jornada",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "recepcao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ezo4t6m97vemwdpvzry": {
+      "domainId": "laudos",
+      "consumerDomainIds": [],
+      "systemId": "app",
+      "screenIds": [
+        "app-exames"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eu0lbytljmsmwdpwsk6": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ehmlrggkxxemwdpx568": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "ebs6f5773evmwdpx83d": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "eiteygxsmmymwdpxc77": {
+      "domainId": "pep",
+      "consumerDomainIds": [],
+      "systemId": "s2",
+      "screenIds": [
+        "consultorio"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    },
+    "es47jute0x7mwdpxye6": {
+      "domainId": "prescricoes",
+      "consumerDomainIds": [],
+      "systemId": "prescricao-api",
+      "screenIds": [
+        "prescricao"
+      ],
+      "tableIds": [],
+      "notes": "",
+      "relationshipStatus": "Hipótese",
+      "operation": "A identificar"
+    }
+  },
+  "decisions": [
+    {
+      "id": "E-01",
+      "title": "Quando nasce o encontro clínico?",
+      "description": "Chegada, fim da recepção e primeiro registro clínico são marcos candidatos.",
+      "sceneId": "recepcao-12",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-02",
+      "title": "O que significa abrir o prontuário?",
+      "description": "Hipótese: um envelope vazio ligado ao cadastro, antes de qualquer fato clínico.",
+      "sceneId": "agenda-consulta",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-03",
+      "title": "Informação ausente ou negada?",
+      "description": "Não informado, desconhecido e negado podem ser estados diferentes.",
+      "sceneId": "preconsulta",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-04",
+      "title": "Limite entre pedido, agenda e execução",
+      "description": "Os pedidos são independentes; agendamento e execução podem nascer em momentos distintos.",
+      "sceneId": "exames-solicitados",
+      "priority": "Média",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-05",
+      "title": "Onde fica o laudo do exame laboratorial?",
+      "description": "A história não cobre análise, transporte e liberação da amostra.",
+      "sceneId": "hema-laudo",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-06",
+      "title": "Critérios de alta do procedimento",
+      "description": "Recuperação, acompanhante e autorização de saída precisam de regra explícita.",
+      "sceneId": "endo-recuperacao",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-07",
+      "title": "Quem publica conduta e pedidos?",
+      "description": "Serviço próprio, serviço de exames ou barramento de eventos são alternativas.",
+      "sceneId": "prescricao-12",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-08",
+      "title": "Versões de laudos e anexos",
+      "description": "Pedem-se várias versões; faltam regras de imutabilidade e de correção.",
+      "sceneId": "endo-resultado",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-09",
+      "title": "Como ligar encontros distintos?",
+      "description": "Consulta, coleta e procedimento têm encontros próprios; falta o fio que os liga.",
+      "sceneId": "hema-recepcao",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-10",
+      "title": "Data do procedimento conciliada",
+      "description": "Duas datas foram registradas; preservar a divergência e usar a confirmada.",
+      "sceneId": "endo-recepcao",
+      "priority": "Baixa",
+      "status": "Resolvida",
+      "owner": "",
+      "resolution": "A data confirmada vale."
+    },
+    {
+      "id": "E-11",
+      "title": "Exemplos listados ou fatos observados?",
+      "description": "Alguns eventos foram listados como exemplo, não como fato observado.",
+      "sceneId": "exames-solicitados",
+      "priority": "Média",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    },
+    {
+      "id": "E-12",
+      "title": "Tabelas de origem não identificadas",
+      "description": "Nenhuma tabela física foi confirmada; mapear antes de projetar.",
+      "sceneId": "identidade",
+      "priority": "Alta",
+      "status": "Aberta",
+      "owner": "",
+      "resolution": ""
+    }
+  ],
+  "meta": {
+    "version": 1,
+    "method": "Relações propostas não equivalem a mapeamento técnico confirmado.",
+    "userContentPreserved": true
+  }
+}
