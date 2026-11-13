@@ -108,6 +108,8 @@ tests/e2e/               roteiros Playwright + run-all.mjs
 
 ## Usar na oficina
 
+O [glossário de Event Storming](docs/glossario.md) explica Jornada, Capítulo, Cena, Ator e Evento, e como eles se ligam aos post-its canônicos.
+
 - A primeira abertura mostra o canvas vazio. Para continuar um mapa, use **↥ Importar** com um arquivo salvo por **↓ Backup JSON**.
 - Crie ou escolha uma jornada, depois capítulos e cenas.
 - Registre os eventos e associe-os a domínio, sistema, tela e tabela por conexões.
