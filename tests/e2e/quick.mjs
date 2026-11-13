@@ -58,6 +58,8 @@ let w4 = await ws();
 const newScene = w4.scenes.find((s) => s.title === "Enfermagem confere pulseira");
 r.newSceneChapter = newScene?.chapter;
 r.sceneOrderAfterOrigin = w4.scenes.findIndex((s) => s.id === newScene.id) === w4.scenes.findIndex((s) => s.id === "preconsulta") + 1;
+const chapterLayout = w4.graph.layouts["lanes|chapter:consulta"] ?? w4.graph.layouts["timeline|chapter:consulta"] ?? {};
+r.newScenePosition = { x: chapterLayout["scene:" + newScene?.id]?.x, originX: chapterLayout["scene:preconsulta"]?.x };
 r.chapterFilter = await page.inputValue("#chapterFilter");
 r.sceneFilter = await page.inputValue("#sceneFilter");
 
@@ -94,6 +96,7 @@ if (!r.siblingEditor || r.afterEscCount !== 4 || r.selectedAfterEsc !== "Sinais 
 if (!r.siblingCreated || !r.siblingBelow) fail("Enter num evento deveria criar o irmão abaixo");
 if (!r.undoOneStep) fail("Ctrl+Z deveria remover o irmão em um passo");
 if (r.newSceneChapter !== "consulta" || !r.sceneOrderAfterOrigin) fail("Enter na cena deveria criar a cena seguinte no mesmo capítulo");
+if (typeof r.newScenePosition.x !== "number" || !(r.newScenePosition.x > r.newScenePosition.originX)) fail(`cena nova deveria ficar à direita da origem: ${JSON.stringify(r.newScenePosition)}`);
 if (r.chapterFilter !== "consulta" || r.sceneFilter !== "") fail(`recorte deveria abrir para o capítulo: ${r.chapterFilter}/${r.sceneFilter}`);
 if (r.semanticChain.type2 !== "Estado" || !r.semanticChain.linked || r.semanticChain.es !== "agregado") fail(`Tab numa Ação deveria criar o Estado seguinte ligado: ${JSON.stringify(r.semanticChain)}`);
 if (!r.buttonOpensEditor) fail("botão de irmão no inspetor não abriu o editor");

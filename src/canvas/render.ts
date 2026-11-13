@@ -18,7 +18,7 @@ import type {
   Table,
 } from "../domain/types";
 import { degree, getByKey, isNodeSelected, label, state } from "../core/state";
-import { $, esc } from "../ui/dom";
+import { $, esc, px, svgNumber } from "../ui/dom";
 import { activePositions, calcBounds, isTimeline, pos, sizeOf } from "./layout";
 import { chapterBands, laneBands } from "./timeline";
 import { renderLaneGutter } from "./lane-gutter";
@@ -29,6 +29,9 @@ import { containedKeys } from "./frame";
 import { visible } from "./visibility";
 
 const NATURE_LABEL = Object.fromEntries(NATURE_BASE);
+
+const svgPath = (parts: TemplateStringsArray, ...coordinates: number[]): string =>
+  parts.reduce((path, part, index) => path + svgNumber(coordinates[index - 1]) + part);
 
 export interface EdgeGeometry {
   d: string;
@@ -103,7 +106,7 @@ function curveBetween(p1: Point, side1: PortSide, p2: Point, side2: PortSide): E
   const c1 = { x: p1.x + OUTWARD[side1].x * reach, y: p1.y + OUTWARD[side1].y * reach };
   const c2 = { x: p2.x + OUTWARD[side2].x * reach, y: p2.y + OUTWARD[side2].y * reach };
   return {
-    d: `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`,
+    d: svgPath`M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`,
     // Meio da curva de Bézier (t = 0,5).
     mx: (p1.x + 3 * c1.x + 3 * c2.x + p2.x) / 8,
     my: (p1.y + 3 * c1.y + 3 * c2.y + p2.y) / 8,
@@ -124,7 +127,7 @@ function autoGeometry(a: NodeKey, b: NodeKey, sa: Size, sb: Size): EdgeGeometry 
     const x2 = q.x;
     const y2 = q.y + PORT_Y;
     const m = Math.max(65, (x2 - x1) * 0.48);
-    return { d: `M ${x1} ${y1} C ${x1 + m} ${y1}, ${x2 - m} ${y2}, ${x2} ${y2}`, mx: (x1 + x2) / 2, my: (p.y + q.y) / 2 + 36 };
+    return { d: svgPath`M ${x1} ${y1} C ${x1 + m} ${y1}, ${x2 - m} ${y2}, ${x2} ${y2}`, mx: (x1 + x2) / 2, my: (p.y + q.y) / 2 + 36 };
   }
   const below = q.y >= p.y + sa.h + 20;
   const above = q.y + sb.h + 20 <= p.y;
@@ -134,7 +137,7 @@ function autoGeometry(a: NodeKey, b: NodeKey, sa: Size, sb: Size): EdgeGeometry 
     const y1 = below ? p.y + sa.h : p.y;
     const y2 = below ? q.y : q.y + sb.h;
     const m = Math.max(40, Math.abs(y2 - y1) * 0.48) * (below ? 1 : -1);
-    return { d: `M ${x1} ${y1} C ${x1} ${y1 + m}, ${x2} ${y2 - m}, ${x2} ${y2}`, mx: (x1 + x2) / 2 + 8, my: (y1 + y2) / 2 };
+    return { d: svgPath`M ${x1} ${y1} C ${x1} ${y1 + m}, ${x2} ${y2 - m}, ${x2} ${y2}`, mx: (x1 + x2) / 2 + 8, my: (y1 + y2) / 2 };
   }
   const x1 = p.x + sa.w;
   const y1 = p.y + PORT_Y;
@@ -143,7 +146,7 @@ function autoGeometry(a: NodeKey, b: NodeKey, sa: Size, sb: Size): EdgeGeometry 
   const cy = Math.min(y1, y2) - 105;
   const dx = 130;
   return {
-    d: `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x1 + dx} ${cy}, ${(x1 + x2) / 2} ${cy} S ${x2 - 80} ${y2}, ${x2} ${y2}`,
+    d: svgPath`M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x1 + dx} ${cy}, ${(x1 + x2) / 2} ${cy} S ${x2 - 80} ${y2}, ${x2} ${y2}`,
     mx: (p.x + sa.w + q.x) / 2,
     my: (p.y + q.y) / 2 + 36,
   };
@@ -171,7 +174,7 @@ export function linkGhostPath(start: NodeKey, side: PortSide, pointer: Point): s
   const a = anchorOf(start, side, screenSizeOf(start));
   const reach = Math.max(60, Math.hypot(pointer.x - a.x, pointer.y - a.y) * 0.4);
   const c = { x: a.x + OUTWARD[side].x * reach, y: a.y + OUTWARD[side].y * reach };
-  return `M ${a.x} ${a.y} C ${c.x} ${c.y}, ${pointer.x} ${pointer.y}, ${pointer.x} ${pointer.y}`;
+  return svgPath`M ${a.x} ${a.y} C ${c.x} ${c.y}, ${pointer.x} ${pointer.y}, ${pointer.x} ${pointer.y}`;
 }
 
 const PORT_TITLE = "Arraste até outro card para ligar (solte numa bolinha para escolher o lado de entrada)";
@@ -185,7 +188,7 @@ export function renderEdges(): void {
   const shown = ws.graph.edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to));
   let out = "<defs>";
   for (const e of shown) {
-    out += `<marker id="head-${esc(e.id)}" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="${colorForEdge(e)}"/></marker>`;
+    out += `<marker id="head-${esc(e.id)}" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="${esc(colorForEdge(e))}"/></marker>`;
   }
   out += "</defs>";
   for (const e of shown) {
@@ -198,7 +201,7 @@ export function renderEdges(): void {
     const offGrammar = verdict.applies && !verdict.ok && !e.grammarException;
     const caption =
       (offGrammar ? "⚠ " : "") + (e.accessMode ? e.accessMode + " · " + e.label : e.label || "relaciona");
-    out += `<g data-edge="${esc(e.id)}"><path class="edge-hit" d="${p}" data-edge="${esc(e.id)}"/><path class="edge-line ${cls}" style="stroke:${color};stroke-width:${active ? 3.6 : 2.3}" d="${p}" marker-end="url(#head-${esc(e.id)})"/><text class="edge-caption${offGrammar ? " off-grammar" : ""}" x="${mx}" y="${my}" text-anchor="middle">${offGrammar ? "<title>Fora do padrão Event Storming — veja no inspetor</title>" : ""}${esc(caption)}</text></g>`;
+    out += `<g data-edge="${esc(e.id)}"><path class="edge-hit" d="${p}" data-edge="${esc(e.id)}"/><path class="edge-line ${cls}" style="stroke:${esc(color)};stroke-width:${active ? 3.6 : 2.3}" d="${p}" marker-end="url(#head-${esc(e.id)})"/><text class="edge-caption${offGrammar ? " off-grammar" : ""}" x="${svgNumber(mx)}" y="${svgNumber(my)}" text-anchor="middle">${offGrammar ? "<title>Fora do padrão Event Storming — veja no inspetor</title>" : ""}${esc(caption)}</text></g>`;
   }
   $("#edgePaths").innerHTML = out;
 }
@@ -254,7 +257,7 @@ function noteHtml(k: NodeKey, o: AnyEntity): string {
   const fmt = String(o.format || "text");
   const isSelected = isNodeSelected(k);
   const bad = fmt === "json" ? jsonError(text) : null;
-  return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px">${portsHtml(k)}<div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
+  return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${px(p.x)};top:${px(p.y)};width:${px(w)};height:${px(h)}">${portsHtml(k)}<div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
 }
 
 /**
@@ -265,7 +268,7 @@ function noteHtml(k: NodeKey, o: AnyEntity): string {
 function frameBgHtml(k: NodeKey): string {
   const p = pos(k);
   const { w, h } = sizeOf(k);
-  return `<div class="frame-bg" data-frame-bg="${esc(k)}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px;--frame:${esc(String(getByKey(k)?.color))}"></div>`;
+  return `<div class="frame-bg" data-frame-bg="${esc(k)}" style="left:${px(p.x)};top:${px(p.y)};width:${px(w)};height:${px(h)};--frame:${esc(String(getByKey(k)?.color))}"></div>`;
 }
 
 function frameHtml(k: NodeKey): string {
@@ -273,7 +276,7 @@ function frameHtml(k: NodeKey): string {
   const p = pos(k);
   const { w, h } = sizeOf(k);
   const inside = containedKeys(k).length;
-  return `<div class="frame ${isNodeSelected(k) ? "selected" : ""}" data-node="${esc(k)}" data-kind="frame" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px;--frame:${esc(String(o.color))}"><div class="frame-head" title="Arraste pelo título para mover a moldura com o que está dentro; duplo clique renomeia"><span class="name">${esc(label(k))}</span><span class="frame-count">${inside} ${inside === 1 ? "card" : "cards"}</span></div><div class="note-resize frame-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
+  return `<div class="frame ${isNodeSelected(k) ? "selected" : ""}" data-node="${esc(k)}" data-kind="frame" style="left:${px(p.x)};top:${px(p.y)};width:${px(w)};height:${px(h)};--frame:${esc(String(o.color))}"><div class="frame-head" title="Arraste pelo título para mover a moldura com o que está dentro; duplo clique renomeia"><span class="name">${esc(label(k))}</span><span class="frame-count">${inside} ${inside === 1 ? "card" : "cards"}</span></div><div class="note-resize frame-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
 }
 
 const areaOf = (k: NodeKey) => sizeOf(k).w * sizeOf(k).h;
@@ -287,7 +290,7 @@ function nodeHtml(k: NodeKey): string {
   const sem = semanticLabel(o).toLowerCase() === PL[t].toLowerCase() ? "" : semanticLabel(o);
   const isSelected = isNodeSelected(k);
   const es = esStyle(t, o.semanticType);
-  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}">${portsHtml(k)}<div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
+  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${px(p.x)};top:${px(p.y)};${esCssVars(es)}">${portsHtml(k)}<div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
 }
 
 /** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
@@ -333,13 +336,13 @@ export function renderBands(): void {
   const laneHtml = lanes
     .map(
       (b, i) =>
-        `<div class="lane-band ${i % 2 ? "alt" : ""}" data-lane="${esc(b.id)}" style="left:${b.x}px;top:${b.top}px;width:${b.w}px;height:${b.height}px"></div>`,
+        `<div class="lane-band ${i % 2 ? "alt" : ""}" data-lane="${esc(b.id)}" style="left:${px(b.x)};top:${px(b.top)};width:${px(b.w)};height:${px(b.height)}"></div>`,
     )
     .join("");
   el.innerHTML = laneHtml + chapterBands(state.visibleKeys, activePositions())
     .map(
       (b, i) =>
-        `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
+        `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${px(b.x)};top:${px(b.y)};width:${px(b.w)};height:${px(b.h)}"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
     )
     .join("") + (emo ? emotionHtml(emo) : "");
 }

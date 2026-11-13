@@ -14,6 +14,16 @@ export const esc = (s: unknown): string =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+// Coordenadas vêm de JSON importado ou salvo: uma string aqui sairia do atributo style/d e viraria HTML.
+function finiteNumber(value: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new TypeError("valor não numérico no render");
+  return value;
+}
+
+export const px = (value: number): string => `${finiteNumber(value)}px`;
+
+export const svgNumber = (value: number): string => String(finiteNumber(value));
+
 let toastTimer: number | undefined;
 export function notify(msg: string): void {
   const t = $("#toast");

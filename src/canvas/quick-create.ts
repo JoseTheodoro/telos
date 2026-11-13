@@ -12,7 +12,7 @@ import { getByKey, setFocus, state } from "../core/state";
 import { notify } from "../ui/dom";
 import { bringIntoView } from "./camera";
 import { startInlineEdit } from "./inline-edit";
-import { activePositions, freeSpot, isTimeline, pos } from "./layout";
+import { activePositions, ensurePositions, freeSpot, isTimeline, pos } from "./layout";
 import { TL, makeRoom, rowYFor } from "./timeline";
 import { visible } from "./visibility";
 
@@ -133,11 +133,15 @@ function timelineSpot(origin: NodeKey, k: NodeKey, kind: NodeKind, mode: QuickMo
 
 /** Abre o recorte (cena → capítulo → jornada → mapa completo) até o nó aparecer. */
 function widenUntilVisible(k: NodeKey): void {
+  let widened = false;
   for (let i = 0; i < 3 && !visible().has(k); i++) {
     if (state.focusScene) setFocus(state.focusJourney, state.focusChapter, "");
     else if (state.focusChapter) setFocus(state.focusJourney, "", "");
     else setFocus("", "", "");
+    widened = true;
   }
+  // O recorte mais largo pode nunca ter sido aberto: sem posições, a vaga do card novo não tem referência.
+  if (widened) ensurePositions();
 }
 
 /** Insere logo após a origem quando são do mesmo tipo (ordem da árvore e do layout). */
