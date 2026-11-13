@@ -1,6 +1,7 @@
 // Inspetor lateral: edição de nós, setas e hotspots.
 import {
   EDGE_PALETTE,
+  EDGE_SIDE_OPTIONS,
   FRAME_PALETTE,
   EDGE_STATUS_OPTIONS,
   HOTSPOT_PRIORITY_OPTIONS,
@@ -128,6 +129,7 @@ function edgeInspector(e: Edge): string {
       : "") +
     options("Estado da relação", "edge.status", e.status, EDGE_STATUS_OPTIONS) +
     accessField +
+    `<div class="side-fields">${options("Sai por", "edge.fromSide", e.fromSide || "auto", EDGE_SIDE_OPTIONS)}${options("Entra por", "edge.toSide", e.toSide || "auto", EDGE_SIDE_OPTIONS)}</div><small class="help side-help">Automático escolhe o lado pela posição dos cards. Puxar a seta por uma bolinha fixa o lado.</small>` +
     `<div class="field"><label for="f-edge.color">Cor da conexão</label><div class="palette-swatches" role="group" aria-label="Escolher uma das dez cores">${swatches}</div><div class="color-field"><label class="color-label" for="f-edge.color"><input type="color" class="color-input" data-field="edge.color" id="f-edge.color" value="${current}" title="Escolher cor com mouse"></label><div class="hex-wrap"><label for="edgeHexInput">HEX</label><input id="edgeHexInput" class="input hex-input" maxlength="7" value="${current}" spellcheck="false" placeholder="#RRGGBB"></div><button type="button" class="btn sm" id="edgeAutoColor" title="Voltar para a cor automática">↺ Auto</button></div><small class="help">${help}</small></div>` +
     field("Evidência / referência", "edge.evidence", e.evidence, true, "SQL, rota, tela, pessoa que confirmou...") +
     field("Origem", "edge.source", e.source) +
@@ -563,9 +565,12 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
   if (sel.kind === "edge") {
     const e = findEdge(sel.id) as unknown as Record<string, unknown> | undefined;
     const prop = path.slice(5);
-    if (!e || e[prop] === value) return;
+    // #15 Lado "auto" é a ausência do campo (setas antigas não o têm).
+    const isSide = prop === "fromSide" || prop === "toSide";
+    if (!e || (e[prop] ?? (isSide ? "auto" : undefined)) === value) return;
     change(() => {
-      e[prop] = value;
+      if (isSide && value === "auto") delete e[prop];
+      else e[prop] = value;
       syncMaps(ws);
     });
     return;

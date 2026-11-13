@@ -1,5 +1,5 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { ARR, NATURE_BASE, PL, PORT_Y, TYPES } from "../domain/constants";
+import { ARR, NATURE_BASE, PL, PORT_SIDES, PORT_Y, TYPES } from "../domain/constants";
 import { formatLabel, isCodeFormat, jsonError, renderNoteBody } from "../ui/rich";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
@@ -7,8 +7,11 @@ import { colorForEdge, edgeVerdict, isTableLink, semanticLabel } from "../domain
 import type {
   AnyEntity,
   Chapter,
+  Edge,
   EventItem,
   NodeKey,
+  Point,
+  PortSide,
   Scene,
   Screen,
   SystemItem,
@@ -34,17 +37,87 @@ export interface EdgeGeometry {
   my: number;
 }
 
+interface Size {
+  w: number;
+  h: number;
+}
+
+export type SizeLookup = (k: NodeKey) => Size;
+
+/** Direção para fora do card em cada lado (a seta sai e chega perpendicular à borda). */
+const OUTWARD: Record<PortSide, Point> = {
+  top: { x: 0, y: -1 },
+  right: { x: 1, y: 0 },
+  bottom: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+};
+
 /**
- * Curva da seta escolhendo os lados pela posição relativa:
- * destino à direita → sai pela direita; empilhado abaixo/acima → sai por baixo/cima;
- * destino atrás e na mesma altura → contorna por cima (comportamento da v1.5).
+ * Altura real dos cards de tamanho fixo, medida a cada `renderGraph`: o conteúdo faz o card passar
+ * do `NODE_H` (91 a 112 px no seed), e a porta de baixo fica na borda real.
  */
-export function edgeGeometry(a: NodeKey, b: NodeKey): EdgeGeometry {
+const renderedHeights = new Map<NodeKey, number>();
+
+function measureCardHeights(): void {
+  for (const el of $("#nodes").children) {
+    const k = (el as HTMLElement).dataset.node;
+    const h = (el as HTMLElement).offsetHeight;
+    // Com o caderno aberto o canvas fica oculto e mede 0: vale a medida anterior.
+    if (k && h > 0 && keyKind(k) !== "note") renderedHeights.set(k, h);
+  }
+}
+
+/** Tamanho do card na tela (altura medida); o SVG exportado usa `sizeOf`, igual aos retângulos que desenha. */
+export function screenSizeOf(k: NodeKey): Size {
+  const size = sizeOf(k);
+  return { w: size.w, h: renderedHeights.get(k) ?? size.h };
+}
+
+/** Ponto da borda onde a seta encosta. Nas laterais dos cards fixos fica em `PORT_Y`, como sempre; nas notas, no meio. */
+export function anchorOf(k: NodeKey, side: PortSide, size: Size): Point {
+  const p = pos(k);
+  const sideY = keyKind(k) === "note" ? size.h / 2 : PORT_Y;
+  switch (side) {
+    case "top":
+      return { x: p.x + size.w / 2, y: p.y };
+    case "bottom":
+      return { x: p.x + size.w / 2, y: p.y + size.h };
+    case "left":
+      return { x: p.x, y: p.y + sideY };
+    case "right":
+      return { x: p.x + size.w, y: p.y + sideY };
+  }
+}
+
+/** Lado do card voltado para um ponto (proporcional ao tamanho, para o card largo não virar sempre cima/baixo). */
+function facingSide(k: NodeKey, size: Size, toward: Point): PortSide {
+  const p = pos(k);
+  const dx = toward.x - (p.x + size.w / 2);
+  const dy = toward.y - (p.y + size.h / 2);
+  if (Math.abs(dx) / (size.w / 2) >= Math.abs(dy) / (size.h / 2)) return dx >= 0 ? "right" : "left";
+  return dy >= 0 ? "bottom" : "top";
+}
+
+function curveBetween(p1: Point, side1: PortSide, p2: Point, side2: PortSide): EdgeGeometry {
+  const reach = Math.max(50, Math.hypot(p2.x - p1.x, p2.y - p1.y) * 0.4);
+  const c1 = { x: p1.x + OUTWARD[side1].x * reach, y: p1.y + OUTWARD[side1].y * reach };
+  const c2 = { x: p2.x + OUTWARD[side2].x * reach, y: p2.y + OUTWARD[side2].y * reach };
+  return {
+    d: `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`,
+    // Meio da curva de Bézier (t = 0,5).
+    mx: (p1.x + 3 * c1.x + 3 * c2.x + p2.x) / 8,
+    my: (p1.y + 3 * c1.y + 3 * c2.y + p2.y) / 8,
+  };
+}
+
+/**
+ * Curva da seta com os dois lados automáticos (regra da v1.5):
+ * destino à direita → sai pela direita; empilhado abaixo/acima → sai por baixo/cima;
+ * destino atrás e na mesma altura → contorna por cima.
+ */
+function autoGeometry(a: NodeKey, b: NodeKey, sa: Size, sb: Size): EdgeGeometry {
   const p = pos(a);
   const q = pos(b);
-  // Notas livres têm tamanho próprio; os demais cards têm tamanho fixo.
-  const sa = sizeOf(a);
-  const sb = sizeOf(b);
   if (q.x >= p.x + sa.w + 20) {
     const x1 = p.x + sa.w;
     const y1 = p.y + PORT_Y;
@@ -76,6 +149,37 @@ export function edgeGeometry(a: NodeKey, b: NodeKey): EdgeGeometry {
   };
 }
 
+/**
+ * #15 Curva da seta. Sem lados escolhidos, vale a regra automática de sempre. Com um lado escolhido,
+ * a outra ponta usa o lado voltado para ele.
+ */
+export function edgeGeometry(e: Pick<Edge, "from" | "to" | "fromSide" | "toSide">, sizeOfKey: SizeLookup = screenSizeOf): EdgeGeometry {
+  const sa = sizeOfKey(e.from);
+  const sb = sizeOfKey(e.to);
+  if (!e.fromSide && !e.toSide) return autoGeometry(e.from, e.to, sa, sb);
+  let fromSide = e.fromSide;
+  let toSide = e.toSide;
+  if (!fromSide && toSide) fromSide = facingSide(e.from, sa, anchorOf(e.to, toSide, sb));
+  if (fromSide && !toSide) toSide = facingSide(e.to, sb, anchorOf(e.from, fromSide, sa));
+  const start = fromSide as PortSide;
+  const end = toSide as PortSide;
+  return curveBetween(anchorOf(e.from, start, sa), start, anchorOf(e.to, end, sb), end);
+}
+
+/** Prévia tracejada enquanto a seta é puxada de uma porta. */
+export function linkGhostPath(start: NodeKey, side: PortSide, pointer: Point): string {
+  const a = anchorOf(start, side, screenSizeOf(start));
+  const reach = Math.max(60, Math.hypot(pointer.x - a.x, pointer.y - a.y) * 0.4);
+  const c = { x: a.x + OUTWARD[side].x * reach, y: a.y + OUTWARD[side].y * reach };
+  return `M ${a.x} ${a.y} C ${c.x} ${c.y}, ${pointer.x} ${pointer.y}, ${pointer.x} ${pointer.y}`;
+}
+
+const PORT_TITLE = "Arraste até outro card para ligar (solte numa bolinha para escolher o lado de entrada)";
+
+function portsHtml(k: NodeKey): string {
+  return PORT_SIDES.map((side) => `<div class="port ${side}" title="${PORT_TITLE}" data-port="${side}" data-key="${esc(k)}"></div>`).join("");
+}
+
 export function renderEdges(): void {
   const { ws, visibleKeys, selected } = state;
   const shown = ws.graph.edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to));
@@ -85,7 +189,7 @@ export function renderEdges(): void {
   }
   out += "</defs>";
   for (const e of shown) {
-    const { d: p, mx, my } = edgeGeometry(e.from, e.to);
+    const { d: p, mx, my } = edgeGeometry(e);
     const active = selected?.kind === "edge" && selected.id === e.id;
     const cls = active ? "selected" : e.status === "Validado" ? "valid" : e.status === "Hipótese" ? "proposed" : "";
     const color = colorForEdge(e);
@@ -150,7 +254,7 @@ function noteHtml(k: NodeKey, o: AnyEntity): string {
   const fmt = String(o.format || "text");
   const isSelected = isNodeSelected(k);
   const bad = fmt === "json" ? jsonError(text) : null;
-  return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
+  return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px">${portsHtml(k)}<div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
 }
 
 /**
@@ -183,7 +287,7 @@ function nodeHtml(k: NodeKey): string {
   const sem = semanticLabel(o).toLowerCase() === PL[t].toLowerCase() ? "" : semanticLabel(o);
   const isSelected = isNodeSelected(k);
   const es = esStyle(t, o.semanticType);
-  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
+  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}">${portsHtml(k)}<div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
 }
 
 /** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
@@ -271,6 +375,7 @@ export function renderGraph(): void {
   $("#frames").innerHTML = visibleFrames.map(frameBgHtml).join("");
   $("#frameUi").innerHTML = visibleFrames.map(frameHtml).join("");
   $("#nodes").innerHTML = [...visibleKeys].filter((k) => keyKind(k) !== "frame").map(nodeHtml).join("");
+  measureCardHeights();
   renderBands();
   const bounds = calcBounds();
   $("#world").style.width = Math.max(2800, bounds.maxX + 500) + "px";

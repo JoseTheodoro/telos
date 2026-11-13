@@ -1,7 +1,6 @@
 // Eventos do canvas: seleção, arrastar nó, puxar seta, pan, zoom, duplo clique.
-import { NODE_W, PORT_Y } from "../domain/constants";
 import { keyKind } from "../domain/keys";
-import type { NodeKind } from "../domain/types";
+import type { NodeKind, PortSide } from "../domain/types";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
 import { getByKey, state, type Dragging } from "../core/state";
@@ -15,7 +14,7 @@ import { withFrameContents } from "./frame";
 import { collectGuideLines, hideGuides, snapDrag } from "./guides";
 import { minSizeOf } from "./size";
 import { copyNote, isNoteEditing, rememberPointer, startNoteEdit } from "./note";
-import { renderBands, renderEdges, renderGraph } from "./render";
+import { linkGhostPath, renderBands, renderEdges, renderGraph } from "./render";
 import { EMO } from "./emotion";
 import { clampEmotion, emotionLevel, emotionSigned } from "../domain/emotion";
 import { nodeKey } from "../domain/keys";
@@ -164,16 +163,21 @@ export function bindCanvas(): void {
       return;
     }
 
+    // #15 Qualquer das 4 portas puxa a seta; no modo Conectar, a porta do destino fixa o lado de entrada.
     const port = el.closest<HTMLElement>("[data-port]");
     if (port) {
       e.preventDefault();
       e.stopPropagation();
       const k = port.dataset.key as string;
-      if (port.dataset.port === "out") {
-        state.connectStart = k;
-        state.dragging = { type: "link", start: k };
-        stage.setPointerCapture(e.pointerId);
-      } else if (state.connectStart) finishConnect(k);
+      const side = port.dataset.port as PortSide;
+      if (state.connectStart && state.connectStart !== k) {
+        finishConnect(k, side);
+        return;
+      }
+      state.connectStart = k;
+      state.dragging = { type: "link", start: k, side };
+      stage.classList.add("linking");
+      stage.setPointerCapture(e.pointerId);
       return;
     }
 
@@ -335,12 +339,7 @@ export function bindCanvas(): void {
       return;
     }
     if (d?.type === "link") {
-      const p = localPoint(e);
-      const src = pos(d.start);
-      const x = src.x + NODE_W;
-      const y = src.y + PORT_Y;
-      const m = Math.max(70, Math.abs(p.x - x) / 2);
-      ghost.setAttribute("d", `M ${x} ${y} C ${x + m} ${y}, ${p.x - m} ${p.y}, ${p.x} ${p.y}`);
+      ghost.setAttribute("d", linkGhostPath(d.start, d.side, localPoint(e)));
       ghost.style.display = "";
       return;
     }
@@ -354,12 +353,16 @@ export function bindCanvas(): void {
   stage.addEventListener("pointerup", (e) => {
     const d = state.dragging;
     if (d?.type === "link") {
-      const dropTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-node]");
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      const dropKey = under?.closest<HTMLElement>("[data-node]")?.dataset.node;
+      // Solta numa porta: entra por aquele lado. Solta no corpo do card: entrada automática.
+      const dropPort = under?.closest<HTMLElement>("[data-port]");
+      const toSide = dropPort && dropPort.dataset.key === dropKey ? (dropPort.dataset.port as PortSide) : undefined;
       state.dragging = null;
       ghost.style.display = "none";
+      stage.classList.remove("linking");
       state.connectStart = null;
-      const dropKey = dropTarget?.dataset.node;
-      if (dropKey && dropKey !== d.start && keyKind(dropKey) !== "frame") linkCreate(d.start, dropKey);
+      if (dropKey && dropKey !== d.start && keyKind(dropKey) !== "frame") linkCreate(d.start, dropKey, { fromSide: d.side, toSide });
       else {
         const p = localPoint(e);
         createModal(NEXT_KIND[keyKind(d.start)] || "event", Math.round(p.x), Math.round(p.y), d.start);
@@ -465,7 +468,7 @@ export function bindCanvas(): void {
     state.dragging = null;
     state.panning = null;
     ghost.style.display = "none";
-    stage.classList.remove("panning");
+    stage.classList.remove("panning", "linking");
   });
 
   stage.addEventListener(

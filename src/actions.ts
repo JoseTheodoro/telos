@@ -13,7 +13,7 @@ import {
 } from "./domain/model";
 import { categoryLabel } from "./domain/grammar";
 import { newEntityId } from "./domain/factory";
-import type { AnyEntity, Chapter, EventItem, NodeKey, Scene } from "./domain/types";
+import type { AnyEntity, Chapter, EventItem, NodeKey, PortSide, Scene } from "./domain/types";
 import { change, refreshUndo } from "./core/history";
 import { get, getByKey, label, related, selectedNodeKeys, setFocus, state } from "./core/state";
 import { refreshAll, refreshTools } from "./app";
@@ -85,7 +85,13 @@ export function ensureVisible(k: NodeKey): void {
   centerOn(k);
 }
 
-export function linkCreate(a: NodeKey, b: NodeKey): void {
+/** Lados escolhidos ao ligar pelas portas (#15); ausente = automático. */
+export interface LinkSides {
+  fromSide?: PortSide;
+  toSide?: PortSide;
+}
+
+export function linkCreate(a: NodeKey, b: NodeKey, sides: LinkSides = {}): void {
   if (!a || !b || a === b) {
     notify("Escolha dois elementos diferentes.");
     return;
@@ -123,6 +129,8 @@ export function linkCreate(a: NodeKey, b: NodeKey): void {
       containment ? "Registrado" : "Hipótese",
       "Criada manualmente no canvas",
     );
+    if (sides.fromSide) relation.fromSide = sides.fromSide;
+    if (sides.toSide) relation.toSide = sides.toSide;
     ws.graph.edges.push(relation);
     state.selected = { kind: "edge", id: relation.id };
     syncMaps(ws);
@@ -143,14 +151,15 @@ export function beginConnect(k: NodeKey): void {
   state.connectStart = k;
   state.mode = "connect";
   refreshTools();
-  notify("Selecione outro nó ou arraste até a bolinha de entrada para criar a seta.");
+  notify("Clique no card de destino (ou numa bolinha dele, para escolher o lado de entrada).");
 }
 
-export function finishConnect(k: NodeKey): void {
+/** Modo Conectar: o segundo clique liga; clicar numa porta do destino fixa o lado de entrada. */
+export function finishConnect(k: NodeKey, toSide?: PortSide): void {
   if (state.connectStart) {
     const a = state.connectStart;
     state.connectStart = null;
-    linkCreate(a, k);
+    linkCreate(a, k, { toSide });
   } else beginConnect(k);
 }
 

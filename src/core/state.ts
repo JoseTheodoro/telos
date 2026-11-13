@@ -8,6 +8,7 @@ import type {
   NodeKey,
   NodeKind,
   Point,
+  PortSide,
   Selection,
   SidebarTab,
   ToolMode,
@@ -16,7 +17,12 @@ import type {
 import type { GuideLines } from "../canvas/guides";
 
 export type Dragging =
-  | { type: "link"; start: NodeKey }
+  | {
+      /** Seta puxada de uma porta; `side` é o lado da porta de origem (#15). */
+      type: "link";
+      start: NodeKey;
+      side: PortSide;
+    }
   | {
       /** #10 Redimensionar uma nota livre pela alça do canto. */
       type: "resize";

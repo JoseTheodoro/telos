@@ -122,7 +122,7 @@ export function svgExport(): void {
   const shown = ws.graph.edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to));
   const paths = shown
     .map((e) => {
-      const g = edgeGeometry(e.from, e.to);
+      const g = edgeGeometry(e, sizeOf);
       const color = colorForEdge(e);
       return `<path d="${g.d}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#svg-arrow-${esc(e.id)})"/><text x="${g.mx}" y="${g.my}" fill="${color}" font-size="11" text-anchor="middle">${esc(e.accessMode ? e.accessMode + " · " + e.label : e.label)}</text>`;
     })

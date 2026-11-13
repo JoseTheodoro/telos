@@ -170,7 +170,7 @@ try {
 
   // 13) Seta solta sobre a moldura não liga nada (a moldura não tem setas).
   const edgesBefore = w.graph.edges.length;
-  const port = page.locator(`[data-node="${kA}"] .port.out`);
+  const port = page.locator(`[data-node="${kA}"] .port.right`);
   const [px, py] = await center(port);
   const [hx, hy] = await center(page.locator(".frame-head .frame-count"));
   await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(hx, hy, { steps: 6 }); await page.mouse.up();

@@ -1,4 +1,4 @@
-import type { CollectionName, NodeKind } from "./types";
+import type { CollectionName, EdgeSide, NodeKind, PortSide } from "./types";
 
 export const TYPES: NodeKind[] = [
   "journey",
@@ -210,6 +210,17 @@ export const EDGE_STATUS_OPTIONS: [string, string][] = [
 
 export const NODE_W = 242;
 export const NODE_H = 94;
+/** #15 Lados das portas de conexão, na ordem do relógio a partir de cima. */
+export const PORT_SIDES: PortSide[] = ["top", "right", "bottom", "left"];
+
+export const EDGE_SIDE_OPTIONS: [EdgeSide, string][] = [
+  ["auto", "Automático"],
+  ["top", "Cima"],
+  ["right", "Direita"],
+  ["bottom", "Baixo"],
+  ["left", "Esquerda"],
+];
+
 /** Passo da grade de encaixe do arraste; o pontilhado do fundo usa o mesmo passo. */
 export const GRID_STEP = 24;
 /** Altura do ponto de ancoragem das setas dentro do card. */

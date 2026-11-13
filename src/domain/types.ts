@@ -168,7 +168,16 @@ export interface Edge {
   role?: DomainRole;
   /** Ligação fora da gramática ES aceita conscientemente (oculta o aviso). */
   grammarException?: boolean;
+  /** #15 Lado do card de origem por onde a seta sai. Ausente = automático. */
+  fromSide?: PortSide;
+  /** #15 Lado do card de destino por onde a seta entra. Ausente = automático. */
+  toSide?: PortSide;
 }
+
+/** #15 Lado do card onde fica uma porta de conexão. */
+export type PortSide = "top" | "right" | "bottom" | "left";
+/** Lado escolhido no inspetor: um dos quatro ou "auto" (pela posição relativa dos cards). */
+export type EdgeSide = "auto" | PortSide;
 
 export type DomainRole = "" | "owner" | "consumer";
 

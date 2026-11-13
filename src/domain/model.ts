@@ -5,6 +5,7 @@ import {
   FRAME_MIN,
   FRAME_PALETTE,
   NATURE_BASE,
+  PORT_SIDES,
   SCHEMA,
   SEMANTIC_BASE,
   TABLE_COLORS,
@@ -290,6 +291,14 @@ function upgradeFrames(ws: Workspace): void {
   }
 }
 
+/** #15 Lado inválido ou "auto" vira ausente (automático). */
+function upgradeEdgeSides(ws: Workspace): void {
+  for (const e of ws.graph.edges) {
+    if (e.fromSide !== undefined && !PORT_SIDES.includes(e.fromSide)) delete e.fromSide;
+    if (e.toSide !== undefined && !PORT_SIDES.includes(e.toSide)) delete e.toSide;
+  }
+}
+
 export function upgradeWorkspace(data: any): Workspace {
   data.schema = SCHEMA;
   data.journeys = Array.isArray(data.journeys) ? data.journeys : [];
@@ -354,6 +363,7 @@ export function upgradeWorkspace(data: any): Workspace {
   upgradeEmotion(data as Workspace);
   upgradeNotes(data as Workspace);
   upgradeFrames(data as Workspace);
+  upgradeEdgeSides(data as Workspace);
   linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;
