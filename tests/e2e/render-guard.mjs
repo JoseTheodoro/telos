@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
+import { openApp } from "./target.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const PAYLOAD = '1px"><img src=x onerror="window.__xss=(window.__xss||0)+1">';
@@ -25,7 +26,7 @@ page.on("dialog", (d) => d.accept());
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 try {
-  await page.goto(url); await page.waitForSelector(".node");
+  await openApp(page, { url }); await page.waitForSelector(".node");
   r.renderRefusal = await page.evaluate(async (payload) => {
     const { state } = await import("/src/core/state.ts");
     const { refreshAll } = await import("/src/app.ts");

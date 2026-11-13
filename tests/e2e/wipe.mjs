@@ -1,13 +1,13 @@
 // "Limpar canvas" apaga tudo o que está no canvas (hotspots, notas livres e molduras inclusive);
 // ficam o caderno e as classificações personalizadas. Recarregar mantém o canvas vazio.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };

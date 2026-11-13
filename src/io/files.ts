@@ -185,7 +185,7 @@ export function svgExport(): void {
 
 export function offerInvalidSavedExport(raw: string): void {
   const message =
-    "Mapa salvo com dados inválidos: o Atlas abriu o mapa de exemplo no lugar dele. Exportar o JSON salvo para recuperar o trabalho?";
+    "Mapa salvo com dados inválidos: o Atlas abriu um mapa vazio no lugar dele. Exportar o JSON salvo para recuperar o trabalho?";
   if (confirm(message)) saveFile("pep-atlas-studio-invalido.json", raw, "application/json;charset=utf-8");
 }
 

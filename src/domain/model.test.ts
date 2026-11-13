@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
-import seed from "../data/seed.json";
+import workshop from "../../tests/e2e/fixtures/oficina-sintetica.json";
 import { graphInit, syncMaps, upgradeWorkspace } from "./model";
 
 const containmentEdges = (edges: { from: string; to: string; label: string }[], fromKind: string, toKind: string) =>
   edges.filter((edge) => edge.label === "contém" && edge.from.startsWith(fromKind + ":") && edge.to.startsWith(toKind + ":"));
 
 describe("graphInit", () => {
-  it("graphInit converts pep-discovery-atlas-v1 seed", () => {
-    const seedCopy = structuredClone(seed);
-    const workspace = graphInit(seedCopy);
+  it("graphInit converts a pep-discovery-atlas-v1 workshop", () => {
+    const workshopCopy = structuredClone(workshop);
+    const workspace = graphInit(workshopCopy);
 
-    expect(seed.schema).toBe("pep-discovery-atlas-v1");
+    expect(workshop.schema).toBe("pep-discovery-atlas-v1");
     expect(workspace.schema).toBe("pep-atlas-studio-v3");
     expect(containmentEdges(workspace.graph.edges, "chapter", "scene")).toHaveLength(28);
     expect(containmentEdges(workspace.graph.edges, "scene", "event")).toHaveLength(45);
     expect(workspace.graph.edges).toContainEqual(
       expect.objectContaining({ from: "chapter:consulta", to: "scene:preconsulta", label: "contém", status: "Registrado" }),
     );
-    expect(seedCopy).toEqual(seed);
+    expect(workshopCopy).toEqual(workshop);
   });
 
   it("graphInit creates one default journey for legacy input without journeys", () => {
-    for (const legacyInput of [structuredClone(seed), { ...structuredClone(seed), journeys: [] }]) {
+    for (const legacyInput of [structuredClone(workshop), { ...structuredClone(workshop), journeys: [] }]) {
       const workspace = graphInit(legacyInput);
 
       expect(workspace.journeys).toHaveLength(1);

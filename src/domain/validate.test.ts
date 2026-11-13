@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import seed from "../data/seed.json";
+import workshop from "../../tests/e2e/fixtures/oficina-sintetica.json";
 import fixtureWithHotspotBox from "../../tests/e2e/fixtures/with-hotspot-box.json";
 import { describeIssues, parseWorkspace } from "./validate";
 
@@ -92,12 +92,12 @@ describe("parseWorkspace", () => {
       scenes: [{ id: "s1", title: "Cena", chapter: "c1", time: "", semanticType: "Cena" }],
     };
 
-    for (const input of [validDocument(), { ...validDocument(), schema: "pep-atlas-studio-v3" }, v3WithoutGraph, seed, fixtureWithHotspotBox]) {
+    for (const input of [validDocument(), { ...validDocument(), schema: "pep-atlas-studio-v3" }, v3WithoutGraph, workshop, fixtureWithHotspotBox]) {
       const workspace = workspaceOf(input);
       expect(workspace.schema).toBe("pep-atlas-studio-v4");
       expect(Array.isArray(workspace.graph.edges)).toBe(true);
     }
-    expect(workspaceOf(seed).graph.edges.length).toBeGreaterThan(0);
+    expect(workspaceOf(workshop).graph.edges.length).toBeGreaterThan(0);
     expect(workspaceOf(v3WithoutGraph).graph.edges).toContainEqual(expect.objectContaining({ from: "chapter:c1", to: "scene:s1", label: "contém" }));
   });
 

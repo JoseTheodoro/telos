@@ -1,10 +1,10 @@
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const toast = () => page.textContent("#toast");
 const r = {};
@@ -84,7 +84,7 @@ try {
 
   // 6) Tab em evento → "precede", sem aviso
   await page.click('[data-tab="journey"]'); await page.click('[data-focus-scene="preconsulta"]');
-  await page.click('[data-tab="inventory"]'); await page.fill("#search", "PréConsultaIniciada"); await page.click('.inventory-item[data-select-node^="event:"]');
+  await page.click('[data-tab="inventory"]'); await page.fill("#search", "Pré-consulta iniciada"); await page.click('.inventory-item[data-select-node^="event:"]');
   const evKey = await page.$eval(".node.selected", (n) => n.dataset.node);
   await page.keyboard.press("Tab"); await page.keyboard.type("Pulseira conferida"); await page.keyboard.press("Enter");
   w = await ws();
@@ -93,7 +93,7 @@ try {
 
   // 7) Papel do domínio: trocar para consumidor e renomear seta não quebra o mapeamento
   const edDom = w.graph.edges.find((e) => e.from === evKey && e.to.startsWith("domain:"));
-  await page.fill("#search", "PréConsultaIniciada"); await page.click('.inventory-item[data-select-node^="event:"]');
+  await page.fill("#search", "Pré-consulta iniciada"); await page.click('.inventory-item[data-select-node^="event:"]');
   await page.click(`[data-inspect-edge="${edDom.id}"]`);
   await page.selectOption('[data-field="edge.role"]', "consumer");
   await page.fill('[data-field="edge.label"]', "usa dados de"); await page.locator('[data-field="edge.label"]').blur();

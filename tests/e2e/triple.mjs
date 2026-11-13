@@ -1,8 +1,8 @@
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 await page.click('[data-focus-scene="preconsulta"]');
 const chaptersBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")).chapters.length);
 const b = await page.locator('.node[data-kind="chapter"]').boundingBox(); const x = b.x + b.width / 2, y = b.y + 22;

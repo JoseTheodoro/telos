@@ -1,10 +1,10 @@
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, FIX] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext()).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 await page.setInputFiles("#importFile", FIX); await page.waitForTimeout(400);
 const w = await page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const h = w.decisions.find((d) => d.title === "Quem valida o laudo?");

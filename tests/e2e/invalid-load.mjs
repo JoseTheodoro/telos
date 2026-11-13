@@ -1,4 +1,4 @@
-// Mapa salvo com estrutura quebrada não pode travar a partida: o app abre o exemplo e oferece exportar o salvo.
+// Mapa salvo com estrutura quebrada não pode travar a partida: o app abre um mapa vazio e oferece exportar o salvo.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,10 +25,10 @@ try {
     localStorage.setItem(key, raw);
   }, [STORE, brokenJson]);
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: 5000 }), page.goto(appUrl())]);
-  await page.waitForSelector(".node", { timeout: 5000 });
+  await page.waitForSelector("#emptyStage:not([hidden])", { timeout: 5000 });
   r.cards = await page.locator("#nodes .node").count();
   r.notice = dialogs.find((m) => m.includes("Mapa salvo com dados inválidos")) ?? "";
-  if (!r.cards) fail("o app deveria abrir o mapa de exemplo");
+  if (r.cards) fail(`o app deveria abrir um mapa vazio: ${r.cards} cards`);
   if (!r.notice) fail(`a carga deveria avisar o mapa inválido: ${JSON.stringify(dialogs)}`);
   r.exportedIntact = fs.readFileSync(await download.path(), "utf8") === brokenJson;
   if (!r.exportedIntact) fail("a exportação deveria trazer o JSON salvo, sem alteração");

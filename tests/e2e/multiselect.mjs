@@ -1,13 +1,13 @@
 // #13 Seleção múltipla: laço com Shift, Shift+clique, arraste em grupo, lote no inspetor, exclusão em lote e undo em um passo.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const LOTE = ["Lote 1", "Lote 2", "Lote 3", "Lote 4", "Lote 5"];
 const r = {};
@@ -48,7 +48,7 @@ async function lassoAround(names) {
 try {
   await page.click('[data-focus-scene="preconsulta"]'); await page.keyboard.press("Escape");
   // 5 eventos novos em sequência (Tab encadeia), depois enquadra o recorte.
-  let [x, y] = await centerOf("PreConsultaFinalizada");
+  let [x, y] = await centerOf("Pré-consulta concluída");
   await page.mouse.click(x, y);
   await page.keyboard.press("Tab");
   for (let i = 0; i < LOTE.length; i++) {

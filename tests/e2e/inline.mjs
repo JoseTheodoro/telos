@@ -1,10 +1,10 @@
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 await page.click('[data-focus-scene="preconsulta"]');
 await page.click("#zoomIn"); await page.click("#zoomIn");
 const results = {};

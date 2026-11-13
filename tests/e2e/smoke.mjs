@@ -1,6 +1,6 @@
 // Roteiro de ponta a ponta no layout em camadas: criar, editar, ligar, desfazer, buscar, recarregar e limpar.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 
 const SHOTS = process.argv[3];
 
@@ -40,7 +40,7 @@ const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 
 try {
-  await page.goto(appUrl());
+  await openApp(page);
   await page.waitForSelector(".node");
   await page.click('[data-layout="layers"]');
   out.push(await snap("inicial"));

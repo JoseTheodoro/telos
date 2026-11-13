@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PAYLOAD = '1px"><img src=x onerror="window.__xss=(window.__xss||0)+1">';
@@ -32,7 +32,7 @@ const importFile = (name, content) => page.setInputFiles("#importFile", { name, 
 const leaksContent = (message) => message.includes("onerror") || message.includes("<img");
 const headerTitle = () => page.locator("#workspaceTitle").textContent({ timeout: 2000 });
 try {
-  await page.goto(appUrl()); await page.waitForSelector(".node");
+  await openApp(page); await page.waitForSelector(".node");
   const countsBefore = await page.textContent("#counts");
   r.seedTitle = await headerTitle();
   if (r.seedTitle !== "Da jornada à arquitetura") fail(`o cabeçalho deveria mostrar o título do mapa: ${r.seedTitle}`);
@@ -71,7 +71,7 @@ try {
     localStorage.setItem(key, raw);
   }, [STORE, poisonedJson]);
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: 5000 }), page.reload()]);
-  await page.waitForSelector(".node");
+  await page.waitForSelector("#emptyStage:not([hidden])");
   r.xssAfterPoisonedLoad = await xssCount();
   if (r.xssAfterPoisonedLoad !== undefined) fail(`payload executou na carga do localStorage (${r.xssAfterPoisonedLoad}x)`);
   const notice = dialogs.find((d) => d.type === "confirm")?.message ?? "";
@@ -83,7 +83,7 @@ try {
   if (!r.backupKept) fail("o JSON inválido deveria ficar guardado no navegador");
 
   dialogs.length = 0;
-  await page.reload(); await page.waitForSelector(".node");
+  await page.reload(); await page.waitForSelector("#emptyStage:not([hidden])");
   r.noticeAgain = dialogs.length;
   if (r.noticeAgain) fail("o aviso deveria aparecer só na carga que encontrou o dado inválido");
 

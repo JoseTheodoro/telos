@@ -44,9 +44,9 @@ src/
     rich.ts              destaque de código (highlight.js) e Markdown sanitizado (marked + DOMPurify)
     docs.ts              caderno de notas Markdown (#21)
   io/files.ts            importar/exportar JSON, CSV, SVG
-  data/seed.json         mapa de exemplo com persona sintética
   styles/app.css
 tests/e2e/               roteiros Playwright + run-all.mjs
+  fixtures/              massa de teste sintética, sem dado de pessoa real
 ```
 
 ## Histórico
@@ -108,6 +108,7 @@ tests/e2e/               roteiros Playwright + run-all.mjs
 
 ## Usar na oficina
 
+- A primeira abertura mostra o canvas vazio. Para continuar um mapa, use **↥ Importar** com um arquivo salvo por **↓ Backup JSON**.
 - Crie ou escolha uma jornada, depois capítulos e cenas.
 - Registre os eventos e associe-os a domínio, sistema, tela e tabela por conexões.
 - Para desenhar estados, ações, decisões ou fluxos que não pertencem a uma cena, use **Caixa livre**.

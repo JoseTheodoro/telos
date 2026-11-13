@@ -1,7 +1,6 @@
 // Persistência no localStorage (mesma chave da v1.5 → dados existentes continuam válidos).
-import seed from "../data/seed.json";
 import { INVALID_STORE, LEGACY_STORE, SCHEMA, STORE } from "../domain/constants";
-import { graphInit, upgradeWorkspace } from "../domain/model";
+import { upgradeWorkspace } from "../domain/model";
 import type { Workspace } from "../domain/types";
 import { parseWorkspace } from "../domain/validate";
 import { $, notify } from "../ui/dom";
@@ -24,7 +23,7 @@ function readSaved(): SavedEntry | null {
       if (raw) return { key, raw };
     }
   } catch {
-    /* storage indisponível: cai no seed */
+    /* storage indisponível: abre um mapa vazio */
   }
   return null;
 }
@@ -37,7 +36,7 @@ function parseSaved(raw: string): unknown {
   }
 }
 
-// Sai da chave principal antes de ser copiado: o autosave do seed não pode sobrescrevê-lo, e a cópia cabe na cota liberada.
+// Sai da chave principal antes de ser copiado: o autosave do mapa vazio não pode sobrescrevê-lo, e a cópia cabe na cota liberada.
 function keepInvalidSaved({ key, raw }: SavedEntry): void {
   try {
     localStorage.removeItem(key);
@@ -47,17 +46,17 @@ function keepInvalidSaved({ key, raw }: SavedEntry): void {
   }
 }
 
-const seedWorkspace = (): Workspace => upgradeWorkspace(graphInit(seed));
+const blankWorkspace = (): Workspace => upgradeWorkspace({ schema: SCHEMA, journeys: [] });
 
-/** Carrega do navegador; sem dados salvos, usa o seed da oficina. */
+/** Carrega do navegador; sem dados salvos, o canvas nasce limpo. */
 export function loadInitialWorkspace(): InitialWorkspace {
   const saved = readSaved();
   const document = saved ? parseSaved(saved.raw) : null;
-  if (!saved || document === null) return { workspace: seedWorkspace(), invalidSaved: null };
+  if (!saved || document === null) return { workspace: blankWorkspace(), invalidSaved: null };
   const parsed = parseWorkspace(document);
   if (parsed.ok) return { workspace: parsed.workspace, invalidSaved: null };
   keepInvalidSaved(saved);
-  return { workspace: seedWorkspace(), invalidSaved: saved.raw };
+  return { workspace: blankWorkspace(), invalidSaved: saved.raw };
 }
 
 /** O localStorage guarda cerca de 5 MB por origem: a partir daqui o usuário é avisado antes da falha. */

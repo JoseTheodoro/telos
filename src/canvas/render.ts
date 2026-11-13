@@ -57,7 +57,7 @@ const OUTWARD: Record<PortSide, Point> = {
 
 /**
  * Altura real dos cards de tamanho fixo, medida a cada `renderGraph`: o conteúdo faz o card passar
- * do `NODE_H` (91 a 112 px no seed), e a porta de baixo fica na borda real.
+ * do `NODE_H` (91 a 112 px na massa de teste), e a porta de baixo fica na borda real.
  */
 const renderedHeights = new Map<NodeKey, number>();
 

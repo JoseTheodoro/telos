@@ -1,6 +1,6 @@
 // Escolher "Não definido" como pai remove a seta de contenção, sem deixar seta com origem vazia.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 
 const CHAPTER = "chapter:consulta";
 
@@ -14,7 +14,7 @@ const containmentOf = (w) => w.graph.edges.filter((e) => e.to === CHAPTER && e.f
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 try {
-  await page.goto(appUrl()); await page.waitForSelector(".node");
+  await openApp(page); await page.waitForSelector(".node");
   r.before = containmentOf(await ws()).map((e) => e.from);
   if (r.before.length !== 1) fail(`preparação: o capítulo deveria começar com uma seta contém da jornada (${r.before.length})`);
 

@@ -1,14 +1,14 @@
 // #14 Encaixe e alinhamento: grade de 24 px, Alt solta livre, guia vence a grade, grupo encaixa pelo card pego,
 // moldura na seleção leva o conteúdo, alinhar/distribuir com undo, clique com tremida não move, pontilhado segue a câmera.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 } });
 const page = await ctx.newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
@@ -104,7 +104,7 @@ async function selectOnly(locs) {
 
 try {
   await page.click('[data-focus-scene="preconsulta"]'); await page.keyboard.press("Escape");
-  let [x, y] = await centerOf(card("PreConsultaFinalizada"));
+  let [x, y] = await centerOf(card("Pré-consulta concluída"));
   await page.mouse.click(x, y);
   await page.keyboard.press("Tab");
   for (let i = 0; i < NAMES.length; i++) {

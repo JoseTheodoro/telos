@@ -1,13 +1,13 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { openApp } from "./target.mjs";
 const FIXTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures/with-hotspot-box.json");
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("dialog", (d) => d.accept());
-await page.goto(appUrl()); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
@@ -31,7 +31,7 @@ r.tabAfterResolve = (await page.textContent("#sidebarBody p.sub")).match(/\d+ em
 await page.screenshot({ path: `${SHOTS}/hotspot-1.png` });
 
 // H num evento → hotspot conectado, editor aberto
-await page.click('[data-tab="inventory"]'); await page.fill("#search", "PréConsultaIniciada");
+await page.click('[data-tab="inventory"]'); await page.fill("#search", "Pré-consulta iniciada");
 await page.click('.inventory-item[data-select-node^="event:"]');
 const b = await page.locator(".node.selected").boundingBox();
 const evKey = await page.$eval(".node.selected", (n) => n.dataset.node);
