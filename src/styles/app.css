@@ -340,3 +340,4 @@ body.presenting{overflow:hidden}
 @media(max-width:1250px){.docs-view{grid-template-columns:260px minmax(0,1fr)}.doc-panes.mode-split{grid-template-columns:1fr}.doc-panes.mode-split .doc-preview{display:none}}
 @media(max-width:930px){.body.docs-mode{grid-template-columns:210px minmax(0,1fr)}.docs-view{grid-template-columns:1fr}.docs-list{max-height:40vh}.areaswitch button{padding:6px 8px}}
 .md li:has(>input[type=checkbox]){list-style:none;margin-left:-1.25em}
+.save.warn{color:#976b30;background:#fff6e5;border-color:#f1dcae}

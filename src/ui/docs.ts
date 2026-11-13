@@ -3,7 +3,7 @@
 import { newId } from "../domain/keys";
 import type { DocNote } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
-import { persist, persistViewNow } from "../core/persistence";
+import { persistViewNow, queuePersist } from "../core/persistence";
 import { get, state } from "../core/state";
 import { $, esc, notify, saveFile, target } from "./dom";
 import { renderMarkdown } from "./rich";
@@ -358,7 +358,7 @@ export function bindDocs(): void {
       }, 120);
     }
     d.updatedAt = nowIso();
-    persist();
+    queuePersist();
     refreshList();
   });
 

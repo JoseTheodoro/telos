@@ -21,7 +21,7 @@ try {
   await page.selectOption("#mdLang", "sql");
   await page.click('[data-md="codeblock"]');
   await page.keyboard.type("select * from atendimento where status = 'aberto';");
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(450); // o caderno grava 300 ms depois da última tecla
   let w = await ws(); let d = w.docs[0];
   r.saved = { title: d.title, link: d.link, hasSql: d.body.includes("```sql\nselect"), count: await page.textContent("#docsCount") };
   r.preview = { h2: await page.$$eval("#docPreview h2", (x) => x.map((e) => e.textContent)), sqlKw: await page.$$eval("#docPreview .hljs-keyword", (x) => x.length), task: await page.$$eval("#docPreview input[type=checkbox]", (x) => x.length) };
@@ -37,7 +37,7 @@ try {
   await page.click("#docBody"); await page.keyboard.press("Meta+End"); await page.keyboard.type("\nimportante");
   await page.keyboard.down("Shift"); for (let i = 0; i < 10; i++) await page.keyboard.press("ArrowLeft"); await page.keyboard.up("Shift");
   await page.keyboard.press("Meta+b");
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(450);
   w = await ws(); r.bold = w.docs[0].body.endsWith("**importante**");
   // segunda nota sem vínculo; filtros
   await page.click(".docs-list-head [data-doc-new]");
