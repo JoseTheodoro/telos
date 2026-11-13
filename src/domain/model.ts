@@ -17,7 +17,7 @@ import { upgradeLanes } from "./lanes";
 import { upgradeEmotion } from "./emotion";
 import { grammarFor, type End, type Verdict } from "./grammar";
 import { keyId, keyKind, newId, nodeKey } from "./keys";
-import type { AnyEntity, DomainRole, Edge, NodeKey, NodeKind, Table, Workspace } from "./types";
+import type { AnyEntity, DomainRole, Edge, Journey, NodeKey, NodeKind, Table, Workspace } from "./types";
 
 export const deep = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 
@@ -215,10 +215,19 @@ function oFill(o: Record<string, unknown>, k: string, v: unknown): void {
   if (o[k] === undefined) o[k] = v;
 }
 
+const defaultJourney = (): Journey => ({
+  id: "jornada-exemplo",
+  name: "Jornada de exemplo",
+  description: "Da identificação ao retorno: consulta, exames e continuidade do cuidado.",
+  status: "Em descoberta",
+  semanticType: "Processo",
+});
+
 /** Converte o formato de oficina (pep-discovery-atlas-v1) em grafo com setas sugeridas. */
 export function graphInit(data: any): Workspace {
   const result = deep(data);
   result.schema = "pep-atlas-studio-v3";
+  if (!Array.isArray(result.journeys) || !result.journeys.length) result.journeys = [defaultJourney()];
   result.graph = { positions: {}, edges: [] };
   const g = result.graph;
   const present = (k: NodeKey) =>
@@ -301,16 +310,8 @@ function upgradeEdgeSides(ws: Workspace): void {
 
 export function upgradeWorkspace(data: any): Workspace {
   data.schema = SCHEMA;
-  data.journeys = Array.isArray(data.journeys) ? data.journeys : [];
-  if (!data.journeys.length && !data.emptyWorkspace) {
-    data.journeys.push({
-      id: "jornada-exemplo",
-      name: "Jornada de exemplo",
-      description: "Da identificação ao retorno: consulta, exames e continuidade do cuidado.",
-      status: "Em descoberta",
-      semanticType: "Processo",
-    });
-  }
+  // Sem o campo, o mapa é anterior às jornadas; uma lista vazia é escolha do usuário e fica vazia.
+  data.journeys = Array.isArray(data.journeys) ? data.journeys : [defaultJourney()];
   const fallback = data.journeys[0]?.id || "";
   for (const c of data.chapters || []) {
     if (!data.journeys.some((j: AnyEntity) => j.id === c.journeyId)) c.journeyId = fallback;

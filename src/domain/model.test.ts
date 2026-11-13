@@ -19,9 +19,41 @@ describe("graphInit", () => {
     );
     expect(seedCopy).toEqual(seed);
   });
+
+  it("graphInit creates one default journey for legacy input without journeys", () => {
+    for (const legacyInput of [structuredClone(seed), { ...structuredClone(seed), journeys: [] }]) {
+      const workspace = graphInit(legacyInput);
+
+      expect(workspace.journeys).toHaveLength(1);
+      expect(workspace.journeys[0]).toMatchObject({ id: "jornada-exemplo", name: "Jornada de exemplo" });
+    }
+  });
 });
 
 describe("upgradeWorkspace", () => {
+  it("upgradeWorkspace keeps journeys empty after user deleted all", () => {
+    const workspace = upgradeWorkspace({
+      schema: "pep-atlas-studio-v4",
+      journeys: [],
+      chapters: [{ id: "c1", label: "Capítulo", title: "Capítulo", journeyId: "j1", date: "", semanticType: "Etapa" }],
+      graph: { positions: {}, edges: [], layouts: {} },
+    });
+
+    expect(workspace.journeys).toEqual([]);
+    expect(workspace.chapters[0].journeyId).toBe("");
+  });
+
+  it("upgradeWorkspace creates the default journey for saves that predate journeys", () => {
+    const workspace = upgradeWorkspace({
+      schema: "pep-atlas-studio-v3",
+      chapters: [{ id: "c1", label: "Capítulo", title: "Capítulo", date: "", semanticType: "Etapa" }],
+      graph: { positions: {}, edges: [], layouts: {} },
+    });
+
+    expect(workspace.journeys.map(({ id, name }) => ({ id, name }))).toEqual([{ id: "jornada-exemplo", name: "Jornada de exemplo" }]);
+    expect(workspace.chapters[0].journeyId).toBe("jornada-exemplo");
+  });
+
   it("upgradeWorkspace keeps extra fields", () => {
     const workspace = upgradeWorkspace({
       schema: "pep-atlas-studio-v4",
