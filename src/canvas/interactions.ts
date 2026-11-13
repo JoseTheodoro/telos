@@ -49,7 +49,9 @@ export function bindCanvas(): void {
 
   stage.addEventListener("pointerdown", (e) => {
     const el = target(e);
-    if (el.closest("#emptyStage, #esLegend, .name-editor")) return;
+    // Controles sobre o canvas recebem o próprio clique (antes o pan capturava o ponteiro e os
+    // botões −/+/⤢ nunca disparavam — bug herdado da v1.5).
+    if (el.closest("#emptyStage, #esLegend, .name-editor, .zoomhud")) return;
     // Clique fora do campo em edição confirma antes de qualquer outra ação
     // (o preventDefault do arraste impediria o blur).
     if (isInlineEditing()) {
@@ -206,7 +208,7 @@ export function bindCanvas(): void {
   stage.addEventListener("dblclick", (e) => {
     // O alvo do dblclick pode ser o "mundo" (o card foi re-renderizado entre os cliques).
     const under = document.elementFromPoint(e.clientX, e.clientY);
-    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],#esLegend")) return;
+    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],#esLegend,.zoomhud")) return;
     if (under?.closest("[data-node],[data-edge],#esLegend")) return;
     const p = localPoint(e);
     createModal(null, Math.round(p.x), Math.round(p.y));
