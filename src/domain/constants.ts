@@ -200,9 +200,6 @@ export const HOTSPOT_PRIORITY_OPTIONS: [string, string][] = [
 /** Tipos criados pelo modal "Adicionar elemento" (nota e moldura têm criação própria). */
 export const MODAL_TYPES = TYPES.filter((t) => t !== "note" && t !== "frame");
 
-/** Hotspots não contam como "desenho" para canvas vazio e Limpar canvas. */
-export const DRAWING_TYPES = TYPES.filter((t) => t !== "hotspot");
-
 export const EDGE_STATUS_OPTIONS: [string, string][] = [
   ["Registrado", "Registrado na narrativa"],
   ["Hipótese", "Hipótese"],

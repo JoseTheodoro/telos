@@ -1,7 +1,7 @@
 // Modal: criação de elementos, lista de conexões e limpeza do canvas.
-import { ARR, CONTAINMENT_LABEL, COL, DRAWING_TYPES, MODAL_TYPES, PL } from "../domain/constants";
+import { ARR, CONTAINMENT_LABEL, COL, MODAL_TYPES, PL, TYPES } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
-import { CONTAINMENT, colorForEdge, deep, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
+import { CONTAINMENT, colorForEdge, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
 import { PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
 import type { AnyEntity, Chapter, NodeKind, Scene } from "../domain/types";
 import { change } from "../core/history";
@@ -180,18 +180,17 @@ export function listConnections(): void {
   modal().showModal();
 }
 
-// Limpar canvas: apaga só o desenho; preserva hotspots, taxonomia e contexto do projeto.
+// Limpar canvas: apaga tudo o que está no canvas, hotspots inclusive. Ficam o caderno e as classificações.
 export function confirmWipe(): void {
   const ws = state.ws;
-  const nodes = DRAWING_TYPES.reduce((n, t) => n + (ws[ARR[t]] as AnyEntity[]).length, 0);
+  const nodes = TYPES.reduce((n, t) => n + ((ws[ARR[t]] as AnyEntity[] | undefined)?.length || 0), 0);
   const arrows = ws.graph.edges.length;
-  const hotspots = ws.decisions?.length || 0;
   if (!nodes && !arrows) {
-    notify("O canvas já está vazio. Os " + hotspots + " hotspots foram preservados.");
+    notify("O canvas já está vazio.");
     return;
   }
   $("#modalBody").innerHTML =
-    `<div class="eyebrow">LIMPEZA DO CANVAS</div><h2 style="color:#a64237">Limpar todos os nós e conexões?</h2><p class="wipe-note">Esta ação apaga <b>somente o desenho visual</b>: jornadas, capítulos, cenas, eventos, domínios, sistemas, telas, tabelas, suas setas e posições. <b>Os hotspots e suas decisões permanecem intactos</b>, assim como as classificações personalizadas.</p><div class="wipe-preview"><strong>${nodes} caixas</strong> e <strong>${arrows} setas</strong> serão apagadas.<br><strong style="color:#247653">${hotspots} hotspots serão mantidos.</strong></div><p class="wipe-note">Faça backup JSON antes de limpar. O canvas vazio será salvo e continuará vazio após refresh.</p><button class="btn" id="backupBeforeWipe" type="button">↓ Fazer backup JSON agora</button><div class="field" style="margin-top:17px"><label for="confirmWipeInput">Para confirmar, digite <b>APAGAR</b></label><input class="input wipe-input" id="confirmWipeInput" placeholder="APAGAR" autocomplete="off" spellcheck="false" aria-label="Digite APAGAR para confirmar"></div><div class="wipe-warning">Esta operação não poderá ser desfeita pelo editor. Um backup JSON permite restaurar o estado anterior.</div><div class="modal-foot"><button class="btn" id="cancelModal" type="button">Cancelar</button><button class="btn danger" id="executeWipe" type="button" disabled>✕ Limpar apenas o canvas</button></div>`;
+    `<div class="eyebrow">LIMPEZA DO CANVAS</div><h2 style="color:#a64237">Limpar tudo o que está no canvas?</h2><p class="wipe-note">Esta ação apaga <b>tudo o que está no canvas</b>: jornadas, capítulos, cenas, eventos, domínios, sistemas, telas, tabelas, <b>hotspots e suas decisões</b>, notas livres, molduras, setas e posições. <b>Ficam</b> o caderno e as classificações personalizadas (tipos, naturezas, destinos e raias).</p><div class="wipe-preview"><strong>${nodes} caixas</strong> e <strong>${arrows} setas</strong> serão apagadas.</div><p class="wipe-note">Faça backup JSON antes de limpar. O canvas vazio será salvo e continuará vazio após refresh.</p><button class="btn" id="backupBeforeWipe" type="button">↓ Fazer backup JSON agora</button><div class="field" style="margin-top:17px"><label for="confirmWipeInput">Para confirmar, digite <b>APAGAR</b></label><input class="input wipe-input" id="confirmWipeInput" placeholder="APAGAR" autocomplete="off" spellcheck="false" aria-label="Digite APAGAR para confirmar"></div><div class="wipe-warning">Esta operação não poderá ser desfeita pelo editor. Um backup JSON permite restaurar o estado anterior.</div><div class="modal-foot"><button class="btn" id="cancelModal" type="button">Cancelar</button><button class="btn danger" id="executeWipe" type="button" disabled>✕ Limpar o canvas</button></div>`;
   modal().showModal();
   $("#confirmWipeInput").focus();
 }
@@ -212,8 +211,9 @@ function wipeWorkspace(): void {
     screens: [],
     tables: [],
     semanticNodes: [],
+    canvasNotes: [],
     frames: [],
-    decisions: deep(old.decisions || []),
+    decisions: [],
     eventMappings: {},
     sceneMappings: {},
     graph: { positions: {}, edges: [], layouts: {} },
@@ -240,7 +240,7 @@ function wipeWorkspace(): void {
   persist();
   refreshAll(false);
   persistViewNow();
-  notify("Canvas limpo. Hotspots preservados. Estado salvo para refresh.");
+  notify("Canvas limpo. O caderno foi mantido. Estado salvo para refresh.");
 }
 
 export function bindModal(): void {

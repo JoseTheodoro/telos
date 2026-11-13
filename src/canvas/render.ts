@@ -1,5 +1,5 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { ARR, DRAWING_TYPES, NATURE_BASE, PL, PORT_Y } from "../domain/constants";
+import { ARR, NATURE_BASE, PL, PORT_Y, TYPES } from "../domain/constants";
 import { formatLabel, isCodeFormat, jsonError, renderNoteBody } from "../ui/rich";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
@@ -254,7 +254,7 @@ export function renderGraph(): void {
   state.visibleKeys = visible();
   const visibleKeys = state.visibleKeys;
   pruneMultiSelection(visibleKeys);
-  $("#emptyStage").hidden = !DRAWING_TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
+  $("#emptyStage").hidden = TYPES.some((t) => ((ws[ARR[t]] as AnyEntity[] | undefined)?.length || 0) > 0);
   renderLegend();
   renderCounters();
   if (!visibleKeys.size) {

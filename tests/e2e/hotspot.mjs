@@ -63,7 +63,7 @@ r.legendHotspot = await page.$$eval("#esLegend li", (ls) => ls.find((l) => l.tex
 // catálogo
 await page.click('[data-tab="inventory"]'); await page.fill("#search", "");
 r.inventoryGroup = await page.$$eval(".inventory-title span", (s) => s.map((x) => x.textContent).find((t) => t.startsWith("HOTSPOT")));
-// limpar canvas preserva hotspots
+// limpar canvas apaga tudo o que está no canvas, hotspots inclusive (asserções em wipe.mjs)
 await page.click("#clearCanvasBtn");
 r.wipePreview = (await page.textContent(".wipe-preview")).replace(/\s+/g, " ");
 await page.fill("#confirmWipeInput", "APAGAR"); await page.click("#executeWipe");
