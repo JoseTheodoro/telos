@@ -19,7 +19,7 @@ import { bindDocs, onGotoCanvas, renderDocs } from "./ui/docs";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
-import { bindImport, csvExport, exportJson, svgExport } from "./io/files";
+import { bindImport, csvExport, exportJson, offerInvalidSavedExport, svgExport } from "./io/files";
 import { bindInspector, renderInspector } from "./ui/inspector";
 import { bindModal, confirmWipe, createModal, listConnections } from "./ui/modal";
 import { bindSidebar, renderFilters, renderSidebar } from "./ui/sidebar";
@@ -220,7 +220,8 @@ function firstLoad(): void {
 }
 
 export function startApp(): void {
-  state.ws = loadInitialWorkspace();
+  const { workspace, invalidSaved } = loadInitialWorkspace();
+  state.ws = workspace;
   const v = state.ws.view;
   if (v.journey !== undefined) setFocus(v.journey || "", v.chapter || "", v.scene || "");
   state.legendCollapsed = v.legendCollapsed ?? window.innerWidth < 930;
@@ -257,4 +258,5 @@ export function startApp(): void {
 
   refreshTools();
   firstLoad();
+  if (invalidSaved !== null) offerInvalidSavedExport(invalidSaved);
 }

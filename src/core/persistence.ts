@@ -1,24 +1,63 @@
 // Persistência no localStorage (mesma chave da v1.5 → dados existentes continuam válidos).
 import seed from "../data/seed.json";
-import { LEGACY_STORE, SCHEMA, STORE } from "../domain/constants";
+import { INVALID_STORE, LEGACY_STORE, SCHEMA, STORE } from "../domain/constants";
 import { graphInit, upgradeWorkspace } from "../domain/model";
 import type { Workspace } from "../domain/types";
+import { parseWorkspace } from "../domain/validate";
 import { $, notify } from "../ui/dom";
 import { state } from "./state";
 
-/** Carrega do navegador; sem dados salvos, usa o seed da oficina. */
-export function loadInitialWorkspace(): Workspace {
-  let saved: unknown = null;
+export interface InitialWorkspace {
+  workspace: Workspace;
+  invalidSaved: string | null;
+}
+
+interface SavedEntry {
+  key: string;
+  raw: string;
+}
+
+function readSaved(): SavedEntry | null {
   try {
-    const raw = localStorage.getItem(STORE) || localStorage.getItem(LEGACY_STORE);
-    if (raw) saved = JSON.parse(raw);
+    for (const key of [STORE, LEGACY_STORE]) {
+      const raw = localStorage.getItem(key);
+      if (raw) return { key, raw };
+    }
   } catch {
-    /* storage indisponível ou corrompido: cai no seed */
+    /* storage indisponível: cai no seed */
   }
-  let ws: any = saved;
-  if (!ws) ws = graphInit(seed);
-  else if (!ws.graph) ws = graphInit(ws);
-  return upgradeWorkspace(ws);
+  return null;
+}
+
+function parseSaved(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// Sai da chave principal antes de ser copiado: o autosave do seed não pode sobrescrevê-lo, e a cópia cabe na cota liberada.
+function keepInvalidSaved({ key, raw }: SavedEntry): void {
+  try {
+    localStorage.removeItem(key);
+    localStorage.setItem(INVALID_STORE, raw);
+  } catch (err) {
+    console.warn("Não foi possível guardar o mapa inválido no navegador", err);
+  }
+}
+
+const seedWorkspace = (): Workspace => upgradeWorkspace(graphInit(seed));
+
+/** Carrega do navegador; sem dados salvos, usa o seed da oficina. */
+export function loadInitialWorkspace(): InitialWorkspace {
+  const saved = readSaved();
+  const document = saved ? parseSaved(saved.raw) : null;
+  if (!saved || document === null) return { workspace: seedWorkspace(), invalidSaved: null };
+  const parsed = parseWorkspace(document);
+  if (parsed.ok) return { workspace: parsed.workspace, invalidSaved: null };
+  keepInvalidSaved(saved);
+  return { workspace: seedWorkspace(), invalidSaved: saved.raw };
 }
 
 /** O localStorage guarda cerca de 5 MB por origem: a partir daqui o usuário é avisado antes da falha. */

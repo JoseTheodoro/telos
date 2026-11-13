@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import seed from "../data/seed.json";
 import fixtureWithHotspotBox from "../../tests/e2e/fixtures/with-hotspot-box.json";
-import { parseWorkspace } from "./validate";
+import { describeIssues, parseWorkspace } from "./validate";
 
 const validDocument = (overrides: Record<string, unknown> = {}, graph: Record<string, unknown> = {}) => ({
   schema: "pep-atlas-studio-v4",
@@ -115,5 +115,29 @@ describe("parseWorkspace", () => {
     expect(roundTripped.graph.edges[0].customEdgeField).toBe(true);
     expect(roundTripped.graph.customGraphField).toBe("g");
     expect(input).toEqual(original);
+  });
+
+  it("drops positions saved as null by older versions", () => {
+    const input = validDocument({}, { layouts: { "lanes|chapter:c1": { "scene:a": { x: null, y: 450 }, "scene:b": { x: 10, y: 20 } } } });
+
+    const workspace = workspaceOf(input);
+
+    expect(workspace.graph.layouts["lanes|chapter:c1"]).toEqual({ "scene:b": { x: 10, y: 20 } });
+  });
+});
+
+describe("describeIssues", () => {
+  it("describes the first three issues without values", () => {
+    const issues = [
+      { path: "graph.layouts.all.scene:a.x", code: "not_number" },
+      { path: "graph.layouts.all.scene:a.y", code: "not_finite" },
+      { path: "scenes.0.id", code: "not_string" },
+      { path: "frames.0.w", code: "not_number" },
+    ] as const;
+
+    expect(describeIssues([...issues])).toBe(
+      "graph.layouts.all.scene:a.x (não é número), graph.layouts.all.scene:a.y (número inválido), scenes.0.id (não é texto) e mais 1",
+    );
+    expect(describeIssues([{ path: "schema", code: "unknown_schema" }])).toBe("schema (formato desconhecido)");
   });
 });

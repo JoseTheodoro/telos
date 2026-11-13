@@ -244,6 +244,7 @@ export const COL: Record<NodeKind, number> = {
 
 export const STORE = "pep-atlas-studio-v4";
 export const LEGACY_STORE = "pep-atlas-studio-v3";
+export const INVALID_STORE = `${STORE}:invalid`;
 export const SCHEMA = "pep-atlas-studio-v4";
 export const ACCEPTED_SCHEMAS = ["pep-atlas-studio-v4", "pep-atlas-studio-v3", "pep-discovery-atlas-v1"];
 

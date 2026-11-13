@@ -1,9 +1,10 @@
 // Importação e exportação (JSON, CSV, SVG).
-import { ACCEPTED_SCHEMAS, COLORS, NODE_H, NODE_W, PL } from "../domain/constants";
+import { COLORS, NODE_H, NODE_W, PL } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
 import { esStyle } from "../domain/es";
-import { colorForEdge, graphInit, isTableLink, semanticLabel, upgradeWorkspace } from "../domain/model";
+import { colorForEdge, isTableLink, semanticLabel } from "../domain/model";
 import type { Chapter, NoteItem, Scene } from "../domain/types";
+import { describeIssues, parseWorkspace, type ValidationIssue } from "../domain/validate";
 import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
@@ -182,6 +183,25 @@ export function svgExport(): void {
   notify("SVG exportado com setas coloridas");
 }
 
+export function offerInvalidSavedExport(raw: string): void {
+  const message =
+    "Mapa salvo com dados inválidos: o Atlas abriu o mapa de exemplo no lugar dele. Exportar o JSON salvo para recuperar o trabalho?";
+  if (confirm(message)) saveFile("pep-atlas-studio-invalido.json", raw, "application/json;charset=utf-8");
+}
+
+function parseImported(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+const importFailure = (issues: ValidationIssue[]): string =>
+  issues.some((issue) => issue.code === "unknown_schema")
+    ? "Use um JSON exportado por uma versão do Atlas."
+    : `dados inválidos em ${describeIssues(issues)}`;
+
 export function bindImport(): void {
   const input = $<HTMLInputElement>("#importFile");
   $("#importBtn").onclick = () => input.click();
@@ -189,11 +209,11 @@ export function bindImport(): void {
     const f = input.files?.[0];
     if (!f) return;
     try {
-      const o = JSON.parse(await f.text());
-      if (!ACCEPTED_SCHEMAS.includes(o.schema)) throw Error("Use um JSON exportado por uma versão do Atlas.");
+      const parsed = parseWorkspace(parseImported(await f.text()));
+      if (!parsed.ok) throw Error(importFailure(parsed.issues));
       if (!confirm("A importação substituirá o mapa atual. Exporte o mapa antes de continuar.")) return;
       undoPush();
-      state.ws = upgradeWorkspace(o.schema === "pep-discovery-atlas-v1" ? graphInit(o) : o);
+      state.ws = parsed.workspace;
       state.selected = null;
       const v = state.ws.view;
       setFocus(v?.journey || state.ws.journeys[0]?.id || "", v?.chapter || "", v?.scene || "");

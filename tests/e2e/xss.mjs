@@ -14,23 +14,65 @@ for (const mode of ["", "timeline|", "lanes|"])
     poisoned.graph.layouts[mode + scope] = Object.fromEntries(sceneNodes.map((nodeKey) => [nodeKey, { x: PAYLOAD, y: 100 }]));
 poisoned.view = { layoutMode: "layers", journey: poisoned.journeys[0]?.id ?? "", chapter: "consulta", scene: "preconsulta" };
 
+const STORE = "pep-atlas-studio-v4";
+const poisonedJson = JSON.stringify(poisoned);
+
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
-const alerts = [];
-page.on("dialog", (d) => { if (d.type() === "alert") alerts.push(d.message()); d.accept(); });
+const errors = [];
+page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
+const dialogs = [];
+page.on("dialog", (d) => { dialogs.push({ type: d.type(), message: d.message() }); d.accept(); });
 const xssCount = () => page.evaluate(() => window.__xss);
+const importFile = (name, content) => page.setInputFiles("#importFile", { name, mimeType: "application/json", buffer: Buffer.from(content) });
+const leaksContent = (message) => message.includes("onerror") || message.includes("<img");
 try {
   await page.goto(appUrl()); await page.waitForSelector(".node");
-  await page.setInputFiles("#importFile", { name: "poc.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(poisoned)) });
+  const countsBefore = await page.textContent("#counts");
+
+  await importFile("poc.json", poisonedJson);
   await page.waitForTimeout(600);
   r.xssAfterImport = await xssCount();
   if (r.xssAfterImport !== undefined) fail(`payload executou no import (${r.xssAfterImport}x)`);
-  await page.reload(); await page.waitForTimeout(600);
-  r.xssAfterReload = await xssCount();
-  if (r.xssAfterReload !== undefined) fail(`payload executou depois do reload (${r.xssAfterReload}x)`);
-  r.alerts = alerts.length;
+  const importAlert = dialogs.find((d) => d.type === "alert")?.message ?? "";
+  r.importAlert = importAlert;
+  if (!/graph\.layouts\.[^ ]+\.x \(não é número\)/.test(importAlert) || !/ e mais \d+$/.test(importAlert)) fail(`import inválido deveria listar as 3 primeiras issues: ${importAlert}`);
+  if (leaksContent(importAlert)) fail("o alerta do import inválido não pode trazer trecho do conteúdo");
+  if (dialogs.some((d) => d.type === "confirm")) fail("import inválido não deveria pedir confirmação para substituir o mapa");
+  if ((await page.textContent("#counts")) !== countsBefore) fail("import inválido não deveria substituir o mapa");
+
+  dialogs.length = 0;
+  await importFile("quebrado.json", '{"schema": <img src=x onerror=alert(1)>');
+  await page.waitForTimeout(300);
+  const brokenAlert = dialogs.find((d) => d.type === "alert")?.message ?? "";
+  r.brokenAlert = brokenAlert;
+  if (!brokenAlert.startsWith("Falha na importação") || leaksContent(brokenAlert)) fail(`JSON quebrado deveria falhar sem trecho do conteúdo: ${brokenAlert}`);
+
+  dialogs.length = 0;
+  // O beforeunload do app regrava o mapa atual: o dado envenenado entra já no documento novo, uma única vez.
+  await page.addInitScript(([key, raw]) => {
+    if (sessionStorage.getItem("xss-seeded")) return;
+    sessionStorage.setItem("xss-seeded", "1");
+    localStorage.setItem(key, raw);
+  }, [STORE, poisonedJson]);
+  const [download] = await Promise.all([page.waitForEvent("download", { timeout: 5000 }), page.reload()]);
+  await page.waitForSelector(".node");
+  r.xssAfterPoisonedLoad = await xssCount();
+  if (r.xssAfterPoisonedLoad !== undefined) fail(`payload executou na carga do localStorage (${r.xssAfterPoisonedLoad}x)`);
+  const notice = dialogs.find((d) => d.type === "confirm")?.message ?? "";
+  r.notice = notice;
+  if (!notice.includes("Mapa salvo com dados inválidos")) fail(`carga inválida deveria avisar o usuário: ${notice}`);
+  const exported = fs.readFileSync(await download.path(), "utf8");
+  if (exported !== poisonedJson) fail("a exportação deveria trazer o JSON salvo, sem alteração");
+  r.backupKept = await page.evaluate((key) => localStorage.getItem(key + ":invalid"), STORE) === poisonedJson;
+  if (!r.backupKept) fail("o JSON inválido deveria ficar guardado no navegador");
+
+  dialogs.length = 0;
+  await page.reload(); await page.waitForSelector(".node");
+  r.noticeAgain = dialogs.length;
+  if (r.noticeAgain) fail("o aviso deveria aparecer só na carga que encontrou o dado inválido");
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
-console.log(r);
+console.log(r, "\nerrors:", errors);
 await browser.close();

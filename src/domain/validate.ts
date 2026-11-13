@@ -25,11 +25,15 @@ function finiteNumberIssues(value: unknown, path: string): ValidationIssue[] {
   return Number.isFinite(value) ? [] : [{ path, code: "not_finite" }];
 }
 
+// Versões anteriores gravavam -Infinity, que o JSON salva como null: a posição é recalculada pelo layout automático.
+const isUnsetPoint = (point: unknown): boolean => isRecord(point) && (point.x === null || point.y === null);
+
 function positionIssues(positions: unknown, path: string): ValidationIssue[] {
   if (!isRecord(positions)) return [];
   return Object.entries(positions).flatMap(([nodeKey, point]): ValidationIssue[] => {
     const pointPath = `${path}.${nodeKey}`;
     if (!NODE_KEY.test(nodeKey)) return [{ path: pointPath, code: "invalid_key" }];
+    if (isUnsetPoint(point)) return [];
     const coordinates = isRecord(point) ? point : {};
     return [...finiteNumberIssues(coordinates.x, `${pointPath}.x`), ...finiteNumberIssues(coordinates.y, `${pointPath}.y`)];
   });
@@ -64,6 +68,17 @@ function sizeIssues(document: JsonRecord): ValidationIssue[] {
   );
 }
 
+function dropUnsetPoints(positions: unknown): void {
+  if (!isRecord(positions)) return;
+  for (const [nodeKey, point] of Object.entries(positions)) if (isUnsetPoint(point)) delete positions[nodeKey];
+}
+
+function dropUnsetPositions(document: JsonRecord): void {
+  if (!isRecord(document.graph)) return;
+  dropUnsetPoints(document.graph.positions);
+  if (isRecord(document.graph.layouts)) Object.values(document.graph.layouts).forEach(dropUnsetPoints);
+}
+
 function normalizeEdgeColors(workspace: Workspace): void {
   for (const edge of workspace.graph.edges) {
     if (!validColor(typeof edge.color === "string" ? edge.color : "")) edge.color = "";
@@ -77,8 +92,26 @@ export function parseWorkspace(input: unknown): ParseResult {
   const issues = [...entityIdIssues(input), ...graphIssues(input.graph), ...sizeIssues(input)];
   if (issues.length) return { ok: false, issues };
   const document = deep(input);
+  dropUnsetPositions(document);
   const needsGraph = document.schema === "pep-discovery-atlas-v1" || !isRecord(document.graph);
   const workspace = upgradeWorkspace(needsGraph ? graphInit(document) : document);
   normalizeEdgeColors(workspace);
   return { ok: true, workspace };
+}
+
+const ISSUE_LABELS: Record<ValidationIssue["code"], string> = {
+  not_number: "não é número",
+  not_finite: "número inválido",
+  not_string: "não é texto",
+  unknown_schema: "formato desconhecido",
+  invalid_color: "cor inválida",
+  invalid_key: "chave inválida",
+};
+
+const DESCRIBED_ISSUES = 3;
+
+export function describeIssues(issues: ValidationIssue[]): string {
+  const described = issues.slice(0, DESCRIBED_ISSUES).map(({ path, code }) => `${path} (${ISSUE_LABELS[code]})`).join(", ");
+  const remaining = issues.length - DESCRIBED_ISSUES;
+  return remaining > 0 ? `${described} e mais ${remaining}` : described;
 }
