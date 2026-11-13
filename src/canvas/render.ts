@@ -104,12 +104,26 @@ function nodeHtml(k: NodeKey): string {
   return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}" style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
 }
 
+/** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
+function renderCounters(): void {
+  const { ws, visibleKeys } = state;
+  const edges = ws.graph.edges;
+  const shownEdges = edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to)).length;
+  $("#visCount").textContent = `${visibleKeys.size} nós · ${shownEdges} setas`;
+  $("#counts").textContent =
+    `${ws.journeys.length} jornadas · ${ws.chapters.length} capítulos · ${ws.scenes.length} cenas · ${ws.events.length} eventos`;
+  const count = (fn: (e: (typeof edges)[number]) => boolean) => edges.filter(fn).length;
+  $("#footerLeft").textContent =
+    `${edges.length} relações · ${count((e) => e.status === "Validado")} validadas · ${count((e) => e.accessMode === "WRITE")} WRITE · ${count((e) => e.accessMode === "READ")} READ`;
+}
+
 export function renderGraph(): void {
   const { ws } = state;
   state.visibleKeys = visible();
   const visibleKeys = state.visibleKeys;
   $("#emptyStage").hidden = !TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
   renderLegend();
+  renderCounters();
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";
     renderEdges();
@@ -120,13 +134,4 @@ export function renderGraph(): void {
   $("#world").style.width = Math.max(2800, bounds.maxX + 500) + "px";
   $("#world").style.height = Math.max(2500, bounds.maxY + 500) + "px";
   renderEdges();
-
-  const edges = ws.graph.edges;
-  const shownEdges = edges.filter((e) => visibleKeys.has(e.from) && visibleKeys.has(e.to)).length;
-  $("#visCount").textContent = `${visibleKeys.size} nós · ${shownEdges} setas`;
-  $("#counts").textContent =
-    `${ws.journeys.length} jornadas · ${ws.chapters.length} capítulos · ${ws.scenes.length} cenas · ${ws.events.length} eventos`;
-  const count = (fn: (e: (typeof edges)[number]) => boolean) => edges.filter(fn).length;
-  $("#footerLeft").textContent =
-    `${edges.length} relações · ${count((e) => e.status === "Validado")} validadas · ${count((e) => e.accessMode === "WRITE")} WRITE · ${count((e) => e.accessMode === "READ")} READ`;
 }
