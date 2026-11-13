@@ -28,12 +28,16 @@ export function getEntityByKey(ws: Workspace, k: NodeKey): AnyEntity | undefined
   return getEntity(ws, keyKind(k), keyId(k));
 }
 
+/** Campo que guarda o nome exibido no card de cada tipo. */
+export function nameField(kind: NodeKind): "label" | "title" | "name" {
+  return kind === "chapter" ? "label" : kind === "scene" ? "title" : "name";
+}
+
 export function entityLabel(ws: Workspace, k: NodeKey): string {
   const o = getEntityByKey(ws, k);
-  const t = keyKind(k);
   if (!o) return "(removido)";
-  if (t === "chapter") return String(o.label ?? "");
-  if (t === "scene") return String(o.title ?? "");
+  const field = nameField(keyKind(k));
+  if (field !== "name") return String(o[field] ?? "");
   return o.name || "(sem nome)";
 }
 

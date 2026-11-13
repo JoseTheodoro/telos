@@ -48,6 +48,8 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 ### Onda 1 · Parece Event Storming
 
 - **#1 Cores canônicas de Event Storming + legenda.** O tipo semântico define o post-it: Ator (amarelo), Comando/Ação (azul), Agregado/Estado (amarelo-claro), Evento (laranja), Política/Regra (lilás), Read model/Tela (verde), Sistema/Integração (rosa) e Hotspot/Dúvida (vermelho). Sem tipo semântico, valem os padrões estruturais: evento é laranja, sistema é rosa, tela é verde e os demais ficam como estrutura neutra. A legenda fica no canto do canvas, conta os elementos do recorte e pode ser recolhida. O inspetor mostra qual post-it o elemento representa. O mapeamento está em `src/domain/es.ts`.
+- **#2 Edição inline do nome.** Duplo clique no card (ou `F2` com o card selecionado) transforma o nome num campo de texto. `Enter` ou clicar fora salva, `Esc` cancela. Nome vazio é recusado e `Ctrl/Cmd+Z` desfaz. Junto vieram duas correções no inspetor: o título acompanha a digitação, e focar um campo sem alterar nada não cria mais um "desfazer" vazio.
+- **Correção:** os contadores de nós, setas e relações zeram depois de "Limpar canvas".
 
 ### v1.6: migração técnica, sem mudança funcional
 

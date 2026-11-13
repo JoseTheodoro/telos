@@ -4,7 +4,7 @@ import { esStyle } from "../domain/es";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import { collection, colorForEdge, defaultEdgeName, edgeFor, isTableLink, syncMaps, validColor } from "../domain/model";
 import type { AnyEntity, Edge, NodeKind, RegistryOption } from "../domain/types";
-import { change, undoPush } from "../core/history";
+import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, state } from "../core/state";
 import { beginConnect, duplicateSelection, ensureVisible, safeRemoveSelection, selectEdge } from "../actions";
@@ -33,7 +33,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
 function edgeInspector(e: Edge): string {
@@ -340,10 +340,13 @@ function addCustomChoice(which: string): void {
 export function bindInspector(): void {
   const body = $("#inspectBody");
 
-  // Snapshot de undo ao entrar num campo de texto (edição ao vivo abaixo não empilha).
+  // Snapshot tirado ao entrar no campo, mas só empilhado na primeira alteração real
+  // (antes, apenas focar um campo criava um "desfazer" vazio).
+  let pendingSnapshot: string | null = null;
   body.addEventListener("focusin", (e) => {
     const x = target(e);
-    if (x.dataset.field && (x.matches("textarea") || x.matches("input"))) undoPush();
+    pendingSnapshot =
+      x.dataset.field && (x.matches("textarea") || x.matches("input")) ? JSON.stringify(state.ws) : null;
   });
 
   // Edição ao vivo (a cada tecla) sem re-render do inspetor.
@@ -365,6 +368,10 @@ export function bindInspector(): void {
     }
     if (!x.dataset.field || !(x.matches("textarea") || x.matches("input:not([type=color])"))) return;
     if (!sel) return;
+    if (pendingSnapshot) {
+      pushSnapshot(pendingSnapshot);
+      pendingSnapshot = null;
+    }
     const path = x.dataset.field;
     const v = x.value;
     if (sel.kind === "edge" && path.startsWith("edge.")) {
@@ -373,9 +380,11 @@ export function bindInspector(): void {
     } else if (sel.kind === "decision" && path.startsWith("decision.")) {
       const o = state.ws.decisions.find((a) => a.id === sel.id) as Record<string, unknown> | undefined;
       if (o) o[path.slice(9)] = v;
+      if (path === "decision.title") $("#inspectTitle").textContent = v;
     } else if (sel.kind === "node") {
       const o = getByKey(sel.id);
       if (o) o[path] = path === "questions" || path === "answers" ? v.split(/\r?\n/) : v;
+      $("#inspectTitle").textContent = label(sel.id);
     }
     persist();
     renderGraph();

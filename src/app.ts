@@ -8,6 +8,7 @@ import { setFocus, state } from "./core/state";
 import { safeRemoveSelection } from "./actions";
 import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
+import { startInlineEdit } from "./canvas/inline-edit";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
@@ -80,6 +81,11 @@ function bindKeyboard(): void {
     if (mod && key === "y") {
       e.preventDefault();
       redo();
+      return;
+    }
+    if (e.key === "F2" && state.selected?.kind === "node") {
+      e.preventDefault();
+      startInlineEdit(state.selected.id);
       return;
     }
     if (e.key === "Delete" || e.key === "Backspace") {

@@ -9,6 +9,7 @@ import { finishConnect, linkCreate, selectEdge, selectNode } from "../actions";
 import { createModal } from "../ui/modal";
 import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
+import { finishInlineEdit, isInlineEditing, startInlineEdit } from "./inline-edit";
 import { activePositions, pos } from "./layout";
 import { renderEdges, renderGraph } from "./render";
 
@@ -23,13 +24,35 @@ const NEXT_KIND: Partial<Record<NodeKind, NodeKind>> = {
   table: "event",
 };
 
+/**
+ * Duplo clique detectado no pointerdown: o primeiro clique re-renderiza os cards,
+ * então o "dblclick" nativo não chega ao card de forma confiável.
+ */
+const DOUBLE_TAP_MS = 450;
+const DOUBLE_TAP_PX = 6;
+let lastTap: { key: string; time: number; x: number; y: number } | null = null;
+
+function isDoubleTap(key: string, e: PointerEvent): boolean {
+  const now = performance.now();
+  const hit =
+    !!lastTap &&
+    lastTap.key === key &&
+    now - lastTap.time < DOUBLE_TAP_MS &&
+    Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DOUBLE_TAP_PX;
+  lastTap = hit ? null : { key, time: now, x: e.clientX, y: e.clientY };
+  return hit;
+}
+
 export function bindCanvas(): void {
   const stage = $("#stage");
   const ghost = $("#linkGhost") as unknown as SVGPathElement;
 
   stage.addEventListener("pointerdown", (e) => {
     const el = target(e);
-    if (el.closest("#emptyStage, #esLegend")) return;
+    if (el.closest("#emptyStage, #esLegend, .name-editor")) return;
+    // Clique fora do campo em edição confirma antes de qualquer outra ação
+    // (o preventDefault do arraste impediria o blur).
+    if (isInlineEditing()) finishInlineEdit(true);
 
     const port = el.closest<HTMLElement>("[data-port]");
     if (port) {
@@ -53,6 +76,12 @@ export function bindCanvas(): void {
     const node = el.closest<HTMLElement>("[data-node]");
     if (node) {
       const k = node.dataset.node as string;
+      if (state.mode === "pointer" && isDoubleTap(k, e)) {
+        e.preventDefault();
+        state.dragging = null;
+        startInlineEdit(k);
+        return;
+      }
       selectNode(k);
       if (state.mode === "connect") {
         finishConnect(k);
@@ -165,7 +194,10 @@ export function bindCanvas(): void {
   );
 
   stage.addEventListener("dblclick", (e) => {
-    if (target(e).closest("[data-node],[data-edge],#esLegend")) return;
+    // O alvo do dblclick pode ser o "mundo" (o card foi re-renderizado entre os cliques).
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],#esLegend")) return;
+    if (under?.closest("[data-node],[data-edge],#esLegend")) return;
     const p = localPoint(e);
     createModal(null, Math.round(p.x), Math.round(p.y));
   });
