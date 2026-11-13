@@ -133,7 +133,6 @@ export const SEMANTIC_BASE: string[] = [
   "Integração",
   "Dependência",
   "Risco",
-  "Hotspot",
   "Pergunta em aberto",
   "Marco / Checkpoint",
   "Regra clínica",

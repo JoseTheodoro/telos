@@ -85,8 +85,10 @@ function updateModalExtra(): void {
         ["WRITE", "WRITE · vermelho"],
       ]);
   const preferred = ds.preferredSemantic || "Não definido";
-  extra +=
-    options("Tipo semântico", "new.semanticType", preferred, semOptions(preferred)) +
+  // Hotspot é sempre o post-it vermelho: sem escolha de tipo semântico.
+  if (t !== "hotspot")
+    extra +=
+      options("Tipo semântico", "new.semanticType", preferred, semOptions(preferred)) +
     `<div class="field"><label>Ou criar tipo semântico personalizado</label><input class="input" id="newCustomSemantic" placeholder="Ex.: Transição de estado"></div>`;
   $("#newExtra").innerHTML = extra;
 }
@@ -94,7 +96,7 @@ function updateModalExtra(): void {
 
 function makeNew(): void {
   const ds = modal().dataset;
-  const t = ds.kind as NodeKind;
+  let t = ds.kind as NodeKind;
   const name = $<HTMLInputElement>("#newName").value.trim();
   if (!name) {
     notify("Informe um nome para criar o elemento.");
@@ -107,6 +109,7 @@ function makeNew(): void {
     return;
   }
   const semantic = $<HTMLInputElement>("#newCustomSemantic")?.value.trim() || val("semanticType") || "Não definido";
+  if (t === "semantic" && semantic.toLowerCase() === "hotspot") t = "hotspot"; // hotspot é nó próprio
   const id = newEntityId(state.ws, t);
   const obj = buildEntity(t, id, name, semantic, val);
   const k = nodeKey(t, id);

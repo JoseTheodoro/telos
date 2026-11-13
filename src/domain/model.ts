@@ -9,6 +9,7 @@ import {
   TYPES,
   UNDEFINED_SEMANTIC,
 } from "./constants";
+import { newEntityId } from "./factory";
 import { grammarFor, type End, type Verdict } from "./grammar";
 import { keyId, keyKind, newId, nodeKey } from "./keys";
 import type { AnyEntity, DomainRole, Edge, NodeKey, NodeKind, Table, Workspace } from "./types";
@@ -261,7 +262,8 @@ export function upgradeWorkspace(data: any): Workspace {
   for (const c of data.chapters || []) {
     if (!data.journeys.some((j: AnyEntity) => j.id === c.journeyId)) c.journeyId = fallback;
   }
-  data.elementTypes = [...new Set([...SEMANTIC_BASE, ...(data.elementTypes || [])])];
+  // "Hotspot" deixou de ser tipo de caixa livre: hotspot é um nó próprio (tecla H).
+  data.elementTypes = [...new Set([...SEMANTIC_BASE, ...(data.elementTypes || [])])].filter((t) => t !== "Hotspot");
   data.natureOptions = Array.isArray(data.natureOptions)
     ? data.natureOptions
     : NATURE_BASE.map((x) => ({ id: x[0], label: x[1] }));
@@ -303,9 +305,46 @@ export function upgradeWorkspace(data: any): Workspace {
       });
   }
   data.graph.layouts = data.graph.layouts || {};
+  promoteHotspotBoxes(data as Workspace);
   linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;
+}
+
+/**
+ * Caixa livre com tipo "Hotspot" vira hotspot de verdade (mesmas setas e posições).
+ * Idempotente: depois da conversão não sobra caixa desse tipo.
+ */
+function promoteHotspotBoxes(ws: Workspace): void {
+  const boxes = ws.semanticNodes.filter((n) => n.semanticType === "Hotspot");
+  if (!boxes.length) return;
+  for (const b of boxes) {
+    const id = newEntityId(ws, "hotspot");
+    ws.decisions.push({
+      id,
+      semanticType: "Hotspot",
+      title: b.name,
+      description: b.description || "",
+      priority: "Média",
+      status: "Aberta",
+      owner: "",
+      resolution: b.notes || "",
+      origin: b.origin,
+    });
+    const oldKey = nodeKey("semantic", b.id);
+    const newKey = nodeKey("hotspot", id);
+    for (const e of ws.graph.edges) {
+      if (e.from === oldKey) e.from = newKey;
+      if (e.to === oldKey) e.to = newKey;
+    }
+    for (const layout of Object.values(ws.graph.layouts)) {
+      if (layout[oldKey]) {
+        layout[newKey] = layout[oldKey];
+        delete layout[oldKey];
+      }
+    }
+  }
+  ws.semanticNodes = ws.semanticNodes.filter((n) => n.semanticType !== "Hotspot");
 }
 
 /**
