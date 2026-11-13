@@ -13,6 +13,7 @@ import type {
   ToolMode,
   Workspace,
 } from "../domain/types";
+import type { GuideLines } from "../canvas/guides";
 
 export type Dragging =
   | { type: "link"; start: NodeKey }
@@ -47,6 +48,7 @@ export type Dragging =
       y0: number;
       snap: string;
       moved: boolean;
+      lines: GuideLines;
     }
   | {
       /** Arraste de um card da seleção múltipla: todos andam juntos, com um só undo. */
@@ -56,6 +58,7 @@ export type Dragging =
       origins: Record<NodeKey, Point>;
       snap: string;
       moved: boolean;
+      lines: GuideLines;
     }
   | {
       /** Laço retangular (Shift + arraste no fundo), em coordenadas de tela. */

@@ -213,6 +213,8 @@ export const EDGE_STATUS_OPTIONS: [string, string][] = [
 
 export const NODE_W = 242;
 export const NODE_H = 94;
+/** Passo da grade de encaixe do arraste; o pontilhado do fundo usa o mesmo passo. */
+export const GRID_STEP = 24;
 /** Altura do ponto de ancoragem das setas dentro do card. */
 export const PORT_Y = 46;
 

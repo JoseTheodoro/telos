@@ -2,7 +2,7 @@
 // É pega pela faixa do título; o fundo deixa passar o mouse (pan, laço e duplo clique continuam funcionando).
 import { FRAME_PALETTE } from "../domain/constants";
 import { buildEntity, DEFAULT_NAME, newEntityId } from "../domain/factory";
-import { nodeKey } from "../domain/keys";
+import { keyKind, nodeKey } from "../domain/keys";
 import type { FrameItem, NodeKey, Point } from "../domain/types";
 import { change } from "../core/history";
 import { selectedNodeKeys, state } from "../core/state";
@@ -36,6 +36,25 @@ export function containedKeys(frameKey: NodeKey): NodeKey[] {
     const s = sizeOf(k);
     return p.x >= f.x && p.y >= f.y && p.x + s.w <= f.x + fs.w && p.y + s.h <= f.y + fs.h;
   });
+}
+
+/**
+ * Cards dentro das molduras de `keys` que não estão em `keys`, cada um ligado à moldura mais interna
+ * que o contém: é ela que o leva junto quando se move.
+ */
+export function frameCarriers(keys: NodeKey[]): Map<NodeKey, NodeKey> {
+  const chosen = new Set(keys);
+  const area = (k: NodeKey): number => sizeOf(k).w * sizeOf(k).h;
+  const frames = keys.filter((k) => keyKind(k) === "frame").sort((a, b) => area(a) - area(b));
+  const carrier = new Map<NodeKey, NodeKey>();
+  for (const frame of frames)
+    for (const k of containedKeys(frame)) if (!chosen.has(k) && !carrier.has(k)) carrier.set(k, frame);
+  return carrier;
+}
+
+/** `keys` mais o conteúdo das molduras entre eles (a moldura sempre leva o que está dentro). */
+export function withFrameContents(keys: NodeKey[]): NodeKey[] {
+  return [...keys, ...frameCarriers(keys).keys()];
 }
 
 function rectAround(keys: NodeKey[]): Rect {

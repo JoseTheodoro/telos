@@ -354,3 +354,6 @@ body.presenting{overflow:hidden}
 .frame-swatches{grid-template-columns:repeat(6,minmax(0,1fr))}
 .tool-frame{background:#eef4f0;color:#3b6b55;border-color:#cfe0d5}
 .tool-frame:hover{background:#e3eee7}
+.guide-layer{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:5}
+.guide-line{stroke:#d9467c;stroke-width:1.5;vector-effect:non-scaling-stroke}
+.arrange-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}.arrange-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.arrange-grid .btn{padding:7px 4px;min-width:0}

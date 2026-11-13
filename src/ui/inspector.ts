@@ -14,6 +14,7 @@ import { EMOTION_LEVELS, emotionSigned, hasEmotion } from "../domain/emotion";
 import { addHotspot } from "../canvas/hotspot";
 import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
 import { containedKeys } from "../canvas/frame";
+import { MIN_TO_DISTRIBUTE, alignSelection, distributeSelection, type AlignEdge, type DistributeAxis } from "../canvas/align";
 import { docsLinkedTo, newDoc, openDoc } from "./docs";
 import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
 import { keyKind, newId, nodeKey } from "../domain/keys";
@@ -67,7 +68,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">T</span> nota livre · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear<br><span class="hotkey">Shift</span>+clique ou <span class="hotkey">Shift</span>+arraste no fundo: seleção múltipla</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">T</span> nota livre · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear<br><span class="hotkey">Shift</span>+clique ou <span class="hotkey">Shift</span>+arraste no fundo: seleção múltipla<br><span class="hotkey">Alt</span>+arraste: mover sem encaixar na grade</div>`;
 }
 
 function chip(c: EsCategory): string {
@@ -424,6 +425,36 @@ function batchFieldHtml(f: BatchField, keys: NodeKey[]): string {
   return `<div class="field"><label for="batch-${esc(f.id)}">${esc(f.label)} <small class="batch-scope">· ${targets.length} de ${keys.length}</small></label><select class="input" id="batch-${esc(f.id)}" data-batch="${esc(f.id)}">${opts}</select></div>`;
 }
 
+const ALIGN_BUTTONS: [AlignEdge, string, string][] = [
+  ["left", "⇤ Esquerda", "Alinhar à esquerda"],
+  ["center", "⇹ Centro", "Alinhar pelo centro (na horizontal)"],
+  ["right", "⇥ Direita", "Alinhar à direita"],
+  ["top", "⤒ Topo", "Alinhar pelo topo"],
+  ["middle", "⇳ Meio", "Alinhar pelo meio (na vertical)"],
+  ["bottom", "⤓ Base", "Alinhar pela base"],
+];
+
+const DISTRIBUTE_BUTTONS: [DistributeAxis, string][] = [
+  ["horizontal", "↔ Horizontal"],
+  ["vertical", "↕ Vertical"],
+];
+
+function arrangeHtml(count: number): string {
+  const align = ALIGN_BUTTONS.map(
+    ([edge, text, hint]) => `<button type="button" class="btn sm" data-align="${edge}" title="${esc(hint)}">${esc(text)}</button>`,
+  ).join("");
+  const canDistribute = count >= MIN_TO_DISTRIBUTE;
+  const distributeHint = canDistribute ? "Espaços iguais entre os elementos; o primeiro e o último ficam onde estão" : `Precisa de ${MIN_TO_DISTRIBUTE} ou mais elementos`;
+  const distribute = DISTRIBUTE_BUTTONS.map(
+    ([axis, text]) =>
+      `<button type="button" class="btn sm" data-distribute="${axis}" title="${esc(distributeHint)}"${canDistribute ? "" : " disabled"}>${esc(text)}</button>`,
+  ).join("");
+  return (
+    `<div class="sectionlabel">Alinhar</div><div class="arrange-grid">${align}</div>` +
+    `<div class="sectionlabel">Distribuir · espaços iguais</div><div class="arrange-grid two">${distribute}</div>`
+  );
+}
+
 function batchInspector(keys: NodeKey[]): string {
   const rows = keys
     .slice(0, BATCH_LIST_LIMIT)
@@ -435,8 +466,9 @@ function batchInspector(keys: NodeKey[]): string {
   const more = keys.length > BATCH_LIST_LIMIT ? `<div class="smallnote">… e mais ${keys.length - BATCH_LIST_LIMIT}</div>` : "";
   const fields = BATCH_FIELDS.map((f) => batchFieldHtml(f, keys)).join("");
   return (
-    `<div class="hint"><b>Seleção múltipla</b><br>Arraste qualquer um destes cards para mover todos. <span class="hotkey">Shift</span>+clique adiciona ou tira um card; <span class="hotkey">Shift</span>+arraste no fundo seleciona uma área; <span class="hotkey">Del</span> exclui todos; <span class="hotkey">Esc</span> limpa a seleção.</div>` +
+    `<div class="hint"><b>Seleção múltipla</b><br>Arraste qualquer um destes cards para mover todos (ele encaixa na grade e nas guias; <span class="hotkey">Alt</span> solta livre). <span class="hotkey">Shift</span>+clique adiciona ou tira um card; <span class="hotkey">Shift</span>+arraste no fundo seleciona uma área; <span class="hotkey">Del</span> exclui todos; <span class="hotkey">Esc</span> limpa a seleção.</div>` +
     (fields ? `<div class="sectionlabel">Editar em lote</div>${fields}` : "") +
+    arrangeHtml(keys.length) +
     `<div class="sectionlabel">Selecionados · ${keys.length}</div>${rows}${more}` +
     `<div class="sectionlabel">Ações</div><div class="rowbtn"><button type="button" class="btn" data-clear-selection>Limpar seleção</button><button class="btn danger" id="deleteButton">✕ Excluir ${keys.length} elementos</button></div>`
   );
@@ -790,6 +822,16 @@ export function bindInspector(): void {
       const inside = containedKeys(nodeSel);
       selectNodes(inside);
       notify(`${inside.length} ${inside.length === 1 ? "card selecionado" : "cards selecionados"} dentro da moldura`);
+      return;
+    }
+    const alignButton = el.closest<HTMLElement>("[data-align]");
+    if (alignButton) {
+      alignSelection(alignButton.dataset.align as AlignEdge);
+      return;
+    }
+    const distributeButton = el.closest<HTMLElement>("[data-distribute]");
+    if (distributeButton) {
+      distributeSelection(distributeButton.dataset.distribute as DistributeAxis);
       return;
     }
     const only = el.closest<HTMLElement>("[data-select-only]");

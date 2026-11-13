@@ -11,7 +11,8 @@ import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
 import { editingKey, finishInlineEdit, isInlineEditing, refocusInlineEdit, startInlineEdit } from "./inline-edit";
 import { activePositions, pos, sizeOf } from "./layout";
-import { containedKeys } from "./frame";
+import { withFrameContents } from "./frame";
+import { collectGuideLines, hideGuides, snapDrag } from "./guides";
 import { minSizeOf } from "./size";
 import { copyNote, isNoteEditing, rememberPointer, startNoteEdit } from "./note";
 import { renderBands, renderEdges, renderGraph } from "./render";
@@ -42,6 +43,8 @@ let lastTap: { key: string; time: number; x: number; y: number } | null = null;
 type LassoDrag = Extract<Dragging, { type: "lasso" }>;
 
 const LASSO_MIN_PX = 6;
+/** O card só começa a andar depois deste deslocamento: um clique com tremida não pode encaixá-lo na grade. */
+const DRAG_START_PX = 4;
 
 function drawLasso(d: LassoDrag): void {
   const box = $("#lasso");
@@ -102,6 +105,7 @@ function startGroupDrag(key: string, keys: string[], e: PointerEvent, stage: HTM
     origins: Object.fromEntries(keys.map((x) => [x, { ...pos(x) }])),
     snap: JSON.stringify(state.ws),
     moved: false,
+    lines: collectGuideLines(keys),
   };
   e.preventDefault();
   stage.setPointerCapture(e.pointerId);
@@ -218,13 +222,13 @@ export function bindCanvas(): void {
       }
       const sel = state.selected;
       if (state.mode === "pointer" && sel?.kind === "nodes" && sel.ids.includes(k)) {
-        startGroupDrag(k, sel.ids.filter((x) => state.visibleKeys.has(x)), e, stage);
+        startGroupDrag(k, withFrameContents(sel.ids.filter((x) => state.visibleKeys.has(x))), e, stage);
         return;
       }
       if (state.mode === "pointer" && keyKind(k) === "frame") {
         // O conteúdo é o que está dentro da moldura no início do arraste.
         selectNode(k);
-        startGroupDrag(k, [k, ...containedKeys(k)], e, stage);
+        startGroupDrag(k, withFrameContents([k]), e, stage);
         return;
       }
       selectNode(k);
@@ -243,6 +247,7 @@ export function bindCanvas(): void {
         y0: start.y,
         snap: JSON.stringify(state.ws),
         moved: false,
+        lines: collectGuideLines([k]),
       };
       e.preventDefault();
       stage.setPointerCapture(e.pointerId);
@@ -284,26 +289,29 @@ export function bindCanvas(): void {
     }
     if (d?.type === "node") {
       const p = localPoint(e);
-      activePositions()[d.key] = { x: Math.round(p.x - d.dx), y: Math.round(p.y - d.dy) };
+      const raw = { x: p.x - d.dx, y: p.y - d.dy };
+      if (!d.moved && Math.hypot(raw.x - d.x0, raw.y - d.y0) * state.cam.z < DRAG_START_PX) return;
       d.moved = true;
-      const n = document.querySelector<HTMLElement>(`[data-node="${CSS.escape(d.key)}"]`);
-      if (n) {
-        n.style.left = pos(d.key).x + "px";
-        n.style.top = pos(d.key).y + "px";
-      }
+      const at = snapDrag(d.key, raw, d.lines, e.altKey);
+      activePositions()[d.key] = at;
+      moveNodeCard(d.key, at.x, at.y);
       renderEdges();
       return;
     }
     if (d?.type === "group") {
       const p = localPoint(e);
-      const dx = Math.round(p.x - d.start.x);
-      const dy = Math.round(p.y - d.start.y);
+      if (!d.moved && Math.hypot(p.x - d.start.x, p.y - d.start.y) * state.cam.z < DRAG_START_PX) return;
+      d.moved = true;
+      // O card pego (ou a moldura) encaixa; os outros andam o mesmo tanto.
+      const anchor = d.origins[d.key];
+      const at = snapDrag(d.key, { x: anchor.x + p.x - d.start.x, y: anchor.y + p.y - d.start.y }, d.lines, e.altKey);
+      const dx = at.x - anchor.x;
+      const dy = at.y - anchor.y;
       const positions = activePositions();
       for (const [k, origin] of Object.entries(d.origins)) {
         positions[k] = { x: origin.x + dx, y: origin.y + dy };
         moveNodeCard(k, positions[k].x, positions[k].y);
       }
-      d.moved = true;
       renderEdges();
       return;
     }
@@ -385,14 +393,20 @@ export function bindCanvas(): void {
     }
     if (d?.type === "group") {
       state.dragging = null;
+      hideGuides();
+      // Clique sem arrastar num card da seleção: fica só ele.
+      if (!d.moved) {
+        selectNode(d.key);
+        return;
+      }
       const now = pos(d.key);
       const before = d.origins[d.key];
-      if (d.moved && before && Math.abs(now.x - before.x) + Math.abs(now.y - before.y) > 2) {
+      if (now.x !== before.x || now.y !== before.y) {
         pushSnapshot(d.snap);
         persist();
         refreshUndo();
         renderGraph();
-      } else selectNode(d.key); // clique sem arrastar num card da seleção: fica só ele
+      }
       return;
     }
     if (d?.type === "lasso") {
@@ -402,8 +416,9 @@ export function bindCanvas(): void {
     }
     if (d?.type === "node") {
       state.dragging = null;
+      hideGuides();
       const now = pos(d.key);
-      if (d.moved && Math.abs(now.x - d.x0) + Math.abs(now.y - d.y0) > 2) {
+      if (d.moved && (now.x !== d.x0 || now.y !== d.y0)) {
         pushSnapshot(d.snap);
         persist();
         refreshUndo();
@@ -433,6 +448,11 @@ export function bindCanvas(): void {
       for (const [k, origin] of Object.entries(d.origins)) positions[k] = { ...origin };
       renderGraph();
     }
+    if (d?.type === "node" && d.moved) {
+      activePositions()[d.key] = { x: d.x0, y: d.y0 };
+      renderGraph();
+    }
+    hideGuides();
     if (d?.type === "lasso") $("#lasso").hidden = true;
     if (d?.type === "emotion" && d.moved) {
       const scene = state.ws.scenes.find((s) => s.id === d.sceneId);

@@ -76,9 +76,12 @@ try {
   const before = JSON.parse(JSON.stringify(layout(w)));
   const z = await zoomOf();
   [x, y] = await centerOf("Lote 3");
+  // Alt: movimento livre (sem encaixe da #14), para conferir o deslocamento exato. O encaixe está em snap.mjs.
+  await page.keyboard.down("Alt");
   await page.mouse.move(x, y); await page.mouse.down();
   await page.mouse.move(x + 40, y + 70, { steps: 4 }); await page.mouse.move(x + 80, y + 140, { steps: 4 });
   await page.mouse.up();
+  await page.keyboard.up("Alt");
   w = await ws();
   const after = layout(w);
   const deltas = keys.map((k) => [after[k].x - before[k].x, after[k].y - before[k].y]);

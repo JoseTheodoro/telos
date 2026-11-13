@@ -1,5 +1,5 @@
 // Câmera do canvas: pan, zoom, enquadrar.
-import { NODE_H, NODE_W } from "../domain/constants";
+import { GRID_STEP, NODE_H, NODE_W } from "../domain/constants";
 import type { NodeKey, Point } from "../domain/types";
 import { queueViewPersist } from "../core/persistence";
 import { state } from "../core/state";
@@ -7,9 +7,24 @@ import { $ } from "../ui/dom";
 import { calcBounds, pos } from "./layout";
 import { positionLaneGutter } from "./lane-gutter";
 
+/** Abaixo disto o pontilhado vira uma textura; os pontos passam a marcar a cada 2, 4… células. */
+const MIN_DOT_SPACING_PX = 12;
+
+/** O pontilhado acompanha o pan e o zoom: cada ponto é um nó da grade de encaixe do mundo. */
+function syncGridDots(): void {
+  const { cam } = state;
+  let spacing = GRID_STEP * cam.z;
+  while (spacing < MIN_DOT_SPACING_PX) spacing *= 2;
+  const stage = $("#stage");
+  stage.style.backgroundSize = `${spacing}px ${spacing}px`;
+  // O ponto do radial-gradient fica no centro da célula.
+  stage.style.backgroundPosition = `${cam.x - spacing / 2}px ${cam.y - spacing / 2}px`;
+}
+
 export function cameraApply(): void {
   const { cam } = state;
   $("#world").style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.z})`;
+  syncGridDots();
   $("#zoomLabel").textContent = Math.round(cam.z * 100) + "%";
   positionLaneGutter();
   queueViewPersist();
