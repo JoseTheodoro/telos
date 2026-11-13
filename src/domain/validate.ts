@@ -1,0 +1,84 @@
+import { ACCEPTED_SCHEMAS, ARR, TYPES } from "./constants";
+import { deep, graphInit, upgradeWorkspace, validColor } from "./model";
+import type { Workspace } from "./types";
+
+export interface ValidationIssue {
+  path: string;
+  code: "not_number" | "not_finite" | "not_string" | "unknown_schema" | "invalid_color" | "invalid_key";
+}
+
+export type ParseResult = { ok: true; workspace: Workspace } | { ok: false; issues: ValidationIssue[] };
+
+type JsonRecord = Record<string, unknown>;
+
+const NODE_KEY = new RegExp(`^(${TYPES.join("|")}):`);
+const SIZED_COLLECTIONS = ["canvasNotes", "frames"] as const;
+const DIMENSIONS = ["w", "h"] as const;
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const listAt = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+
+function finiteNumberIssues(value: unknown, path: string): ValidationIssue[] {
+  if (typeof value !== "number") return [{ path, code: "not_number" }];
+  return Number.isFinite(value) ? [] : [{ path, code: "not_finite" }];
+}
+
+function positionIssues(positions: unknown, path: string): ValidationIssue[] {
+  if (!isRecord(positions)) return [];
+  return Object.entries(positions).flatMap(([nodeKey, point]): ValidationIssue[] => {
+    const pointPath = `${path}.${nodeKey}`;
+    if (!NODE_KEY.test(nodeKey)) return [{ path: pointPath, code: "invalid_key" }];
+    const coordinates = isRecord(point) ? point : {};
+    return [...finiteNumberIssues(coordinates.x, `${pointPath}.x`), ...finiteNumberIssues(coordinates.y, `${pointPath}.y`)];
+  });
+}
+
+function graphIssues(graph: unknown): ValidationIssue[] {
+  if (!isRecord(graph)) return [];
+  const layouts = isRecord(graph.layouts) ? graph.layouts : {};
+  return [
+    ...positionIssues(graph.positions, "graph.positions"),
+    ...Object.entries(layouts).flatMap(([layoutKey, positions]) => positionIssues(positions, `graph.layouts.${layoutKey}`)),
+  ];
+}
+
+function entityIdIssues(document: JsonRecord): ValidationIssue[] {
+  return Object.values(ARR).flatMap((collection) =>
+    listAt(document[collection]).flatMap((entity, index): ValidationIssue[] =>
+      isRecord(entity) && typeof entity.id === "string" ? [] : [{ path: `${collection}.${index}.id`, code: "not_string" }],
+    ),
+  );
+}
+
+function sizeIssues(document: JsonRecord): ValidationIssue[] {
+  return SIZED_COLLECTIONS.flatMap((collection) =>
+    listAt(document[collection]).flatMap((entity, index) =>
+      isRecord(entity)
+        ? DIMENSIONS.flatMap((dimension) =>
+            entity[dimension] === undefined ? [] : finiteNumberIssues(entity[dimension], `${collection}.${index}.${dimension}`),
+          )
+        : [],
+    ),
+  );
+}
+
+function normalizeEdgeColors(workspace: Workspace): void {
+  for (const edge of workspace.graph.edges) {
+    if (!validColor(typeof edge.color === "string" ? edge.color : "")) edge.color = "";
+  }
+}
+
+export function parseWorkspace(input: unknown): ParseResult {
+  if (!isRecord(input) || typeof input.schema !== "string" || !ACCEPTED_SCHEMAS.includes(input.schema)) {
+    return { ok: false, issues: [{ path: "schema", code: "unknown_schema" }] };
+  }
+  const issues = [...entityIdIssues(input), ...graphIssues(input.graph), ...sizeIssues(input)];
+  if (issues.length) return { ok: false, issues };
+  const document = deep(input);
+  const needsGraph = document.schema === "pep-discovery-atlas-v1" || !isRecord(document.graph);
+  const workspace = upgradeWorkspace(needsGraph ? graphInit(document) : document);
+  normalizeEdgeColors(workspace);
+  return { ok: true, workspace };
+}
