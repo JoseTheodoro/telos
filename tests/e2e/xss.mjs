@@ -86,6 +86,21 @@ try {
   await page.reload(); await page.waitForSelector(".node");
   r.noticeAgain = dialogs.length;
   if (r.noticeAgain) fail("o aviso deveria aparecer só na carga que encontrou o dado inválido");
+
+  const docsPoisoned = {
+    ...JSON.parse(fs.readFileSync(path.join(here, "fixtures/with-hotspot-box.json"), "utf8")),
+    docs: [{ id: "d1", title: "Ata", body: "texto", link: "", createdAt: 0, updatedAt: 0 }],
+    view: { area: "docs", docId: "d1", docsMode: 'split"><img src=x onerror="window.__xss=(window.__xss||0)+1">' },
+  };
+  await page.addInitScript(([key, raw]) => {
+    if (sessionStorage.getItem("docs-seeded")) return;
+    sessionStorage.setItem("docs-seeded", "1");
+    localStorage.setItem(key, raw);
+  }, [STORE, JSON.stringify(docsPoisoned)]);
+  await page.reload(); await page.waitForSelector(".doc-head");
+  await page.waitForTimeout(300);
+  r.xssAfterDocsMode = await xssCount();
+  if (r.xssAfterDocsMode !== undefined) fail(`o modo do caderno salvo executou HTML (${r.xssAfterDocsMode}x)`);
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
 console.log(r, "\nerrors:", errors);
 await browser.close();

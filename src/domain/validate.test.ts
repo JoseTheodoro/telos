@@ -124,6 +124,51 @@ describe("parseWorkspace", () => {
 
     expect(workspace.graph.layouts["lanes|chapter:c1"]).toEqual({ "scene:b": { x: 10, y: 20 } });
   });
+
+  it("rejects malformed containers instead of throwing", () => {
+    const cases: [Record<string, unknown>, string][] = [
+      [validDocument({ chapters: {} }), "chapters"],
+      [validDocument({}, { edges: [null] }), "graph.edges.0"],
+      [validDocument({}, { edges: {} }), "graph.edges"],
+      [validDocument({ docs: [null] }), "docs.0"],
+      [validDocument({ elementTypes: 5 }), "elementTypes"],
+      [validDocument({}, { layouts: [] }), "graph.layouts"],
+      [validDocument({}, { layouts: { all: "abc" } }), "graph.layouts.all"],
+      [validDocument({}, { positions: [] }), "graph.positions"],
+      [validDocument({ graph: "abc" }), "graph"],
+      [validDocument({ lanes: [null] }), "lanes.0"],
+      [validDocument({ natureOptions: "x" }), "natureOptions"],
+      [validDocument({ scenes: [{ id: "a", title: "Cena", actor: 5 }] }), "documento"],
+    ];
+
+    for (const [input, path] of cases) {
+      expect(() => parseWorkspace(input), path).not.toThrow();
+      expect(issuesOf(input), path).toContainEqual({ path, code: "invalid_structure" });
+    }
+    expect(issuesOf(validDocument({}, { edges: [{ id: "r1", to: "scene:a" }] }))).toEqual([{ path: "graph.edges.0.from", code: "not_string" }]);
+  });
+
+  it("drops note and frame sizes saved as null", () => {
+    const input = validDocument({
+      canvasNotes: [{ id: "n1", text: "", w: null, h: 200, scope: "all" }],
+      frames: [{ id: "f1", title: "Moldura", w: 600, h: null, scope: "all" }],
+    });
+
+    const workspace = workspaceOf(input);
+
+    expect([workspace.canvasNotes[0].w, workspace.canvasNotes[0].h]).toEqual([320, 200]);
+    expect([workspace.frames[0].w, workspace.frames[0].h]).toEqual([600, 360]);
+  });
+
+  it("drops view options outside the known values", () => {
+    const injected = validDocument({
+      view: { docsMode: 'split"><img src=x onerror=alert(1)>', area: "x", layoutMode: "grid", sidebarTab: "z", camera: { x: "1", y: 0, z: 1 }, docId: "d1" },
+    });
+    const knownView = { docsMode: "edit", area: "docs", layoutMode: "timeline", sidebarTab: "inventory", camera: { x: 10, y: -5, z: 0.5 } };
+
+    expect(workspaceOf(injected).view).toEqual({ docId: "d1" });
+    expect(workspaceOf(validDocument({ view: knownView })).view).toEqual(knownView);
+  });
 });
 
 describe("describeIssues", () => {
@@ -139,5 +184,6 @@ describe("describeIssues", () => {
       "graph.layouts.all.scene:a.x (não é número), graph.layouts.all.scene:a.y (número inválido), scenes.0.id (não é texto) e mais 1",
     );
     expect(describeIssues([{ path: "schema", code: "unknown_schema" }])).toBe("schema (formato desconhecido)");
+    expect(describeIssues([{ path: "chapters", code: "invalid_structure" }])).toBe("chapters (estrutura inválida)");
   });
 });
