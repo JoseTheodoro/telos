@@ -68,6 +68,10 @@ export function visible(): Set<NodeKey> {
   for (const e of edges) if (set.has(e.from) && keyKind(e.from) === "system" && !isNarrative(e.to)) set.add(e.to);
   for (const e of edges) if (set.has(e.to) && keyKind(e.to) === "system" && !isNarrative(e.from)) set.add(e.from);
 
+  // #10 Notas livres aparecem no recorte em que foram criadas (e onde estiverem ligadas por seta).
+  const scope = scopeKey();
+  for (const n of ws.canvasNotes) if (n.scope === scope) set.add(nodeKey("note", n.id));
+
   if (!focusScene && !focusChapter && !focusJourney)
     for (const t of TYPES) for (const o of ws[ARR[t]] as AnyEntity[]) set.add(nodeKey(t, o.id));
 

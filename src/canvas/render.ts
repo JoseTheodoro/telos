@@ -1,5 +1,6 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { ARR, DRAWING_TYPES, NATURE_BASE, NODE_H, NODE_W, PL, PORT_Y } from "../domain/constants";
+import { ARR, DRAWING_TYPES, NATURE_BASE, PL, PORT_Y } from "../domain/constants";
+import { formatLabel, isCodeFormat, jsonError, renderNoteBody } from "../ui/rich";
 import { keyKind } from "../domain/keys";
 import { esCssVars, esStyle } from "../domain/es";
 import { colorForEdge, edgeVerdict, isTableLink, semanticLabel } from "../domain/model";
@@ -15,7 +16,7 @@ import type {
 } from "../domain/types";
 import { degree, getByKey, label, state } from "../core/state";
 import { $, esc } from "../ui/dom";
-import { activePositions, calcBounds, isTimeline, pos } from "./layout";
+import { activePositions, calcBounds, isTimeline, pos, sizeOf } from "./layout";
 import { chapterBands, laneBands } from "./timeline";
 import { renderLaneGutter } from "./lane-gutter";
 import { emotionBand, emotionHtml } from "./emotion";
@@ -40,25 +41,28 @@ export interface EdgeGeometry {
 export function edgeGeometry(a: NodeKey, b: NodeKey): EdgeGeometry {
   const p = pos(a);
   const q = pos(b);
-  if (q.x >= p.x + NODE_W + 20) {
-    const x1 = p.x + NODE_W;
+  // Notas livres têm tamanho próprio; os demais cards têm tamanho fixo.
+  const sa = sizeOf(a);
+  const sb = sizeOf(b);
+  if (q.x >= p.x + sa.w + 20) {
+    const x1 = p.x + sa.w;
     const y1 = p.y + PORT_Y;
     const x2 = q.x;
     const y2 = q.y + PORT_Y;
     const m = Math.max(65, (x2 - x1) * 0.48);
     return { d: `M ${x1} ${y1} C ${x1 + m} ${y1}, ${x2 - m} ${y2}, ${x2} ${y2}`, mx: (x1 + x2) / 2, my: (p.y + q.y) / 2 + 36 };
   }
-  const below = q.y >= p.y + NODE_H + 20;
-  const above = q.y + NODE_H + 20 <= p.y;
+  const below = q.y >= p.y + sa.h + 20;
+  const above = q.y + sb.h + 20 <= p.y;
   if (below || above) {
-    const x1 = p.x + NODE_W / 2;
-    const x2 = q.x + NODE_W / 2;
-    const y1 = below ? p.y + NODE_H : p.y;
-    const y2 = below ? q.y : q.y + NODE_H;
+    const x1 = p.x + sa.w / 2;
+    const x2 = q.x + sb.w / 2;
+    const y1 = below ? p.y + sa.h : p.y;
+    const y2 = below ? q.y : q.y + sb.h;
     const m = Math.max(40, Math.abs(y2 - y1) * 0.48) * (below ? 1 : -1);
     return { d: `M ${x1} ${y1} C ${x1} ${y1 + m}, ${x2} ${y2 - m}, ${x2} ${y2}`, mx: (x1 + x2) / 2 + 8, my: (y1 + y2) / 2 };
   }
-  const x1 = p.x + NODE_W;
+  const x1 = p.x + sa.w;
   const y1 = p.y + PORT_Y;
   const x2 = q.x;
   const y2 = q.y + PORT_Y;
@@ -66,7 +70,7 @@ export function edgeGeometry(a: NodeKey, b: NodeKey): EdgeGeometry {
   const dx = 130;
   return {
     d: `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x1 + dx} ${cy}, ${(x1 + x2) / 2} ${cy} S ${x2 - 80} ${y2}, ${x2} ${y2}`,
-    mx: (p.x + NODE_W + q.x) / 2,
+    mx: (p.x + sa.w + q.x) / 2,
     my: (p.y + q.y) / 2 + 36,
   };
 }
@@ -137,8 +141,20 @@ function sceneBadges(o: AnyEntity): string {
   return `<div class="scene-badges">${lvl ? `<span class="emo-tag" data-emo="${Math.sign(lvl.value)}" title="Emoção: ${esc(lvl.label)} (${emotionSigned(lvl.value)})">${lvl.face} ${esc(lvl.label)}</span>` : ""}${pain ? `<span class="pain-tag" title="Dor: ${esc(pain)}">⚡ Dor</span>` : ""}</div>`;
 }
 
+/** #10 Nota livre: post-it redimensionável com texto, Markdown ou código destacado. */
+function noteHtml(k: NodeKey, o: AnyEntity): string {
+  const p = pos(k);
+  const { w, h } = sizeOf(k);
+  const text = String(o.text ?? "");
+  const fmt = String(o.format || "text");
+  const isSelected = state.selected?.kind === "node" && state.selected.id === k;
+  const bad = fmt === "json" ? jsonError(text) : null;
+  return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
+}
+
 function nodeHtml(k: NodeKey): string {
   const o = getByKey(k) as AnyEntity;
+  if (keyKind(k) === "note") return noteHtml(k, o);
   const p = pos(k);
   const t = keyKind(k);
   // Não repete o tipo quando o semântico diz o mesmo (ex.: "Hotspot · Hotspot").

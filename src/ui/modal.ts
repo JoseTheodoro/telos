@@ -1,5 +1,5 @@
 // Modal: criação de elementos, lista de conexões e limpeza do canvas.
-import { ARR, CONTAINMENT_LABEL, COL, DRAWING_TYPES, PL, TYPES } from "../domain/constants";
+import { ARR, CONTAINMENT_LABEL, COL, DRAWING_TYPES, MODAL_TYPES, PL } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
 import { CONTAINMENT, colorForEdge, deep, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
 import { PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
@@ -26,7 +26,7 @@ export function createModal(
 ): void {
   const ws = state.ws;
   if (!t) t = ws.scenes.length ? "event" : ws.journeys.length ? "chapter" : "journey";
-  const boxes = TYPES.map(
+  const boxes = MODAL_TYPES.map(
     (k) =>
       `<button type="button" class="btn sm ${k === t ? "primary" : ""}" data-modal-type="${k}" style="margin:0 4px 6px 0">${PL[k]}</button>`,
   ).join("");

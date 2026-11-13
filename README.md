@@ -36,7 +36,9 @@ src/
     model.ts             graphInit, upgradeWorkspace, syncMaps, regras de seta
   core/                  estado, persistência (localStorage) e undo/redo
   canvas/                visibilidade por recorte, layout, câmera, render, eventos de ponteiro
-  ui/                    barra lateral, inspetor, modal, helpers de DOM
+  ui/                    barra lateral, inspetor, modal, apresentação, caderno, helpers de DOM
+    rich.ts              destaque de código (highlight.js) e Markdown sanitizado (marked + DOMPurify)
+    docs.ts              caderno de notas Markdown (#21)
   io/files.ts            importar/exportar JSON, CSV, SVG
   data/seed.json         mapa de exemplo
   styles/app.css
@@ -44,6 +46,12 @@ legacy/PEP_Atlas_Studio_v1.5.html   versão original de arquivo único (referên
 ```
 
 ## Histórico
+
+### Onda 3 · Canvas livre (em andamento)
+
+- **#10 Notas livres no canvas.** O botão **＋ Nota** cria a nota no centro da tela, e a tecla `T` cria **onde o cursor está**. A nota é um post-it redimensionável (alça ◢ no canto) com **formato**: Texto, Markdown, **JSON, SQL, Bash**, JavaScript, TypeScript, Python, Java, C#, Go, YAML, XML/HTML, HTTP ou Dockerfile. O código aparece com destaque de sintaxe. A edição acontece dentro do próprio card: duplo clique, `Enter` ou `F2` abrem o editor, `Tab` indenta, `Esc` ou `Ctrl+Enter` salvam, e a nota nova que ficar vazia é descartada. O botão **⧉ Copiar** copia o conteúdo bruto. No formato JSON, a nota avisa quando o JSON é inválido e oferece **{ } Formatar JSON**. A nota aparece no recorte em onde foi criada, além do mapa completo e de onde estiver ligada por seta; "Organizar" não a move. O catálogo busca pelo conteúdo, e o SVG exportado inclui as notas. A roda do mouse rola o conteúdo da nota (`Ctrl` + roda continua dando zoom).
+- **#21 Caderno de notas Markdown.** Uma nova área, **✎ Caderno**, fica no topo ao lado de **◇ Canvas**. Cada nota tem título, corpo em Markdown (GFM: tabelas, tarefas, blocos de código com destaque) e **vínculo opcional a uma jornada ou capítulo**. O editor tem os modos Editar, Dividir (texto + pré-visualização) e Ver, além de uma barra de formatação: negrito, itálico, título, listas, tarefa, citação, código, link, tabela, separador e bloco de código com a linguagem escolhida. `Ctrl+B` e `Ctrl+I` funcionam no texto. As tarefas são clicáveis na pré-visualização. A lista tem busca e os filtros **Recorte** (segue a jornada ou capítulo escolhido na barra lateral), **Todas** e **Sem vínculo**. Uma nota nova já nasce vinculada ao recorte atual. Dá para exportar a nota ou o filtro inteiro em `.md`. No canvas, o inspetor da jornada ou do capítulo lista as notas vinculadas e cria uma nova. "◇ Ver no canvas" volta ao recorte vinculado. Todo HTML gerado de Markdown passa pelo DOMPurify, sem scripts, eventos `on*`, `javascript:` ou iframes.
+- **Dependências** (embutidas no `dist/index.html`, então o app funciona offline): `highlight.js` 11.12.0 (core + 14 linguagens), `marked` 18.1.2 e `dompurify` 3.4.17, com versões fixadas.
 
 ### Onda 2 · É uma jornada
 

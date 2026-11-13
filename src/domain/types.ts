@@ -11,7 +11,8 @@ export type NodeKind =
   | "screen"
   | "table"
   | "semantic"
-  | "hotspot";
+  | "hotspot"
+  | "note";
 
 /** Chave de nó no grafo: `${kind}:${id}` (ex.: "scene:preconsulta"). */
 export type NodeKey = string;
@@ -104,6 +105,29 @@ export interface SemanticNode extends BaseEntity {
   name: string;
 }
 
+/** #10 Nota livre no canvas: texto, Markdown ou código (JSON, SQL, Bash…). */
+export interface NoteItem extends BaseEntity {
+  text: string;
+  /** Id de `NOTE_FORMATS` ("text", "markdown", "json", "sql", "bash"…). */
+  format: string;
+  /** Tamanho do card (a nota é redimensionável). */
+  w: number;
+  h: number;
+  /** Recorte onde a nota foi criada (`scopeKey()`): é lá que ela aparece. */
+  scope: string;
+}
+
+/** #21 Nota do caderno (Markdown), opcionalmente vinculada a uma jornada ou capítulo. */
+export interface DocNote {
+  id: string;
+  title: string;
+  body: string;
+  /** "journey:<id>" | "chapter:<id>" | "" (sem vínculo). */
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type AnyEntity =
   | Journey
   | Chapter
@@ -114,7 +138,8 @@ export type AnyEntity =
   | Screen
   | Table
   | SemanticNode
-  | Decision;
+  | Decision
+  | NoteItem;
 
 export interface Edge {
   id: string;
@@ -191,6 +216,10 @@ export interface ViewState {
   lanes?: boolean;
   /** #8 Curva de emoção visível na timeline. */
   emotion?: boolean;
+  /** #21 Área aberta (canvas/caderno), nota aberta e modo do editor. */
+  area?: "canvas" | "docs";
+  docId?: string;
+  docsMode?: "edit" | "split" | "view";
 }
 
 /** "layers": colunas por tipo (v1.5) · "timeline": tempo da esquerda para a direita (v1.6). */
@@ -216,6 +245,10 @@ export interface Workspace {
   scenario?: Record<string, string>;
   emptyWorkspace?: boolean;
   journeys: Journey[];
+  /** #10 Notas livres do canvas. */
+  canvasNotes: NoteItem[];
+  /** #21 Caderno de notas Markdown. */
+  docs: DocNote[];
   chapters: Chapter[];
   scenes: Scene[];
   events: EventItem[];
@@ -247,7 +280,8 @@ export type CollectionName =
   | "screens"
   | "tables"
   | "semanticNodes"
-  | "decisions";
+  | "decisions"
+  | "canvasNotes";
 
 export type SidebarTab = "journey" | "inventory" | "decisions";
 export type ToolMode = "pointer" | "connect";

@@ -37,9 +37,20 @@ export function nameField(kind: NodeKind): "label" | "title" | "name" {
   return kind === "chapter" ? "label" : kind === "scene" || kind === "hotspot" ? "title" : "name";
 }
 
+/** Título de uma nota livre: primeira linha com conteúdo (sem marcação Markdown). */
+export function noteTitle(text: string): string {
+  const line = text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^[#>*\-\s`]+/, "").trim())
+    .find(Boolean);
+  if (!line) return "Nota vazia";
+  return line.length > 48 ? line.slice(0, 47).trimEnd() + "…" : line;
+}
+
 export function entityLabel(ws: Workspace, k: NodeKey): string {
   const o = getEntityByKey(ws, k);
   if (!o) return "(removido)";
+  if (keyKind(k) === "note") return noteTitle(String(o.text ?? ""));
   const field = nameField(keyKind(k));
   if (field !== "name") return String(o[field] ?? "");
   return o.name || "(sem nome)";
@@ -248,6 +259,23 @@ export function graphInit(data: any): Workspace {
 }
 
 /** Normaliza qualquer versão salva para o schema atual (idempotente). */
+/** #10/#21 Notas livres e caderno: campos mínimos e tamanhos válidos. */
+function upgradeNotes(ws: Workspace): void {
+  for (const n of ws.canvasNotes) {
+    n.text = typeof n.text === "string" ? n.text : "";
+    n.format = n.format || "text";
+    n.w = Number.isFinite(n.w) ? Math.max(180, n.w) : 320;
+    n.h = Number.isFinite(n.h) ? Math.max(90, n.h) : 180;
+    n.scope = typeof n.scope === "string" ? n.scope : "all";
+  }
+  ws.docs = Array.isArray(ws.docs) ? ws.docs : [];
+  for (const d of ws.docs) {
+    d.title = typeof d.title === "string" ? d.title : "";
+    d.body = typeof d.body === "string" ? d.body : "";
+    d.link = typeof d.link === "string" ? d.link : "";
+  }
+}
+
 export function upgradeWorkspace(data: any): Workspace {
   data.schema = SCHEMA;
   data.journeys = Array.isArray(data.journeys) ? data.journeys : [];
@@ -310,6 +338,7 @@ export function upgradeWorkspace(data: any): Workspace {
   promoteHotspotBoxes(data as Workspace);
   upgradeLanes(data as Workspace);
   upgradeEmotion(data as Workspace);
+  upgradeNotes(data as Workspace);
   linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;

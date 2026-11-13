@@ -21,6 +21,7 @@ export const DEFAULT_NAME: Record<NodeKind, string> = {
   table: "Nova tabela",
   semantic: "Nova caixa",
   hotspot: "Nova dúvida",
+  note: "",
 };
 
 /** Id de um elemento novo; hotspots ganham código legível sequencial (H-01, H-02…). */
@@ -85,6 +86,8 @@ export function buildEntity(t: NodeKind, id: string, name: string, semantic: str
       };
     case "semantic":
       return { ...base, name, description: "", status: "Em descoberta", notes: "", origin: "Criado no Atlas Studio" };
+    case "note":
+      return { ...base, semanticType: "Nota", text: name, format: val("format") || "text", w: 320, h: 180, scope: val("scope") };
     case "hotspot":
       return {
         ...base,

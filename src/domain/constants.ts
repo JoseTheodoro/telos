@@ -11,6 +11,7 @@ export const TYPES: NodeKind[] = [
   "table",
   "semantic",
   "hotspot",
+  "note",
 ];
 
 /** Tipos da hierarquia narrativa (jornada → capítulo → cena → evento). */
@@ -28,6 +29,7 @@ export const PL: Record<NodeKind, string> = {
   table: "Tabela",
   semantic: "Caixa livre",
   hotspot: "Hotspot",
+  note: "Nota",
 };
 
 /** Coleção do workspace onde cada tipo é armazenado. */
@@ -42,6 +44,7 @@ export const ARR: Record<NodeKind, CollectionName> = {
   table: "tables",
   semantic: "semanticNodes",
   hotspot: "decisions",
+  note: "canvasNotes",
 };
 
 export const COLORS: Record<NodeKind, string> = {
@@ -55,6 +58,7 @@ export const COLORS: Record<NodeKind, string> = {
   table: "#67768e",
   semantic: "#466e7d",
   hotspot: "#b3261e",
+  note: "#9a7b2f",
 };
 
 export const TABLE_COLORS = { READ: "#ed8b23", WRITE: "#d84343" } as const;
@@ -174,6 +178,9 @@ export const HOTSPOT_PRIORITY_OPTIONS: [string, string][] = [
   ["Baixa", "Baixa"],
 ];
 
+/** Tipos criados pelo modal "Adicionar elemento" (nota tem criação própria). */
+export const MODAL_TYPES = TYPES.filter((t) => t !== "note");
+
 /** Hotspots não contam como "desenho" para canvas vazio e Limpar canvas. */
 export const DRAWING_TYPES = TYPES.filter((t) => t !== "hotspot");
 
@@ -202,6 +209,7 @@ export const COL: Record<NodeKind, number> = {
   table: 2195,
   semantic: 2510,
   hotspot: 2825,
+  note: 3140,
 };
 
 export const STORE = "pep-atlas-studio-v4";

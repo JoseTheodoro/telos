@@ -16,6 +16,17 @@ import type {
 export type Dragging =
   | { type: "link"; start: NodeKey }
   | {
+      /** #10 Redimensionar uma nota livre pela alça do canto. */
+      type: "resize";
+      key: NodeKey;
+      x0: number;
+      y0: number;
+      w0: number;
+      h0: number;
+      snap: string;
+      moved: boolean;
+    }
+  | {
       /** #8 Arrastar o ponto da curva de emoção para cima/baixo. */
       type: "emotion";
       sceneId: string;
@@ -53,6 +64,12 @@ export const state = {
   lanes: true,
   /** #8 Curva de emoção acima da timeline. */
   emotion: true,
+  /** #21 Área principal: canvas ou caderno de notas Markdown. */
+  area: "canvas" as "canvas" | "docs",
+  docId: "",
+  docsFilter: "scope" as "scope" | "all" | "unlinked",
+  docsMode: "split" as "edit" | "split" | "view",
+  docsSearch: "",
   search: "",
   collapsed: new Set<string>(),
   mode: "pointer" as ToolMode,

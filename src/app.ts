@@ -4,14 +4,17 @@ import { deep } from "./domain/model";
 import type { LayoutMode, ToolMode } from "./domain/types";
 import { redo, refreshUndo, undo } from "./core/history";
 import { loadInitialWorkspace, persist, persistViewNow } from "./core/persistence";
-import { setFocus, state } from "./core/state";
-import { safeRemoveSelection } from "./actions";
+import { getByKey, setFocus, state } from "./core/state";
+import { ensureVisible, safeRemoveSelection } from "./actions";
 import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
 import { startInlineEdit } from "./canvas/inline-edit";
 import { quickCreate } from "./canvas/quick-create";
 import { addHotspot } from "./canvas/hotspot";
+import { keyKind, nodeKey } from "./domain/keys";
+import { addNote, rememberPointer, startNoteEdit } from "./canvas/note";
 import { bindPresentation, startPresentation } from "./ui/presentation";
+import { bindDocs, onGotoCanvas, renderDocs } from "./ui/docs";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
@@ -27,6 +30,7 @@ export function refreshAll(autoFit = false): void {
   renderFilters();
   renderGraph();
   renderInspector();
+  renderDocs();
   refreshUndo();
   if (autoFit) fit();
   else cameraApply();
@@ -114,6 +118,7 @@ function bindToolbar(): void {
   $("#undo").onclick = () => undo();
   $("#redo").onclick = redo;
   $("#presentBtn").onclick = startPresentation;
+  $("#quickNoteBtn").onclick = () => addNote(false);
   $("#inspectorBtn").onclick = () => $("#inspector").classList.toggle("open");
 }
 
@@ -132,8 +137,17 @@ function bindKeyboard(): void {
       redo();
       return;
     }
+    // #21 No caderno, os atalhos do canvas (Del, N, H, T, Tab…) ficam desligados.
+    if (state.area === "docs") return;
     // #3 Criação encadeada: Tab = próximo conectado, Enter = irmão.
     const onControl = !!target(e).closest?.("button, a, summary, [tabindex]");
+    // #10 Nota selecionada: Enter/F2 abrem o editor do card (Tab não cria sequência).
+    const selNote = state.selected?.kind === "node" && keyKind(state.selected.id) === "note" ? state.selected.id : "";
+    if (selNote && !mod && !onControl && (e.key === "Enter" || e.key === "F2" || e.key === "Tab")) {
+      e.preventDefault();
+      if (e.key !== "Tab") startNoteEdit(selNote);
+      return;
+    }
     if ((e.key === "Tab" || e.key === "Enter") && !mod && !e.altKey && !onControl && state.selected?.kind === "node") {
       if (e.key === "Tab" && e.shiftKey) return;
       e.preventDefault();
@@ -157,6 +171,7 @@ function bindKeyboard(): void {
       c: () => setMode("connect"),
       v: () => setMode("pointer"),
       p: startPresentation,
+      t: () => addNote(true),
     };
     if (!mod && !e.altKey && single[key]) {
       e.preventDefault();
@@ -207,6 +222,9 @@ export function startApp(): void {
   state.layoutMode = v.layoutMode ?? (hasLayers ? "layers" : "timeline");
   state.lanes = v.lanes ?? true;
   state.emotion = v.emotion ?? true;
+  state.area = v.area ?? "canvas";
+  state.docId = v.docId ?? "";
+  state.docsMode = v.docsMode ?? "split";
 
   bindCanvas();
   bindLegend();
@@ -217,6 +235,14 @@ export function startApp(): void {
   bindImport();
   bindKeyboard();
   bindPresentation();
+  bindDocs();
+  onGotoCanvas((link) => {
+    const [kind, ...rest] = link.split(":");
+    const k = nodeKey(kind, rest.join(":"));
+    if (getByKey(k)) ensureVisible(k);
+    else refreshAll(true);
+  });
+  $("#stage").addEventListener("pointerleave", () => rememberPointer(null));
   window.addEventListener("beforeunload", persistViewNow);
   window.addEventListener("resize", () => cameraApply());
 

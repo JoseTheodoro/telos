@@ -23,6 +23,7 @@ import { renderEdges, renderGraph } from "./canvas/render";
 import { renderInspector } from "./ui/inspector";
 import { createModal } from "./ui/modal";
 import { $, notify } from "./ui/dom";
+import { focusNoteScope } from "./canvas/note";
 
 function openInspectorOnMobile(): void {
   if (window.innerWidth < 930) $("#inspector").classList.add("open");
@@ -62,6 +63,8 @@ export function ensureVisible(k: NodeKey): void {
     const s = get("scene", ev.sceneId) as Scene | undefined;
     const c = get("chapter", s?.chapter) as Chapter | undefined;
     setFocus(c?.journeyId || "", s?.chapter || "", ev.sceneId);
+  } else if (kind === "note") {
+    focusNoteScope(k);
   } else if (kind === "hotspot") {
     // Hotspot abre no recorte do card narrativo que ele questiona (se houver).
     const anchor = related(k)
@@ -189,7 +192,7 @@ export function duplicateSelection(): void {
   const copy = deep(o);
   copy.id = "u" + newId();
   const nf = nameField(t);
-  copy[nf] = String(o[nf] ?? "") + " (cópia)";
+  if (t !== "note") copy[nf] = String(o[nf] ?? "") + " (cópia)";
   if (t === "hotspot") copy.id = newEntityId(state.ws, t);
   const nk = nodeKey(t, copy.id);
   change(() => {

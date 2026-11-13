@@ -51,6 +51,9 @@ export function persistViewNow(): void {
     layoutMode: state.layoutMode,
     lanes: state.lanes,
     emotion: state.emotion,
+    area: state.area,
+    docId: state.docId,
+    docsMode: state.docsMode,
   };
   persist();
 }

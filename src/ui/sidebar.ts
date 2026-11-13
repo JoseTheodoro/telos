@@ -9,6 +9,7 @@ import { refreshAll } from "../app";
 import { ensureVisible, selectNode } from "../actions";
 import { ensurePositions } from "../canvas/layout";
 import { createModal } from "./modal";
+import { addNote } from "../canvas/note";
 import { $, $$, esc, target } from "./dom";
 
 function journeyTree(j: Journey, ji: number): string {
@@ -40,7 +41,7 @@ function inventory(): string {
   const q = search.toLowerCase();
   const groups = TYPES.map((t) => {
     const arr = collection(ws, t).filter((o) =>
-      (label(nodeKey(t, o.id)) + " " + (o.notes || "")).toLowerCase().includes(q),
+      (label(nodeKey(t, o.id)) + " " + (o.notes || "") + " " + (o.text || "")).toLowerCase().includes(q),
     );
     const items =
       arr
@@ -125,6 +126,10 @@ export function bindSidebar(): void {
   $("#sidebarBody").addEventListener("click", (e) => {
     const el = target(e);
     const create = el.closest<HTMLElement>("[data-create]");
+    if (create?.dataset.create === "note") {
+      addNote();
+      return;
+    }
     if (create) {
       createModal(create.dataset.create as NodeKind, null, null, create.dataset.parent || "");
       return;

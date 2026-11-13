@@ -11,6 +11,9 @@ import { categoryLabel } from "../domain/grammar";
 import { DEFAULT_LANE, laneOf } from "../domain/lanes";
 import { EMOTION_LEVELS, emotionSigned, hasEmotion } from "../domain/emotion";
 import { addHotspot } from "../canvas/hotspot";
+import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
+import { docsLinkedTo, newDoc, openDoc } from "./docs";
+import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import {
   collection,
@@ -23,7 +26,7 @@ import {
   syncMaps,
   validColor,
 } from "../domain/model";
-import type { AnyEntity, Edge, NodeKind, RegistryOption, Scene } from "../domain/types";
+import type { AnyEntity, Edge, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, state } from "../core/state";
@@ -54,7 +57,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">T</span> nota livre · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
 function chip(c: EsCategory): string {
@@ -224,6 +227,8 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
         options("Acesso padrão nas novas setas", "defaultAccess", v("defaultAccess") || "", ACCESS_OPTIONS) +
         `<div class="hint"><b>Acesso por seta</b><br>Uma mesma tabela pode receber WRITE de um sistema e READ de outros. Edite cada conexão para descrever quem lê e quem escreve.</div>`
       );
+    case "note":
+      return "";
     case "hotspot":
       return (
         field("Dúvida / título", "title", o.title) +
@@ -245,9 +250,61 @@ function esHint(kind: NodeKind, semanticType: string | undefined): string {
   return `<div class="es-hint"><span class="es-swatch" style="background:${es.bg};border-color:${es.outline}"></span><span>Post-it <b>${es.colorName}</b> · ${esc(es.label)}<br><small>${esc(es.hint)}</small></span></div>`;
 }
 
+/** Validação do JSON + botões (atualizados a cada tecla, sem re-render do inspetor). */
+function noteTools(n: NoteItem): string {
+  const bad = n.format === "json" ? jsonError(n.text) : null;
+  const hint =
+    n.format !== "json" || !n.text.trim()
+      ? ""
+      : bad
+        ? `<small class="help note-bad">⚠ JSON inválido: ${esc(bad)}</small>`
+        : `<small class="help">✓ JSON válido</small>`;
+  return `${hint}<div class="rowbtn" style="margin-top:8px"><button type="button" class="btn sm" data-note-act="copy">⧉ Copiar</button><button type="button" class="btn sm" data-note-act="edit">✎ Editar no card <span class="hotkey">Enter</span></button>${n.format === "json" && !bad && n.text.trim() ? `<button type="button" class="btn sm" data-note-act="pretty">{ } Formatar JSON</button>` : ""}</div>`;
+}
+
+/** #10 Inspetor da nota livre: formato, conteúdo (editável aqui ou no card) e ações. */
+function noteInspector(k: string, o: AnyEntity): string {
+  const n = o as unknown as NoteItem;
+  const rels = related(k);
+  const relRows = rels
+    .map((e) => {
+      const neighbor = e.from === k ? e.to : e.from;
+      return `<div class="rel"><span title="${esc(label(neighbor))}">${e.from === k ? "→" : "←"} ${esc(label(neighbor))}<br><small>${esc(e.label)}</small></span><button title="Inspecionar relação" data-inspect-edge="${esc(e.id)}">↗</button></div>`;
+    })
+    .join("");
+  return (
+    options(
+      "Formato",
+      "format",
+      n.format,
+      NOTE_FORMATS.map((f): [string, string] => [f.id, f.label]),
+    ) +
+    `<div class="field"><label for="f-text">Conteúdo</label><textarea class="input area note-src${isCodeFormat(n.format) ? " is-code" : ""}" data-field="text" id="f-text" spellcheck="${!isCodeFormat(n.format)}" placeholder="Texto, Markdown ou código…">${esc(n.text)}</textarea></div>` +
+    `<div class="note-tools">${noteTools(n)}</div>` +
+    `<small class="help">Aparece em: <b>${esc(scopeName(n.scope))}</b>. Duplo clique no card edita; arraste o canto ◢ para redimensionar.</small>` +
+    `<div class="sectionlabel">Setas desta nota · ${rels.length}</div><div class="rowbtn"><button class="btn sm primary" id="startLinkBtn">⇢ Ligar a um card</button></div>` +
+    relRows +
+    `<div class="sectionlabel">Ações</div><div class="rowbtn"><button class="btn" id="duplicateButton">⧉ Duplicar</button><button class="btn danger" id="deleteButton">✕ Excluir nota</button></div>`
+  );
+}
+
+/** #21 Notas do caderno vinculadas a esta jornada/capítulo. */
+function linkedDocs(k: string): string {
+  const docs = docsLinkedTo(k);
+  const rows = docs
+    .map(
+      (d) =>
+        `<button type="button" class="rel doc-rel" data-open-doc="${esc(d.id)}"><span>✎ ${esc(d.title || "Sem título")}</span><b>↗</b></button>`,
+    )
+    .join("");
+  return `<div class="sectionlabel">Caderno · ${docs.length} nota${docs.length === 1 ? "" : "s"}</div>${rows}<button type="button" class="btn sm add-choice" data-new-doc="${esc(k)}">＋ Nova nota no caderno</button>`;
+}
+
 function nodeInspector(k: string, o: AnyEntity): string {
   const kind = keyKind(k);
+  if (kind === "note") return noteInspector(k, o);
   let content = kindFields(kind, o);
+  if (kind === "journey" || kind === "chapter") content += linkedDocs(k);
   if (["domain", "system", "screen", "table"].includes(kind)) {
     content +=
       options("Status do inventário", "status", o.status || "A validar", [
@@ -353,6 +410,7 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
   if (!o || String(o[path] ?? "") === value) return;
   change(() => {
     if (path === "lane") resetLaneLayouts();
+    if (path === "format") rememberFormat(value);
     if (path === "questions" || path === "answers") o[path] = value.split(/\r?\n/);
     else if (path === "discussed") o[path] = value === "true";
     else o[path] = value;
@@ -473,6 +531,8 @@ export function bindInspector(): void {
       const o = getByKey(sel.id);
       if (o) o[path] = path === "questions" || path === "answers" ? v.split(/\r?\n/) : v;
       $("#inspectTitle").textContent = label(sel.id);
+      const tools = body.querySelector(".note-tools");
+      if (tools && keyKind(sel.id) === "note") tools.innerHTML = noteTools(o as unknown as NoteItem);
       if (path === "pain") body.querySelector<HTMLButtonElement>("[data-pain-hotspot]")!.disabled = !v.trim();
     }
     persist();
@@ -551,6 +611,25 @@ export function bindInspector(): void {
     if (el.closest("[data-pain-hotspot]") && nodeSel && keyKind(nodeSel) === "scene") {
       const sc = getByKey(nodeSel) as Scene | undefined;
       if (sc?.pain?.trim()) addHotspot({ target: nodeSel, name: sc.pain.trim() });
+      return;
+    }
+    const openD = el.closest<HTMLElement>("[data-open-doc]");
+    if (openD) return openDoc(openD.dataset.openDoc as string);
+    const newD = el.closest<HTMLElement>("[data-new-doc]");
+    if (newD) return newDoc(newD.dataset.newDoc as string);
+    const noteAct = el.closest<HTMLElement>("[data-note-act]");
+    if (noteAct && nodeSel && keyKind(nodeSel) === "note") {
+      const n = getByKey(nodeSel) as unknown as NoteItem | undefined;
+      const act = noteAct.dataset.noteAct;
+      if (act === "copy") void copyNote(nodeSel);
+      else if (act === "edit") startNoteEdit(nodeSel);
+      else if (act === "pretty" && n) {
+        const pretty = prettyJson(n.text);
+        if (pretty && pretty !== n.text)
+          change(() => {
+            n.text = pretty;
+          });
+      }
       return;
     }
     const quick = el.closest<HTMLElement>("[data-quick]");

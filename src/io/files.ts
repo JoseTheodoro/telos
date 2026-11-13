@@ -3,7 +3,7 @@ import { ACCEPTED_SCHEMAS, COLORS, NODE_H, NODE_W, PL } from "../domain/constant
 import { keyKind, nodeKey } from "../domain/keys";
 import { esStyle } from "../domain/es";
 import { colorForEdge, graphInit, isTableLink, semanticLabel, upgradeWorkspace } from "../domain/model";
-import type { Chapter, Scene } from "../domain/types";
+import type { Chapter, NoteItem, Scene } from "../domain/types";
 import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
@@ -12,6 +12,7 @@ import { activePositions, calcBounds, ensurePositions, isTimeline, pos } from ".
 import { edgeGeometry } from "../canvas/render";
 import { chapterBands, laneBands } from "../canvas/timeline";
 import { emotionBand, emotionSvg } from "../canvas/emotion";
+import { formatLabel, isCodeFormat } from "../ui/rich";
 import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { $, esc, notify, saveFile } from "../ui/dom";
 
@@ -96,6 +97,20 @@ function wrap(text: string): string[] {
   return lines.slice(0, 2);
 }
 
+/** #10 Nota livre no SVG: post-it com o texto bruto (linhas que cabem no card). */
+function noteSvg(p: { x: number; y: number }, n: NoteItem): string {
+  const code = isCodeFormat(n.format);
+  const maxChars = Math.floor((n.w - 28) / (code ? 7 : 7.4));
+  const maxLines = Math.max(1, Math.floor((n.h - 44) / 16));
+  const all = n.text.split(/\r?\n/);
+  const lines = all.slice(0, maxLines).map((l) => (l.length > maxChars ? l.slice(0, maxChars - 1) + "…" : l));
+  if (all.length > maxLines) lines[lines.length - 1] = "…";
+  const fill = code ? "#fbfcfd" : "#fffbea";
+  const stroke = code ? "#d5dde6" : "#e6d59f";
+  const ink = code ? "#24313f" : "#4a3d16";
+  return `<g><rect x="${p.x}" y="${p.y}" width="${n.w}" height="${n.h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/><text x="${p.x + 14}" y="${p.y + 18}" font-size="9" font-weight="800" fill="${code ? "#4f6d8a" : "#b08a2e"}">${esc(formatLabel(n.format).toUpperCase())}</text>${lines.map((l, i) => `<text x="${p.x + 14}" y="${p.y + 40 + i * 16}" font-size="${code ? 11 : 12}" font-family="monospace" fill="${ink}" xml:space="preserve">${esc(l)}</text>`).join("")}</g>`;
+}
+
 export function svgExport(): void {
   const { ws, visibleKeys } = state;
   const bb = calcBounds();
@@ -138,6 +153,7 @@ export function svgExport(): void {
     .map((k) => {
       const p = pos(k);
       const o = getByKey(k);
+      if (keyKind(k) === "note" && o) return noteSvg(p, o as unknown as NoteItem);
       const es = esStyle(keyKind(k), o?.semanticType);
       const c = es?.accent ?? COLORS[keyKind(k)];
       const fill = es?.bg ?? "white";

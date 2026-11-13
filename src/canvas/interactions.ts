@@ -4,13 +4,14 @@ import { keyKind } from "../domain/keys";
 import type { NodeKind } from "../domain/types";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
-import { state } from "../core/state";
+import { getByKey, state } from "../core/state";
 import { finishConnect, linkCreate, selectEdge, selectNode } from "../actions";
 import { createModal } from "../ui/modal";
 import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
 import { editingKey, finishInlineEdit, isInlineEditing, refocusInlineEdit, startInlineEdit } from "./inline-edit";
-import { activePositions, pos } from "./layout";
+import { activePositions, pos, sizeOf } from "./layout";
+import { copyNote, isNoteEditing, rememberPointer, startNoteEdit } from "./note";
 import { renderBands, renderEdges, renderGraph } from "./render";
 import { EMO } from "./emotion";
 import { clampEmotion, emotionLevel, emotionSigned } from "../domain/emotion";
@@ -55,7 +56,7 @@ export function bindCanvas(): void {
     const el = target(e);
     // Controles sobre o canvas recebem o próprio clique (antes o pan capturava o ponteiro e os
     // botões −/+/⤢ nunca disparavam — bug herdado da v1.5).
-    if (el.closest("#emptyStage, #esLegend, .name-editor, .zoomhud")) return;
+    if (el.closest("#emptyStage, #esLegend, .name-editor, .note-editor, .zoomhud")) return;
     // Clique fora do campo em edição confirma antes de qualquer outra ação
     // (o preventDefault do arraste impediria o blur).
     if (isInlineEditing()) {
@@ -69,6 +70,25 @@ export function bindCanvas(): void {
     }
     // O canvas assume o teclado (Tab/Enter/Del): solta o foco de botões e campos.
     (document.activeElement as HTMLElement | null)?.blur?.();
+
+    // #10 Nota livre: copiar o conteúdo e redimensionar pela alça do canto.
+    const copy = el.closest<HTMLElement>("[data-note-copy]");
+    if (copy) {
+      e.preventDefault();
+      selectNode(copy.dataset.noteCopy as string);
+      void copyNote(copy.dataset.noteCopy as string);
+      return;
+    }
+    const grip = el.closest<HTMLElement>("[data-note-resize]");
+    if (grip) {
+      e.preventDefault();
+      const k = grip.dataset.noteResize as string;
+      const size = sizeOf(k);
+      selectNode(k);
+      state.dragging = { type: "resize", key: k, x0: e.clientX, y0: e.clientY, w0: size.w, h0: size.h, snap: JSON.stringify(state.ws), moved: false };
+      stage.setPointerCapture(e.pointerId);
+      return;
+    }
 
     const port = el.closest<HTMLElement>("[data-port]");
     if (port) {
@@ -116,7 +136,8 @@ export function bindCanvas(): void {
       if (state.mode === "pointer" && isDoubleTap(k, e)) {
         e.preventDefault();
         state.dragging = null;
-        startInlineEdit(k);
+        if (keyKind(k) === "note") startNoteEdit(k);
+        else startInlineEdit(k);
         return;
       }
       selectNode(k);
@@ -152,7 +173,22 @@ export function bindCanvas(): void {
   });
 
   stage.addEventListener("pointermove", (e) => {
+    rememberPointer(localPoint(e));
     const d = state.dragging;
+    if (d?.type === "resize") {
+      const o = getByKey(d.key);
+      if (!o) return;
+      o.w = Math.max(180, Math.round(d.w0 + (e.clientX - d.x0) / state.cam.z));
+      o.h = Math.max(90, Math.round(d.h0 + (e.clientY - d.y0) / state.cam.z));
+      d.moved = true;
+      const n = document.querySelector<HTMLElement>(`[data-node="${CSS.escape(d.key)}"]`);
+      if (n) {
+        n.style.width = o.w + "px";
+        n.style.height = o.h + "px";
+      }
+      renderEdges();
+      return;
+    }
     if (d?.type === "node") {
       const p = localPoint(e);
       activePositions()[d.key] = { x: Math.round(p.x - d.dx), y: Math.round(p.y - d.dy) };
@@ -210,6 +246,16 @@ export function bindCanvas(): void {
       }
       return;
     }
+    if (d?.type === "resize") {
+      state.dragging = null;
+      if (d.moved) {
+        pushSnapshot(d.snap);
+        persist();
+        refreshUndo();
+        renderGraph();
+      }
+      return;
+    }
     if (d?.type === "emotion") {
       state.dragging = null;
       const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
@@ -244,6 +290,14 @@ export function bindCanvas(): void {
   stage.addEventListener("pointercancel", () => {
     // Arraste da curva interrompido: a nota volta ao valor de antes (nada foi salvo).
     const d = state.dragging;
+    if (d?.type === "resize" && d.moved) {
+      const o = getByKey(d.key);
+      if (o) {
+        o.w = d.w0;
+        o.h = d.h0;
+        renderGraph();
+      }
+    }
     if (d?.type === "emotion" && d.moved) {
       const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
       if (scene) {
@@ -261,6 +315,13 @@ export function bindCanvas(): void {
   stage.addEventListener(
     "wheel",
     (e) => {
+      // Dentro de uma nota com rolagem, a roda rola o conteúdo (Ctrl + roda continua dando zoom).
+      const body = target(e).closest<HTMLElement>(".note-body, .note-editor");
+      if (body && !e.ctrlKey && body.scrollHeight > body.clientHeight + 1) {
+        const atTop = body.scrollTop <= 0 && e.deltaY < 0;
+        const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 1 && e.deltaY > 0;
+        if (!atTop && !atEnd) return;
+      }
       e.preventDefault();
       zoom(e.deltaY > 0 ? 0.89 : 1.11, e.clientX, e.clientY);
     },
@@ -270,7 +331,7 @@ export function bindCanvas(): void {
   stage.addEventListener("dblclick", (e) => {
     // O alvo do dblclick pode ser o "mundo" (o card foi re-renderizado entre os cliques).
     const under = document.elementFromPoint(e.clientX, e.clientY);
-    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],[data-emo-scene],#esLegend,.zoomhud")) return;
+    if (isInlineEditing() || isNoteEditing() || target(e).closest("[data-node],[data-edge],[data-emo-scene],#esLegend,.zoomhud")) return;
     if (under?.closest("[data-node],[data-edge],[data-emo-scene],#esLegend")) return;
     const p = localPoint(e);
     createModal(null, Math.round(p.x), Math.round(p.y));

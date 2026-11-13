@@ -96,7 +96,8 @@ const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   const ws = state.ws;
   const has = (k: NodeKey) => keys.has(k);
-  for (const k of keys) delete positions[k];
+  // Notas livres ficam onde o usuário as colocou ("Organizar" não as move).
+  for (const k of keys) if (keyKind(k) !== "note") delete positions[k];
   const placed = () => [...keys].filter((k) => positions[k]);
   const { COLW, ROW } = TL;
   const eventY = (k: NodeKey) => rowYFor(k, keys);

@@ -4,7 +4,7 @@ import { keyId, keyKind } from "../domain/keys";
 import type { NodeKey, NodeKind, Point, Positions } from "../domain/types";
 import { persist } from "../core/persistence";
 import { undoPush } from "../core/history";
-import { state } from "../core/state";
+import { getByKey, state } from "../core/state";
 import { notify } from "../ui/dom";
 import { renderGraph } from "./render";
 import { timelineAppend, timelineLayout } from "./timeline";
@@ -21,6 +21,15 @@ export function activePositions(): Positions {
   const layouts = (state.ws.graph.layouts = state.ws.graph.layouts || {});
   const key = positionsKey();
   return layouts[key] || (layouts[key] = {});
+}
+
+/** Tamanho do card: notas livres são redimensionáveis; os demais têm tamanho fixo. */
+export function sizeOf(k: NodeKey): { w: number; h: number } {
+  if (keyKind(k) === "note") {
+    const o = getByKey(k);
+    return { w: Number(o?.w) || 320, h: Number(o?.h) || 180 };
+  }
+  return { w: NODE_W, h: NODE_H };
 }
 
 export function pos(k: NodeKey): Point {
@@ -96,11 +105,26 @@ function layersLayout(): void {
   }
 }
 
+/**
+ * Nota livre sem posição neste arranjo (ex.: criada na Timeline, aberta em Camadas):
+ * reaproveita a posição de outro arranjo do mesmo recorte.
+ */
+function placeNotes(keys: Set<NodeKey>, positions: Positions): void {
+  const layouts = state.ws.graph.layouts || {};
+  for (const k of keys) {
+    if (keyKind(k) !== "note" || positions[k]) continue;
+    const from = Object.values(layouts).find((lay) => lay[k]);
+    if (from) positions[k] = { ...from[k] };
+  }
+}
+
 /** Garante posição para todo nó visível (layout automático se o recorte for novo). */
 export function ensurePositions(): void {
   const keys = visible();
   const positions = activePositions();
-  if (!Object.keys(positions).length) {
+  const fresh = !Object.keys(positions).length;
+  placeNotes(keys, positions);
+  if (fresh) {
     autoLayout(false);
     return;
   }
@@ -138,8 +162,8 @@ export function calcBounds(): Bounds {
   const ys = keys.map((k) => positions[k]?.y ?? 100);
   let minX = xs.length ? Math.min(...xs) : 0;
   let minY = ys.length ? Math.min(...ys) : 0;
-  const maxX = xs.length ? Math.max(...xs) + NODE_W : 2000;
-  const maxY = ys.length ? Math.max(...ys) + NODE_H : 800;
+  const maxX = xs.length ? Math.max(...keys.map((k, i) => xs[i] + sizeOf(k).w)) : 2000;
+  const maxY = ys.length ? Math.max(...keys.map((k, i) => ys[i] + sizeOf(k).h)) : 800;
   // #8 A curva de emoção fica acima dos cards e entra no enquadramento/export.
   const emo = emotionBand(state.visibleKeys, positions);
   if (emo) {
