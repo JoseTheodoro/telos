@@ -1,5 +1,6 @@
 // Inspetor lateral: edição de nós, setas e hotspots.
 import { EDGE_PALETTE, EDGE_STATUS_OPTIONS, PL } from "../domain/constants";
+import { esStyle } from "../domain/es";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import { collection, colorForEdge, defaultEdgeName, edgeFor, isTableLink, syncMaps, validColor } from "../domain/model";
 import type { AnyEntity, Edge, NodeKind, RegistryOption } from "../domain/types";
@@ -147,6 +148,14 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
   }
 }
 
+/** Explica qual post-it de Event Storming o elemento representa. */
+function esHint(kind: NodeKind, semanticType: string | undefined): string {
+  const es = esStyle(kind, semanticType);
+  if (!es)
+    return `<div class="es-hint"><span class="es-swatch es-swatch-neutral"></span><span>Estrutura da jornada: sem cor de Event Storming. Escolha um tipo semântico (ex.: Comando, Política) para virar post-it.</span></div>`;
+  return `<div class="es-hint"><span class="es-swatch" style="background:${es.bg};border-color:${es.outline}"></span><span>Post-it <b>${es.colorName}</b> · ${esc(es.label)}<br><small>${esc(es.hint)}</small></span></div>`;
+}
+
 function nodeInspector(k: string, o: AnyEntity): string {
   const kind = keyKind(k);
   let content = kindFields(kind, o);
@@ -163,7 +172,8 @@ function nodeInspector(k: string, o: AnyEntity): string {
   content +=
     `<div class="sectionlabel">Classificação do elemento</div>` +
     options("Tipo semântico", "semanticType", o.semanticType || "Não definido", semOptions(o.semanticType)) +
-    `<button class="btn sm add-choice" data-add-choice="semantic">＋ Cadastrar novo tipo</button>`;
+    `<button class="btn sm add-choice" data-add-choice="semantic">＋ Cadastrar novo tipo</button>` +
+    esHint(kind, o.semanticType);
   const rels = related(k);
   const relRows = rels
     .slice(0, 70)

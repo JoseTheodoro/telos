@@ -8,6 +8,7 @@ import { setFocus, state } from "./core/state";
 import { safeRemoveSelection } from "./actions";
 import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
+import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
 import { bindImport, csvExport, exportJson, svgExport } from "./io/files";
@@ -124,8 +125,10 @@ export function startApp(): void {
   state.ws = loadInitialWorkspace();
   const v = state.ws.view;
   if (v.journey !== undefined) setFocus(v.journey || "", v.chapter || "", v.scene || "");
+  state.legendCollapsed = v.legendCollapsed ?? window.innerWidth < 930;
 
   bindCanvas();
+  bindLegend();
   bindSidebar();
   bindToolbar();
   bindModal();

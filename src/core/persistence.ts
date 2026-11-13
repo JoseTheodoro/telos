@@ -47,6 +47,7 @@ export function persistViewNow(): void {
     scene: state.focusScene,
     camera: { ...state.cam },
     sidebarTab: state.sidebarTab,
+    legendCollapsed: state.legendCollapsed,
   };
   persist();
 }

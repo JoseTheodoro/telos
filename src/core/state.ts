@@ -35,6 +35,7 @@ export const state = {
   focusChapter: "consulta",
   focusScene: "preconsulta",
   sidebarTab: "journey" as SidebarTab,
+  legendCollapsed: false,
   search: "",
   collapsed: new Set<string>(),
   mode: "pointer" as ToolMode,

@@ -29,7 +29,7 @@ export function bindCanvas(): void {
 
   stage.addEventListener("pointerdown", (e) => {
     const el = target(e);
-    if (el.closest("#emptyStage")) return;
+    if (el.closest("#emptyStage, #esLegend")) return;
 
     const port = el.closest<HTMLElement>("[data-port]");
     if (port) {
@@ -165,7 +165,7 @@ export function bindCanvas(): void {
   );
 
   stage.addEventListener("dblclick", (e) => {
-    if (target(e).closest("[data-node],[data-edge]")) return;
+    if (target(e).closest("[data-node],[data-edge],#esLegend")) return;
     const p = localPoint(e);
     createModal(null, Math.round(p.x), Math.round(p.y));
   });

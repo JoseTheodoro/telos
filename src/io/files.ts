@@ -1,6 +1,7 @@
 // Importação e exportação (JSON, CSV, SVG).
 import { ACCEPTED_SCHEMAS, COLORS, NODE_H, NODE_W, PL } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
+import { esStyle } from "../domain/es";
 import { colorForEdge, graphInit, isTableLink, semanticLabel, upgradeWorkspace } from "../domain/model";
 import type { Chapter, Scene } from "../domain/types";
 import { undoPush } from "../core/history";
@@ -114,10 +115,13 @@ export function svgExport(): void {
   const cards = [...visibleKeys]
     .map((k) => {
       const p = pos(k);
-      const c = COLORS[keyKind(k)];
-      const sem = semanticLabel(getByKey(k));
+      const o = getByKey(k);
+      const es = esStyle(keyKind(k), o?.semanticType);
+      const c = es?.accent ?? COLORS[keyKind(k)];
+      const fill = es?.bg ?? "white";
+      const sem = semanticLabel(o);
       const lines = wrap(label(k));
-      return `<g><rect x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" rx="12" fill="white" stroke="${c}" stroke-width="2"/><rect x="${p.x}" y="${p.y}" width="6" height="${NODE_H}" fill="${c}" rx="3"/><text x="${p.x + 16}" y="${p.y + 21}" fill="${c}" font-weight="700" font-size="10">${esc(PL[keyKind(k)].toUpperCase())}${sem ? " / " + esc(sem) : ""}</text>${lines.map((l, i) => `<text x="${p.x + 16}" y="${p.y + 45 + i * 17}" font-size="13" font-weight="600" fill="#244132">${esc(l)}</text>`).join("")}</g>`;
+      return `<g><rect x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" rx="12" fill="${fill}" stroke="${es?.outline ?? c}" stroke-width="2"/><rect x="${p.x}" y="${p.y}" width="6" height="${NODE_H}" fill="${c}" rx="3"/><text x="${p.x + 16}" y="${p.y + 21}" fill="${c}" font-weight="700" font-size="10">${esc(PL[keyKind(k)].toUpperCase())}${sem ? " / " + esc(sem) : ""}</text>${lines.map((l, i) => `<text x="${p.x + 16}" y="${p.y + 45 + i * 17}" font-size="13" font-weight="600" fill="#244132">${esc(l)}</text>`).join("")}</g>`;
     })
     .join("");
   saveFile(

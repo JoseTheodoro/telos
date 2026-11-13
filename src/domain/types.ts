@@ -162,6 +162,7 @@ export interface ViewState {
   scene?: string;
   camera?: Camera;
   sidebarTab?: SidebarTab;
+  legendCollapsed?: boolean;
 }
 
 export interface RegistryOption {

@@ -1,6 +1,7 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
 import { NATURE_BASE, NODE_W, PL, PORT_Y, TYPES, ARR } from "../domain/constants";
 import { keyKind } from "../domain/keys";
+import { esCssVars, esStyle } from "../domain/es";
 import { colorForEdge, isTableLink, semanticLabel } from "../domain/model";
 import type {
   AnyEntity,
@@ -15,6 +16,7 @@ import type {
 import { degree, getByKey, label, state } from "../core/state";
 import { $, esc } from "../ui/dom";
 import { calcBounds, pos } from "./layout";
+import { renderLegend } from "./legend";
 import { visible } from "./visibility";
 
 const NATURE_LABEL = Object.fromEntries(NATURE_BASE);
@@ -98,7 +100,8 @@ function nodeHtml(k: NodeKey): string {
   const t = keyKind(k);
   const sem = semanticLabel(o);
   const isSelected = state.selected?.kind === "node" && state.selected.id === k;
-  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" style="left:${p.x}px;top:${p.y}px"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
+  const es = esStyle(t, o.semanticType);
+  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}" style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
 }
 
 export function renderGraph(): void {
@@ -106,6 +109,7 @@ export function renderGraph(): void {
   state.visibleKeys = visible();
   const visibleKeys = state.visibleKeys;
   $("#emptyStage").hidden = !TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
+  renderLegend();
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";
     renderEdges();
