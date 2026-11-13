@@ -13,6 +13,7 @@ import { quickCreate } from "./canvas/quick-create";
 import { addHotspot } from "./canvas/hotspot";
 import { keyKind, nodeKey } from "./domain/keys";
 import { addNote, rememberPointer, startNoteEdit } from "./canvas/note";
+import { addFrame } from "./canvas/frame";
 import { bindPresentation, startPresentation } from "./ui/presentation";
 import { bindDocs, onGotoCanvas, renderDocs } from "./ui/docs";
 import { bindLegend } from "./canvas/legend";
@@ -118,6 +119,7 @@ function bindToolbar(): void {
   $("#redo").onclick = redo;
   $("#presentBtn").onclick = startPresentation;
   $("#quickNoteBtn").onclick = () => addNote(false);
+  $("#quickFrameBtn").onclick = () => addFrame(false);
   $("#inspectorBtn").onclick = () => $("#inspector").classList.toggle("open");
 }
 
@@ -147,6 +149,13 @@ function bindKeyboard(): void {
       if (e.key !== "Tab") startNoteEdit(selNote);
       return;
     }
+    // #11 Moldura selecionada: Enter renomeia (não há sequência a criar).
+    const selFrame = state.selected?.kind === "node" && keyKind(state.selected.id) === "frame" ? state.selected.id : "";
+    if (selFrame && !mod && !onControl && e.key === "Enter") {
+      e.preventDefault();
+      startInlineEdit(selFrame);
+      return;
+    }
     if ((e.key === "Tab" || e.key === "Enter") && !mod && !e.altKey && !onControl && state.selected?.kind === "node") {
       if (e.key === "Tab" && e.shiftKey) return;
       e.preventDefault();
@@ -171,6 +180,7 @@ function bindKeyboard(): void {
       v: () => setMode("pointer"),
       p: startPresentation,
       t: () => addNote(true),
+      f: () => addFrame(true),
     };
     if (!mod && !e.altKey && single[key]) {
       e.preventDefault();

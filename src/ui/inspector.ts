@@ -1,6 +1,7 @@
 // Inspetor lateral: edição de nós, setas e hotspots.
 import {
   EDGE_PALETTE,
+  FRAME_PALETTE,
   EDGE_STATUS_OPTIONS,
   HOTSPOT_PRIORITY_OPTIONS,
   HOTSPOT_STATUS_OPTIONS,
@@ -12,6 +13,7 @@ import { DEFAULT_LANE, laneOf } from "../domain/lanes";
 import { EMOTION_LEVELS, emotionSigned, hasEmotion } from "../domain/emotion";
 import { addHotspot } from "../canvas/hotspot";
 import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
+import { containedKeys } from "../canvas/frame";
 import { docsLinkedTo, newDoc, openDoc } from "./docs";
 import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
 import { keyKind, newId, nodeKey } from "../domain/keys";
@@ -26,7 +28,7 @@ import {
   syncMaps,
   validColor,
 } from "../domain/model";
-import type { AnyEntity, Edge, NodeKey, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
+import type { AnyEntity, Edge, FrameItem, NodeKey, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, selectedNodeKeys, selectedSingleNode, state } from "../core/state";
@@ -236,6 +238,7 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
         `<div class="hint"><b>Acesso por seta</b><br>Uma mesma tabela pode receber WRITE de um sistema e READ de outros. Edite cada conexão para descrever quem lê e quem escreve.</div>`
       );
     case "note":
+    case "frame":
       return "";
     case "hotspot":
       return (
@@ -308,9 +311,26 @@ function linkedDocs(k: string): string {
   return `<div class="sectionlabel">Caderno · ${docs.length} nota${docs.length === 1 ? "" : "s"}</div>${rows}<button type="button" class="btn sm add-choice" data-new-doc="${esc(k)}">＋ Nova nota no caderno</button>`;
 }
 
+/** #11 Moldura: título, cor, onde aparece e o que está dentro. */
+function frameInspector(k: NodeKey, o: AnyEntity): string {
+  const frame = o as unknown as FrameItem;
+  const inside = containedKeys(k);
+  const swatches = FRAME_PALETTE.map(
+    ([name, hex]) =>
+      `<button type="button" class="palette-swatch ${frame.color === hex ? "is-active" : ""}" style="--swatch:${hex}" title="${name}" aria-label="${name}" data-frame-color="${hex}"><span></span></button>`,
+  ).join("");
+  return (
+    field("Título", "title", frame.title) +
+    `<div class="field"><label>Cor de fundo</label><div class="palette-swatches frame-swatches" role="group" aria-label="Cor da moldura">${swatches}</div></div>` +
+    `<div class="hint"><b>${inside.length} ${inside.length === 1 ? "card" : "cards"} dentro</b> · aparece em: ${esc(scopeName(frame.scope))}<br>Arraste pelo título para mover a moldura com o que está dentro dela. O fundo deixa passar o mouse: dá para mover a tela, desenhar o laço e criar cards dentro dela.</div>` +
+    `<div class="sectionlabel">Ações</div><div class="rowbtn"><button type="button" class="btn" data-frame-select-content${inside.length ? "" : " disabled"}>◎ Selecionar conteúdo</button><button class="btn danger" id="deleteButton">✕ Excluir moldura</button></div>`
+  );
+}
+
 function nodeInspector(k: string, o: AnyEntity): string {
   const kind = keyKind(k);
   if (kind === "note") return noteInspector(k, o);
+  if (kind === "frame") return frameInspector(k, o);
   let content = kindFields(kind, o);
   if (kind === "journey" || kind === "chapter") content += linkedDocs(k);
   if (INVENTORY_KINDS.includes(kind)) {
@@ -371,7 +391,7 @@ const BATCH_FIELDS: BatchField[] = [
     id: "semanticType",
     field: "semanticType",
     label: "Tipo semântico",
-    appliesTo: (kind) => kind !== "hotspot" && kind !== "note",
+    appliesTo: (kind) => kind !== "hotspot" && kind !== "note" && kind !== "frame",
     choices: (current) => semOptions(current || undefined),
   },
   {
@@ -482,7 +502,11 @@ export function renderInspector(): void {
   }
   title.textContent = label(sel.id);
   const kindLabel = keyKind(sel.id) === "hotspot" ? `Hotspot ${o.id}` : PL[keyKind(sel.id)];
-  sub.textContent = `${kindLabel} · ${degree(sel.id)} conexões`;
+  const inside = keyKind(sel.id) === "frame" ? containedKeys(sel.id).length : 0;
+  sub.textContent =
+    keyKind(sel.id) === "frame"
+      ? `${kindLabel} · ${inside} ${inside === 1 ? "card dentro" : "cards dentro"}`
+      : `${kindLabel} · ${degree(sel.id)} conexões`;
   body.innerHTML = nodeInspector(sel.id, o);
 }
 
@@ -750,6 +774,22 @@ export function bindInspector(): void {
     const quick = el.closest<HTMLElement>("[data-quick]");
     if (quick) {
       quickCreate(quick.dataset.quick === "next" ? "next" : "sibling");
+      return;
+    }
+    const frameColor = el.closest<HTMLElement>("[data-frame-color]");
+    if (frameColor && nodeSel && keyKind(nodeSel) === "frame") {
+      const frame = getByKey(nodeSel) as unknown as FrameItem | undefined;
+      const color = frameColor.dataset.frameColor as string;
+      if (frame && frame.color !== color)
+        change(() => {
+          frame.color = color;
+        });
+      return;
+    }
+    if (el.closest("[data-frame-select-content]") && nodeSel && keyKind(nodeSel) === "frame") {
+      const inside = containedKeys(nodeSel);
+      selectNodes(inside);
+      notify(`${inside.length} ${inside.length === 1 ? "card selecionado" : "cards selecionados"} dentro da moldura`);
       return;
     }
     const only = el.closest<HTMLElement>("[data-select-only]");

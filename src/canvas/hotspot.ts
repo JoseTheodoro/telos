@@ -24,7 +24,8 @@ export function addHotspot(opts: { target?: NodeKey; name?: string } = {}): void
     return;
   }
   const target: NodeKey | null =
-    opts.target ?? (sel?.kind === "node" && getByKey(sel.id) && keyKind(sel.id) !== "hotspot" ? sel.id : null);
+    opts.target ??
+    (sel?.kind === "node" && getByKey(sel.id) && keyKind(sel.id) !== "hotspot" && keyKind(sel.id) !== "frame" ? sel.id : null);
   const id = newEntityId(ws, "hotspot");
   const k = nodeKey("hotspot", id);
   // #8 "Virar hotspot" a partir da dor da cena já nasce com o texto da dor.

@@ -8,7 +8,7 @@ import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
-import { activePositions, calcBounds, ensurePositions, isTimeline, pos } from "../canvas/layout";
+import { activePositions, calcBounds, ensurePositions, isTimeline, pos, sizeOf } from "../canvas/layout";
 import { edgeGeometry } from "../canvas/render";
 import { chapterBands, laneBands } from "../canvas/timeline";
 import { emotionBand, emotionSvg } from "../canvas/emotion";
@@ -149,7 +149,19 @@ export function svgExport(): void {
         `<marker id="svg-arrow-${esc(e.id)}" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="${colorForEdge(e)}"/></marker>`,
     )
     .join("");
+  // #11 Molduras atrás de setas e cards; as maiores primeiro.
+  const frames = [...visibleKeys]
+    .filter((k) => keyKind(k) === "frame")
+    .sort((a, b) => sizeOf(b).w * sizeOf(b).h - sizeOf(a).w * sizeOf(a).h)
+    .map((k) => {
+      const p = pos(k);
+      const { w, h } = sizeOf(k);
+      const color = String(getByKey(k)?.color || "#eceff1");
+      return `<g><rect x="${p.x}" y="${p.y}" width="${w}" height="${h}" rx="16" fill="${esc(color)}" fill-opacity="0.75" stroke="#b7c7bc" stroke-width="1.5"/><text x="${p.x + 16}" y="${p.y + 27}" font-size="15" font-weight="800" fill="#2c4036">${esc(label(k))}</text></g>`;
+    })
+    .join("");
   const cards = [...visibleKeys]
+    .filter((k) => keyKind(k) !== "frame")
     .map((k) => {
       const p = pos(k);
       const o = getByKey(k);
@@ -164,7 +176,7 @@ export function svgExport(): void {
     .join("");
   saveFile(
     "pep-atlas-mapa.svg",
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(W)}" height="${Math.ceil(H)}" viewBox="${X} ${Y} ${W} ${H}"><defs>${markers}</defs><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fbfdfb"/>${bands}${paths}${cards}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(W)}" height="${Math.ceil(H)}" viewBox="${X} ${Y} ${W} ${H}"><defs>${markers}</defs><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fbfdfb"/>${bands}${frames}${paths}${cards}</svg>`,
     "image/svg+xml;charset=utf-8",
   );
   notify("SVG exportado com setas coloridas");

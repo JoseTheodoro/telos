@@ -12,7 +12,8 @@ export type NodeKind =
   | "table"
   | "semantic"
   | "hotspot"
-  | "note";
+  | "note"
+  | "frame";
 
 /** Chave de nó no grafo: `${kind}:${id}` (ex.: "scene:preconsulta"). */
 export type NodeKey = string;
@@ -117,6 +118,17 @@ export interface NoteItem extends BaseEntity {
   scope: string;
 }
 
+/** #11 Moldura: retângulo com título que delimita uma área do canvas (sem setas). */
+export interface FrameItem extends BaseEntity {
+  title: string;
+  /** Cor de fundo, uma de `FRAME_PALETTE`. */
+  color: string;
+  w: number;
+  h: number;
+  /** Recorte onde a moldura foi criada (`scopeKey()`), como nas notas livres. */
+  scope: string;
+}
+
 /** #21 Nota do caderno (Markdown), opcionalmente vinculada a uma jornada ou capítulo. */
 export interface DocNote {
   id: string;
@@ -139,7 +151,8 @@ export type AnyEntity =
   | Table
   | SemanticNode
   | Decision
-  | NoteItem;
+  | NoteItem
+  | FrameItem;
 
 export interface Edge {
   id: string;
@@ -247,6 +260,8 @@ export interface Workspace {
   journeys: Journey[];
   /** #10 Notas livres do canvas. */
   canvasNotes: NoteItem[];
+  /** #11 Molduras do canvas. */
+  frames: FrameItem[];
   /** #21 Caderno de notas Markdown. */
   docs: DocNote[];
   chapters: Chapter[];
@@ -281,7 +296,8 @@ export type CollectionName =
   | "tables"
   | "semanticNodes"
   | "decisions"
-  | "canvasNotes";
+  | "canvasNotes"
+  | "frames";
 
 export type SidebarTab = "journey" | "inventory" | "decisions";
 export type ToolMode = "pointer" | "connect";

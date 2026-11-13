@@ -11,6 +11,8 @@ import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
 import { editingKey, finishInlineEdit, isInlineEditing, refocusInlineEdit, startInlineEdit } from "./inline-edit";
 import { activePositions, pos, sizeOf } from "./layout";
+import { containedKeys } from "./frame";
+import { minSizeOf } from "./size";
 import { copyNote, isNoteEditing, rememberPointer, startNoteEdit } from "./note";
 import { renderBands, renderEdges, renderGraph } from "./render";
 import { EMO } from "./emotion";
@@ -78,12 +80,31 @@ function finishLasso(d: LassoDrag): void {
   );
 }
 
+/** Elementos do card no DOM (a moldura tem também o fundo, numa camada atrás das setas). */
+function cardElements(k: string): HTMLElement[] {
+  const key = CSS.escape(k);
+  return [...document.querySelectorAll<HTMLElement>(`[data-node="${key}"], [data-frame-bg="${key}"]`)];
+}
+
 function moveNodeCard(k: string, x: number, y: number): void {
-  const card = document.querySelector<HTMLElement>(`[data-node="${CSS.escape(k)}"]`);
-  if (card) {
-    card.style.left = x + "px";
-    card.style.top = y + "px";
+  for (const el of cardElements(k)) {
+    el.style.left = x + "px";
+    el.style.top = y + "px";
   }
+}
+
+/** Arraste de vários cards juntos (seleção múltipla ou moldura com o conteúdo), com um só undo. */
+function startGroupDrag(key: string, keys: string[], e: PointerEvent, stage: HTMLElement): void {
+  state.dragging = {
+    type: "group",
+    key,
+    start: localPoint(e),
+    origins: Object.fromEntries(keys.map((x) => [x, { ...pos(x) }])),
+    snap: JSON.stringify(state.ws),
+    moved: false,
+  };
+  e.preventDefault();
+  stage.setPointerCapture(e.pointerId);
 }
 
 function isDoubleTap(key: string, e: PointerEvent): boolean {
@@ -197,17 +218,13 @@ export function bindCanvas(): void {
       }
       const sel = state.selected;
       if (state.mode === "pointer" && sel?.kind === "nodes" && sel.ids.includes(k)) {
-        const keys = sel.ids.filter((x) => state.visibleKeys.has(x));
-        state.dragging = {
-          type: "group",
-          key: k,
-          start: localPoint(e),
-          origins: Object.fromEntries(keys.map((x) => [x, { ...pos(x) }])),
-          snap: JSON.stringify(state.ws),
-          moved: false,
-        };
-        e.preventDefault();
-        stage.setPointerCapture(e.pointerId);
+        startGroupDrag(k, sel.ids.filter((x) => state.visibleKeys.has(x)), e, stage);
+        return;
+      }
+      if (state.mode === "pointer" && keyKind(k) === "frame") {
+        // O conteúdo é o que está dentro da moldura no início do arraste.
+        selectNode(k);
+        startGroupDrag(k, [k, ...containedKeys(k)], e, stage);
         return;
       }
       selectNode(k);
@@ -254,13 +271,13 @@ export function bindCanvas(): void {
     if (d?.type === "resize") {
       const o = getByKey(d.key);
       if (!o) return;
-      o.w = Math.max(180, Math.round(d.w0 + (e.clientX - d.x0) / state.cam.z));
-      o.h = Math.max(90, Math.round(d.h0 + (e.clientY - d.y0) / state.cam.z));
+      const min = minSizeOf(d.key);
+      o.w = Math.max(min.w, Math.round(d.w0 + (e.clientX - d.x0) / state.cam.z));
+      o.h = Math.max(min.h, Math.round(d.h0 + (e.clientY - d.y0) / state.cam.z));
       d.moved = true;
-      const n = document.querySelector<HTMLElement>(`[data-node="${CSS.escape(d.key)}"]`);
-      if (n) {
-        n.style.width = o.w + "px";
-        n.style.height = o.h + "px";
+      for (const el of cardElements(d.key)) {
+        el.style.width = o.w + "px";
+        el.style.height = o.h + "px";
       }
       renderEdges();
       return;
@@ -333,7 +350,8 @@ export function bindCanvas(): void {
       state.dragging = null;
       ghost.style.display = "none";
       state.connectStart = null;
-      if (dropTarget && dropTarget.dataset.node !== d.start) linkCreate(d.start, dropTarget.dataset.node as string);
+      const dropKey = dropTarget?.dataset.node;
+      if (dropKey && dropKey !== d.start && keyKind(dropKey) !== "frame") linkCreate(d.start, dropKey);
       else {
         const p = localPoint(e);
         createModal(NEXT_KIND[keyKind(d.start)] || "event", Math.round(p.x), Math.round(p.y), d.start);

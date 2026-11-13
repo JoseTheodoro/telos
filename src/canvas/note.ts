@@ -1,5 +1,6 @@
 // #10 Nota livre no canvas: nasce onde o cursor está, edita dentro do próprio card
 // (texto, Markdown ou código) e aparece no recorte em que foi criada.
+import { FREE_PLACED_KINDS } from "../domain/constants";
 import { buildEntity, newEntityId } from "../domain/factory";
 import { keyKind, nodeKey } from "../domain/keys";
 import type { NodeKey, NoteItem, Point } from "../domain/types";
@@ -23,6 +24,7 @@ let pointer: Point | null = null;
 export const rememberPointer = (p: Point | null): void => {
   pointer = p;
 };
+export const lastPointer = (): Point | null => pointer;
 
 /** Formato da próxima nota (o último escolhido). */
 let lastFormat = "text";
@@ -140,10 +142,10 @@ export function scopeName(scope: string): string {
   return "Mapa completo";
 }
 
-/** Ajusta o recorte para o da nota (usado ao localizar a nota pelo catálogo). */
-export function focusNoteScope(k: NodeKey): void {
-  const o = getByKey(k) as NoteItem | undefined;
-  if (!o || keyKind(k) !== "note") return;
+/** Ajusta o recorte para o da nota ou moldura (usado ao localizar pelo catálogo). */
+export function focusScopeOf(k: NodeKey): void {
+  const o = getByKey(k) as { scope: string } | undefined;
+  if (!o || !FREE_PLACED_KINDS.includes(keyKind(k))) return;
   const [kind, ...rest] = o.scope.split(":");
   const id = rest.join(":");
   const ws = state.ws;
@@ -155,7 +157,7 @@ export function focusNoteScope(k: NodeKey): void {
     const c = ws.chapters.find((x) => x.id === id);
     if (c) return setFocus(c.journeyId, c.id, "");
   } else if (kind === "journey" && ws.journeys.some((j) => j.id === id)) return setFocus(id, "", "");
-  // Recorte de origem não existe mais: a nota passa a morar no mapa completo.
+  // Recorte de origem não existe mais: o item passa a morar no mapa completo.
   o.scope = "all";
   setFocus("", "", "");
 }

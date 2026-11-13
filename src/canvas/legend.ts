@@ -9,7 +9,7 @@ function countVisible(): { byCat: Map<EsCategory, number>; neutral: number } {
   const byCat = new Map<EsCategory, number>();
   let neutral = 0;
   for (const k of state.visibleKeys) {
-    if (keyKind(k) === "note") continue; // notas livres não são post-its do Event Storming
+    if (keyKind(k) === "note" || keyKind(k) === "frame") continue; // notas e molduras não são post-its do Event Storming
     const cat = esCategory(keyKind(k), getByKey(k)?.semanticType);
     if (cat) byCat.set(cat, (byCat.get(cat) || 0) + 1);
     else neutral++;

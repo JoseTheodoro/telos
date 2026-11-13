@@ -23,7 +23,9 @@ import { renderEdges, renderGraph } from "./canvas/render";
 import { renderInspector } from "./ui/inspector";
 import { createModal } from "./ui/modal";
 import { $, notify } from "./ui/dom";
-import { focusNoteScope } from "./canvas/note";
+import { focusScopeOf } from "./canvas/note";
+
+const FRAME_NO_EDGE = "Moldura não tem setas: ligue os cards que estão dentro dela.";
 
 function openInspectorOnMobile(): void {
   if (window.innerWidth < 930) $("#inspector").classList.add("open");
@@ -63,8 +65,8 @@ export function ensureVisible(k: NodeKey): void {
     const s = get("scene", ev.sceneId) as Scene | undefined;
     const c = get("chapter", s?.chapter) as Chapter | undefined;
     setFocus(c?.journeyId || "", s?.chapter || "", ev.sceneId);
-  } else if (kind === "note") {
-    focusNoteScope(k);
+  } else if (kind === "note" || kind === "frame") {
+    focusScopeOf(k);
   } else if (kind === "hotspot") {
     // Hotspot abre no recorte do card narrativo que ele questiona (se houver).
     const anchor = related(k)
@@ -90,6 +92,10 @@ export function linkCreate(a: NodeKey, b: NodeKey): void {
   }
   if (!getByKey(a) || !getByKey(b)) {
     notify("Origem ou destino inexistente.");
+    return;
+  }
+  if (keyKind(a) === "frame" || keyKind(b) === "frame") {
+    notify(FRAME_NO_EDGE);
     return;
   }
   const { ws } = state;
@@ -130,6 +136,10 @@ export function linkCreate(a: NodeKey, b: NodeKey): void {
 }
 
 export function beginConnect(k: NodeKey): void {
+  if (keyKind(k) === "frame") {
+    notify(FRAME_NO_EDGE);
+    return;
+  }
   state.connectStart = k;
   state.mode = "connect";
   refreshTools();
@@ -165,6 +175,7 @@ export function toggleNodeSelection(k: NodeKey): void {
 
 const SINGLE_DELETE_QUESTION =
   "Excluir o elemento selecionado? Esta ação também remove suas setas associadas e pode ser desfeita.";
+const FRAME_DELETE_QUESTION = "Excluir a moldura? Os cards que estão dentro dela continuam no canvas. Ctrl+Z desfaz.";
 
 function deleteNode(k: NodeKey): void {
   const ws = state.ws;
@@ -206,7 +217,9 @@ export function removeSelection(): void {
   }
   const question =
     keys.length === 1
-      ? SINGLE_DELETE_QUESTION
+      ? keyKind(keys[0]) === "frame"
+        ? FRAME_DELETE_QUESTION
+        : SINGLE_DELETE_QUESTION
       : `Excluir os ${keys.length} elementos selecionados? As setas ligadas a eles também saem, e Ctrl+Z desfaz tudo de uma vez.`;
   if (!confirm(question)) return;
   change(() => {

@@ -10,6 +10,7 @@ import { ensureVisible, selectNode } from "../actions";
 import { ensurePositions } from "../canvas/layout";
 import { createModal } from "./modal";
 import { addNote } from "../canvas/note";
+import { addFrame } from "../canvas/frame";
 import { $, $$, esc, target } from "./dom";
 
 function journeyTree(j: Journey, ji: number): string {
@@ -128,6 +129,10 @@ export function bindSidebar(): void {
     const create = el.closest<HTMLElement>("[data-create]");
     if (create?.dataset.create === "note") {
       addNote();
+      return;
+    }
+    if (create?.dataset.create === "frame") {
+      addFrame();
       return;
     }
     if (create) {

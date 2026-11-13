@@ -212,6 +212,7 @@ function wipeWorkspace(): void {
     screens: [],
     tables: [],
     semanticNodes: [],
+    frames: [],
     decisions: deep(old.decisions || []),
     eventMappings: {},
     sceneMappings: {},

@@ -2,6 +2,8 @@
 import {
   ARR,
   DEST_BASE,
+  FRAME_MIN,
+  FRAME_PALETTE,
   NATURE_BASE,
   SCHEMA,
   SEMANTIC_BASE,
@@ -34,7 +36,7 @@ export function getEntityByKey(ws: Workspace, k: NodeKey): AnyEntity | undefined
 
 /** Campo que guarda o nome exibido no card de cada tipo. */
 export function nameField(kind: NodeKind): "label" | "title" | "name" {
-  return kind === "chapter" ? "label" : kind === "scene" || kind === "hotspot" ? "title" : "name";
+  return kind === "chapter" ? "label" : kind === "scene" || kind === "hotspot" || kind === "frame" ? "title" : "name";
 }
 
 /** Título de uma nota livre: primeira linha com conteúdo (sem marcação Markdown). */
@@ -276,6 +278,18 @@ function upgradeNotes(ws: Workspace): void {
   }
 }
 
+/** #11 Molduras: título, cor da paleta, tamanho mínimo e recorte válidos. */
+function upgradeFrames(ws: Workspace): void {
+  const colors = FRAME_PALETTE.map(([, hex]) => hex);
+  for (const f of ws.frames) {
+    f.title = typeof f.title === "string" ? f.title : "Moldura";
+    f.color = colors.includes(f.color) ? f.color : colors[0];
+    f.w = Number.isFinite(f.w) ? Math.max(FRAME_MIN.w, f.w) : 560;
+    f.h = Number.isFinite(f.h) ? Math.max(FRAME_MIN.h, f.h) : 360;
+    f.scope = typeof f.scope === "string" ? f.scope : "all";
+  }
+}
+
 export function upgradeWorkspace(data: any): Workspace {
   data.schema = SCHEMA;
   data.journeys = Array.isArray(data.journeys) ? data.journeys : [];
@@ -339,6 +353,7 @@ export function upgradeWorkspace(data: any): Workspace {
   upgradeLanes(data as Workspace);
   upgradeEmotion(data as Workspace);
   upgradeNotes(data as Workspace);
+  upgradeFrames(data as Workspace);
   linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;

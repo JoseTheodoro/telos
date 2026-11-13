@@ -22,6 +22,7 @@ import { renderLaneGutter } from "./lane-gutter";
 import { emotionBand, emotionHtml } from "./emotion";
 import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { renderLegend } from "./legend";
+import { containedKeys } from "./frame";
 import { visible } from "./visibility";
 
 const NATURE_LABEL = Object.fromEntries(NATURE_BASE);
@@ -152,6 +153,27 @@ function noteHtml(k: NodeKey, o: AnyEntity): string {
   return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
 }
 
+/**
+ * #11 A moldura tem duas camadas: o fundo fica atrás das setas; borda, título e alça ficam
+ * entre as setas e os cards, para uma seta que cruza o título não roubar o clique.
+ * Só o título e a alça recebem o mouse (o fundo deixa passar).
+ */
+function frameBgHtml(k: NodeKey): string {
+  const p = pos(k);
+  const { w, h } = sizeOf(k);
+  return `<div class="frame-bg" data-frame-bg="${esc(k)}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px;--frame:${esc(String(getByKey(k)?.color))}"></div>`;
+}
+
+function frameHtml(k: NodeKey): string {
+  const o = getByKey(k) as AnyEntity;
+  const p = pos(k);
+  const { w, h } = sizeOf(k);
+  const inside = containedKeys(k).length;
+  return `<div class="frame ${isNodeSelected(k) ? "selected" : ""}" data-node="${esc(k)}" data-kind="frame" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px;--frame:${esc(String(o.color))}"><div class="frame-head" title="Arraste pelo título para mover a moldura com o que está dentro; duplo clique renomeia"><span class="name">${esc(label(k))}</span><span class="frame-count">${inside} ${inside === 1 ? "card" : "cards"}</span></div><div class="note-resize frame-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
+}
+
+const areaOf = (k: NodeKey) => sizeOf(k).w * sizeOf(k).h;
+
 function nodeHtml(k: NodeKey): string {
   const o = getByKey(k) as AnyEntity;
   if (keyKind(k) === "note") return noteHtml(k, o);
@@ -237,12 +259,18 @@ export function renderGraph(): void {
   renderCounters();
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";
+    $("#frames").innerHTML = "";
+    $("#frameUi").innerHTML = "";
     $("#bands").innerHTML = "";
     renderLaneGutter([]);
     renderEdges();
     return;
   }
-  $("#nodes").innerHTML = [...visibleKeys].map(nodeHtml).join("");
+  // Maiores primeiro: uma moldura dentro de outra fica por cima e continua clicável.
+  const visibleFrames = [...visibleKeys].filter((k) => keyKind(k) === "frame").sort((a, b) => areaOf(b) - areaOf(a));
+  $("#frames").innerHTML = visibleFrames.map(frameBgHtml).join("");
+  $("#frameUi").innerHTML = visibleFrames.map(frameHtml).join("");
+  $("#nodes").innerHTML = [...visibleKeys].filter((k) => keyKind(k) !== "frame").map(nodeHtml).join("");
   renderBands();
   const bounds = calcBounds();
   $("#world").style.width = Math.max(2800, bounds.maxX + 500) + "px";

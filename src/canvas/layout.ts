@@ -1,15 +1,18 @@
 // Posições por recorte e layout automático em camadas.
-import { COL, NODE_H, NODE_W, TYPES } from "../domain/constants";
+import { COL, FREE_PLACED_KINDS, TYPES } from "../domain/constants";
 import { keyId, keyKind } from "../domain/keys";
 import type { NodeKey, NodeKind, Point, Positions } from "../domain/types";
 import { persist } from "../core/persistence";
 import { undoPush } from "../core/history";
-import { getByKey, state } from "../core/state";
+import { state } from "../core/state";
 import { notify } from "../ui/dom";
 import { renderGraph } from "./render";
 import { timelineAppend, timelineLayout } from "./timeline";
 import { emotionBand } from "./emotion";
 import { scopeKey, visible } from "./visibility";
+import { sizeOf } from "./size";
+
+export { sizeOf };
 
 /** Chave das posições: recorte + modo (cada modo guarda seu próprio arranjo). */
 export const positionsKey = (): string =>
@@ -21,15 +24,6 @@ export function activePositions(): Positions {
   const layouts = (state.ws.graph.layouts = state.ws.graph.layouts || {});
   const key = positionsKey();
   return layouts[key] || (layouts[key] = {});
-}
-
-/** Tamanho do card: notas livres são redimensionáveis; os demais têm tamanho fixo. */
-export function sizeOf(k: NodeKey): { w: number; h: number } {
-  if (keyKind(k) === "note") {
-    const o = getByKey(k);
-    return { w: Number(o?.w) || 320, h: Number(o?.h) || 180 };
-  }
-  return { w: NODE_W, h: NODE_H };
 }
 
 export function pos(k: NodeKey): Point {
@@ -106,13 +100,13 @@ function layersLayout(): void {
 }
 
 /**
- * Nota livre sem posição neste arranjo (ex.: criada na Timeline, aberta em Camadas):
+ * Nota ou moldura sem posição neste arranjo (ex.: criada na Timeline, aberta em Camadas):
  * reaproveita a posição de outro arranjo do mesmo recorte.
  */
-function placeNotes(keys: Set<NodeKey>, positions: Positions): void {
+function placeFreeNodes(keys: Set<NodeKey>, positions: Positions): void {
   const layouts = state.ws.graph.layouts || {};
   for (const k of keys) {
-    if (keyKind(k) !== "note" || positions[k]) continue;
+    if (!FREE_PLACED_KINDS.includes(keyKind(k)) || positions[k]) continue;
     const from = Object.values(layouts).find((lay) => lay[k]);
     if (from) positions[k] = { ...from[k] };
   }
@@ -123,7 +117,7 @@ export function ensurePositions(): void {
   const keys = visible();
   const positions = activePositions();
   const fresh = !Object.keys(positions).length;
-  placeNotes(keys, positions);
+  placeFreeNodes(keys, positions);
   if (fresh) {
     autoLayout(false);
     return;
@@ -175,17 +169,25 @@ export function calcBounds(): Bounds {
 
 const GAP_Y = 30;
 
-/** Primeira posição livre a partir de `start`, andando para baixo (dir=1) ou para cima (dir=-1). */
+/**
+ * Primeira posição livre a partir de `start`, andando para baixo (dir=1) ou para cima (dir=-1).
+ * Molduras não contam como obstáculo: os cards ficam dentro delas.
+ */
 export function freeSpot(start: Point, ignore: NodeKey, dir: 1 | -1 = 1): Point {
   const positions = activePositions();
-  const keys = [...visible()].filter((k) => k !== ignore);
+  const self = sizeOf(ignore);
+  const keys = [...visible()].filter((k) => k !== ignore && keyKind(k) !== "frame");
   const collides = (p: Point) =>
     keys.some((k) => {
       const q = positions[k];
-      return q && Math.abs(q.x - p.x) < NODE_W - 10 && Math.abs(q.y - p.y) < NODE_H + 10;
+      if (!q) return false;
+      const other = sizeOf(k);
+      const overlapX = p.x < q.x + other.w - 10 && q.x < p.x + self.w - 10;
+      const overlapY = p.y < q.y + other.h + 10 && q.y < p.y + self.h + 10;
+      return overlapX && overlapY;
     });
   const p = { ...start };
-  for (let i = 0; i < 40 && collides(p); i++) p.y += dir * (NODE_H + GAP_Y);
+  for (let i = 0; i < 40 && collides(p); i++) p.y += dir * (self.h + GAP_Y);
   return p;
 }
 

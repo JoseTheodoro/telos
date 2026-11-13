@@ -2,11 +2,12 @@
 // Linhas (de cima para baixo): hotspots · jornada · capítulos · cenas · EVENTOS ·
 // fluxo ES (caixas livres) · domínios · sistemas · telas · tabelas.
 // #7 Com raias, a linha de EVENTOS vira uma faixa por ator (quem age na cena).
-import { NARRATIVE_KINDS, NODE_H, NODE_W } from "../domain/constants";
+import { FREE_PLACED_KINDS, NARRATIVE_KINDS, NODE_H, NODE_W } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
 import { laneOf } from "../domain/lanes";
 import type { Chapter, EventItem, NodeKey, NodeKind, Point, Positions, Scene } from "../domain/types";
 import { related, state } from "../core/state";
+import { sizeOf } from "./size";
 
 export const TL = {
   X0: 120,
@@ -81,11 +82,15 @@ function neighbors(k: NodeKey): NodeKey[] {
   return related(k).map((e) => (e.from === k ? e.to : e.from));
 }
 
+/** Colisão com folga de 8 px. Molduras não contam: os cards ficam dentro delas. */
 function overlaps(positions: Positions, keys: Iterable<NodeKey>, p: Point, self: NodeKey): boolean {
+  const own = sizeOf(self);
   for (const k of keys) {
-    if (k === self) continue;
+    if (k === self || keyKind(k) === "frame") continue;
     const q = positions[k];
-    if (q && Math.abs(q.x - p.x) < NODE_W + 8 && Math.abs(q.y - p.y) < NODE_H + 8) return true;
+    if (!q) continue;
+    const other = sizeOf(k);
+    if (p.x < q.x + other.w + 8 && q.x < p.x + own.w + 8 && p.y < q.y + other.h + 8 && q.y < p.y + own.h + 8) return true;
   }
   return false;
 }
@@ -96,8 +101,8 @@ const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   const ws = state.ws;
   const has = (k: NodeKey) => keys.has(k);
-  // Notas livres ficam onde o usuário as colocou ("Organizar" não as move).
-  for (const k of keys) if (keyKind(k) !== "note") delete positions[k];
+  // Notas livres e molduras ficam onde o usuário as colocou ("Organizar" não as move).
+  for (const k of keys) if (!FREE_PLACED_KINDS.includes(keyKind(k))) delete positions[k];
   const placed = () => [...keys].filter((k) => positions[k]);
   const { COLW, ROW } = TL;
   const eventY = (k: NodeKey) => rowYFor(k, keys);

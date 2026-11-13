@@ -154,6 +154,10 @@ export function quickCreate(mode: QuickMode): void {
     return;
   }
   const origin = sel.id;
+  if (keyKind(origin) === "frame") {
+    notify("Moldura não tem sequência: use ＋ Moldura, ou F com cards selecionados.");
+    return;
+  }
   const plan = planFor(origin, mode);
   if (!plan) {
     notify(`${PL[keyKind(origin)]}: use Enter para criar um irmão.`);

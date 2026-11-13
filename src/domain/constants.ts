@@ -12,7 +12,11 @@ export const TYPES: NodeKind[] = [
   "semantic",
   "hotspot",
   "note",
+  "frame",
 ];
+
+/** Tipos posicionados à mão: "Organizar" não os move e eles não ocupam linha no layout automático. */
+export const FREE_PLACED_KINDS: NodeKind[] = ["note", "frame"];
 
 /** Tipos da hierarquia narrativa (jornada → capítulo → cena → evento). */
 export const NARRATIVE_KINDS: NodeKind[] = ["journey", "chapter", "scene", "event"];
@@ -30,6 +34,7 @@ export const PL: Record<NodeKind, string> = {
   semantic: "Caixa livre",
   hotspot: "Hotspot",
   note: "Nota",
+  frame: "Moldura",
 };
 
 /** Coleção do workspace onde cada tipo é armazenado. */
@@ -45,6 +50,7 @@ export const ARR: Record<NodeKind, CollectionName> = {
   semantic: "semanticNodes",
   hotspot: "decisions",
   note: "canvasNotes",
+  frame: "frames",
 };
 
 export const COLORS: Record<NodeKind, string> = {
@@ -59,7 +65,20 @@ export const COLORS: Record<NodeKind, string> = {
   semantic: "#466e7d",
   hotspot: "#b3261e",
   note: "#9a7b2f",
+  frame: "#6d8a7a",
 };
+
+export const FRAME_MIN = { w: 240, h: 140 };
+
+/** #11 Cores de fundo das molduras (suaves, para ficar atrás dos post-its). */
+export const FRAME_PALETTE: [string, string][] = [
+  ["Verde", "#e3f1e7"],
+  ["Azul", "#e1ecf8"],
+  ["Lilás", "#ece5f6"],
+  ["Âmbar", "#fbf0d9"],
+  ["Rosa", "#f9e3ea"],
+  ["Cinza", "#eceff1"],
+];
 
 export const TABLE_COLORS = { READ: "#ed8b23", WRITE: "#d84343" } as const;
 
@@ -178,8 +197,8 @@ export const HOTSPOT_PRIORITY_OPTIONS: [string, string][] = [
   ["Baixa", "Baixa"],
 ];
 
-/** Tipos criados pelo modal "Adicionar elemento" (nota tem criação própria). */
-export const MODAL_TYPES = TYPES.filter((t) => t !== "note");
+/** Tipos criados pelo modal "Adicionar elemento" (nota e moldura têm criação própria). */
+export const MODAL_TYPES = TYPES.filter((t) => t !== "note" && t !== "frame");
 
 /** Hotspots não contam como "desenho" para canvas vazio e Limpar canvas. */
 export const DRAWING_TYPES = TYPES.filter((t) => t !== "hotspot");
@@ -210,6 +229,7 @@ export const COL: Record<NodeKind, number> = {
   semantic: 2510,
   hotspot: 2825,
   note: 3140,
+  frame: 3455,
 };
 
 export const STORE = "pep-atlas-studio-v4";
