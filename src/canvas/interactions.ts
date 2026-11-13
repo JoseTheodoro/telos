@@ -4,8 +4,8 @@ import { keyKind } from "../domain/keys";
 import type { NodeKind } from "../domain/types";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
-import { getByKey, state } from "../core/state";
-import { finishConnect, linkCreate, selectEdge, selectNode } from "../actions";
+import { getByKey, state, type Dragging } from "../core/state";
+import { finishConnect, linkCreate, selectEdge, selectNode, selectNodes, toggleNodeSelection } from "../actions";
 import { createModal } from "../ui/modal";
 import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
@@ -36,6 +36,55 @@ const NEXT_KIND: Partial<Record<NodeKind, NodeKind>> = {
 const DOUBLE_TAP_MS = 450;
 const DOUBLE_TAP_PX = 6;
 let lastTap: { key: string; time: number; x: number; y: number } | null = null;
+
+type LassoDrag = Extract<Dragging, { type: "lasso" }>;
+
+const LASSO_MIN_PX = 6;
+
+function drawLasso(d: LassoDrag): void {
+  const box = $("#lasso");
+  const stageRect = $("#stage").getBoundingClientRect();
+  box.hidden = false;
+  box.style.left = Math.min(d.x0, d.x1) - stageRect.left + "px";
+  box.style.top = Math.min(d.y0, d.y1) - stageRect.top + "px";
+  box.style.width = Math.abs(d.x1 - d.x0) + "px";
+  box.style.height = Math.abs(d.y1 - d.y0) + "px";
+}
+
+/** Cards visíveis inteiramente dentro do laço (um card cortado pela borda fica de fora). */
+function keysInsideLasso(d: LassoDrag): string[] {
+  const topLeft = localPoint({ clientX: Math.min(d.x0, d.x1), clientY: Math.min(d.y0, d.y1) });
+  const bottomRight = localPoint({ clientX: Math.max(d.x0, d.x1), clientY: Math.max(d.y0, d.y1) });
+  return [...state.visibleKeys].filter((k) => {
+    const p = pos(k);
+    const size = sizeOf(k);
+    return p.x >= topLeft.x && p.y >= topLeft.y && p.x + size.w <= bottomRight.x && p.y + size.h <= bottomRight.y;
+  });
+}
+
+function finishLasso(d: LassoDrag): void {
+  $("#lasso").hidden = true;
+  if (Math.abs(d.x1 - d.x0) + Math.abs(d.y1 - d.y0) < LASSO_MIN_PX) return;
+  const inside = keysInsideLasso(d);
+  if (!inside.length) {
+    notify("Nenhum card inteiro dentro da área: o laço pega só os cards que cabem por completo nele.");
+    return;
+  }
+  selectNodes(inside);
+  notify(
+    inside.length === 1
+      ? "1 elemento selecionado"
+      : `${inside.length} elementos selecionados · arraste um deles para mover todos`,
+  );
+}
+
+function moveNodeCard(k: string, x: number, y: number): void {
+  const card = document.querySelector<HTMLElement>(`[data-node="${CSS.escape(k)}"]`);
+  if (card) {
+    card.style.left = x + "px";
+    card.style.top = y + "px";
+  }
+}
 
 function isDoubleTap(key: string, e: PointerEvent): boolean {
   const now = performance.now();
@@ -133,11 +182,32 @@ export function bindCanvas(): void {
     const node = el.closest<HTMLElement>("[data-node]");
     if (node) {
       const k = node.dataset.node as string;
+      // Vem antes do duplo clique: Shift+cliques rápidos não podem abrir a edição do nome.
+      if (state.mode === "pointer" && e.shiftKey) {
+        e.preventDefault();
+        toggleNodeSelection(k);
+        return;
+      }
       if (state.mode === "pointer" && isDoubleTap(k, e)) {
         e.preventDefault();
         state.dragging = null;
         if (keyKind(k) === "note") startNoteEdit(k);
         else startInlineEdit(k);
+        return;
+      }
+      const sel = state.selected;
+      if (state.mode === "pointer" && sel?.kind === "nodes" && sel.ids.includes(k)) {
+        const keys = sel.ids.filter((x) => state.visibleKeys.has(x));
+        state.dragging = {
+          type: "group",
+          key: k,
+          start: localPoint(e),
+          origins: Object.fromEntries(keys.map((x) => [x, { ...pos(x) }])),
+          snap: JSON.stringify(state.ws),
+          moved: false,
+        };
+        e.preventDefault();
+        stage.setPointerCapture(e.pointerId);
         return;
       }
       selectNode(k);
@@ -165,6 +235,12 @@ export function bindCanvas(): void {
     if (state.mode === "connect" && state.connectStart) {
       state.connectStart = null;
       notify("Conexão cancelada");
+      return;
+    }
+    if (state.mode === "pointer" && e.shiftKey) {
+      e.preventDefault();
+      state.dragging = { type: "lasso", x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY };
+      stage.setPointerCapture(e.pointerId);
       return;
     }
     state.panning = { x: e.clientX, y: e.clientY, oldX: state.cam.x, oldY: state.cam.y };
@@ -199,6 +275,25 @@ export function bindCanvas(): void {
         n.style.top = pos(d.key).y + "px";
       }
       renderEdges();
+      return;
+    }
+    if (d?.type === "group") {
+      const p = localPoint(e);
+      const dx = Math.round(p.x - d.start.x);
+      const dy = Math.round(p.y - d.start.y);
+      const positions = activePositions();
+      for (const [k, origin] of Object.entries(d.origins)) {
+        positions[k] = { x: origin.x + dx, y: origin.y + dy };
+        moveNodeCard(k, positions[k].x, positions[k].y);
+      }
+      d.moved = true;
+      renderEdges();
+      return;
+    }
+    if (d?.type === "lasso") {
+      d.x1 = e.clientX;
+      d.y1 = e.clientY;
+      drawLasso(d);
       return;
     }
     if (d?.type === "emotion") {
@@ -270,6 +365,23 @@ export function bindCanvas(): void {
       } else selectNode(k);
       return;
     }
+    if (d?.type === "group") {
+      state.dragging = null;
+      const now = pos(d.key);
+      const before = d.origins[d.key];
+      if (d.moved && before && Math.abs(now.x - before.x) + Math.abs(now.y - before.y) > 2) {
+        pushSnapshot(d.snap);
+        persist();
+        refreshUndo();
+        renderGraph();
+      } else selectNode(d.key); // clique sem arrastar num card da seleção: fica só ele
+      return;
+    }
+    if (d?.type === "lasso") {
+      state.dragging = null;
+      finishLasso(d);
+      return;
+    }
     if (d?.type === "node") {
       state.dragging = null;
       const now = pos(d.key);
@@ -298,6 +410,12 @@ export function bindCanvas(): void {
         renderGraph();
       }
     }
+    if (d?.type === "group" && d.moved) {
+      const positions = activePositions();
+      for (const [k, origin] of Object.entries(d.origins)) positions[k] = { ...origin };
+      renderGraph();
+    }
+    if (d?.type === "lasso") $("#lasso").hidden = true;
     if (d?.type === "emotion" && d.moved) {
       const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
       if (scene) {

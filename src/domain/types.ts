@@ -286,4 +286,5 @@ export type CollectionName =
 export type SidebarTab = "journey" | "inventory" | "decisions";
 export type ToolMode = "pointer" | "connect";
 
-export type Selection = { kind: "node" | "edge"; id: string } | null;
+/** Um nó só continua como `kind: "node"`; `nodes` sempre tem 2 ou mais chaves. */
+export type Selection = { kind: "node" | "edge"; id: string } | { kind: "nodes"; ids: NodeKey[] } | null;

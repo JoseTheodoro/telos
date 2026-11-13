@@ -6,7 +6,7 @@ import { edgeFor, syncMaps } from "../domain/model";
 import type { NodeKey } from "../domain/types";
 import { change } from "../core/history";
 import { getByKey, state } from "../core/state";
-import { $ } from "../ui/dom";
+import { $, notify } from "../ui/dom";
 import { bringIntoView, localPoint } from "./camera";
 import { startInlineEdit } from "./inline-edit";
 import { activePositions, freeSpot, isTimeline, pos } from "./layout";
@@ -19,6 +19,10 @@ import { visible } from "./visibility";
 export function addHotspot(opts: { target?: NodeKey; name?: string } = {}): void {
   const ws = state.ws;
   const sel = state.selected;
+  if (!opts.target && sel?.kind === "nodes") {
+    notify(`Selecione um único card para ligar o hotspot (há ${sel.ids.length} selecionados).`);
+    return;
+  }
   const target: NodeKey | null =
     opts.target ?? (sel?.kind === "node" && getByKey(sel.id) && keyKind(sel.id) !== "hotspot" ? sel.id : null);
   const id = newEntityId(ws, "hotspot");

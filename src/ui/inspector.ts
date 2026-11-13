@@ -26,11 +26,19 @@ import {
   syncMaps,
   validColor,
 } from "../domain/model";
-import type { AnyEntity, Edge, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
+import type { AnyEntity, Edge, NodeKey, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
-import { degree, findEdge, getByKey, label, related, state } from "../core/state";
-import { beginConnect, duplicateSelection, ensureVisible, safeRemoveSelection, selectEdge } from "../actions";
+import { degree, findEdge, getByKey, label, related, selectedNodeKeys, selectedSingleNode, state } from "../core/state";
+import {
+  beginConnect,
+  duplicateSelection,
+  ensureVisible,
+  safeRemoveSelection,
+  selectEdge,
+  selectNode,
+  selectNodes,
+} from "../actions";
 import { renderEdges, renderGraph } from "../canvas/render";
 import { renderSidebar } from "./sidebar";
 import { nextLabel, quickCreate } from "../canvas/quick-create";
@@ -57,7 +65,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">T</span> nota livre · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">T</span> nota livre · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear<br><span class="hotkey">Shift</span>+clique ou <span class="hotkey">Shift</span>+arraste no fundo: seleção múltipla</div>`;
 }
 
 function chip(c: EsCategory): string {
@@ -305,13 +313,9 @@ function nodeInspector(k: string, o: AnyEntity): string {
   if (kind === "note") return noteInspector(k, o);
   let content = kindFields(kind, o);
   if (kind === "journey" || kind === "chapter") content += linkedDocs(k);
-  if (["domain", "system", "screen", "table"].includes(kind)) {
+  if (INVENTORY_KINDS.includes(kind)) {
     content +=
-      options("Status do inventário", "status", o.status || "A validar", [
-        ["A validar", "A validar"],
-        ["Em investigação", "Em investigação"],
-        ["Validado", "Validado"],
-      ]) +
+      options("Status do inventário", "status", o.status || "A validar", INVENTORY_STATUS_OPTIONS) +
       field("Evidência de origem", "origin", o.origin || "", true) +
       field("Notas", "notes", o.notes || "", true);
   }
@@ -343,6 +347,106 @@ function nodeInspector(k: string, o: AnyEntity): string {
   return content;
 }
 
+const INVENTORY_KINDS: NodeKind[] = ["domain", "system", "screen", "table"];
+const INVENTORY_STATUS_OPTIONS: [string, string][] = [
+  ["A validar", "A validar"],
+  ["Em investigação", "Em investigação"],
+  ["Validado", "Validado"],
+];
+
+/**
+ * Campos editáveis em lote. Cada tipo de nó tem o próprio vocabulário de status,
+ * então cada campo vale só para os tipos em que existe como lista.
+ */
+interface BatchField {
+  id: string;
+  field: string;
+  label: string;
+  appliesTo: (kind: NodeKind) => boolean;
+  choices: (current: string) => [string, string][];
+}
+
+const BATCH_FIELDS: BatchField[] = [
+  {
+    id: "semanticType",
+    field: "semanticType",
+    label: "Tipo semântico",
+    appliesTo: (kind) => kind !== "hotspot" && kind !== "note",
+    choices: (current) => semOptions(current || undefined),
+  },
+  {
+    id: "inventoryStatus",
+    field: "status",
+    label: "Status do inventário",
+    appliesTo: (kind) => INVENTORY_KINDS.includes(kind),
+    choices: () => INVENTORY_STATUS_OPTIONS,
+  },
+  {
+    id: "hotspotStatus",
+    field: "status",
+    label: "Status do hotspot",
+    appliesTo: (kind) => kind === "hotspot",
+    choices: () => HOTSPOT_STATUS_OPTIONS,
+  },
+];
+
+const BATCH_LIST_LIMIT = 40;
+
+function batchFieldHtml(f: BatchField, keys: NodeKey[]): string {
+  const targets = keys.filter((k) => f.appliesTo(keyKind(k)));
+  if (!targets.length) return "";
+  const values = new Set(targets.map((k) => String(getByKey(k)?.[f.field] ?? "")));
+  const shared = values.size === 1 ? [...values][0] : "";
+  const placeholder: [string, string] = ["", values.size === 1 ? "— escolher —" : "Valores diferentes"];
+  const opts = [placeholder, ...f.choices(shared)]
+    .map(([v, n]) => `<option value="${esc(v)}" ${v && v === shared ? "selected" : ""}>${esc(n)}</option>`)
+    .join("");
+  return `<div class="field"><label for="batch-${esc(f.id)}">${esc(f.label)} <small class="batch-scope">· ${targets.length} de ${keys.length}</small></label><select class="input" id="batch-${esc(f.id)}" data-batch="${esc(f.id)}">${opts}</select></div>`;
+}
+
+function batchInspector(keys: NodeKey[]): string {
+  const rows = keys
+    .slice(0, BATCH_LIST_LIMIT)
+    .map(
+      (k) =>
+        `<div class="rel"><span title="${esc(label(k))}">${esc(PL[keyKind(k)])} · ${esc(label(k))}</span><button type="button" title="Selecionar só este" data-select-only="${esc(k)}">↗</button></div>`,
+    )
+    .join("");
+  const more = keys.length > BATCH_LIST_LIMIT ? `<div class="smallnote">… e mais ${keys.length - BATCH_LIST_LIMIT}</div>` : "";
+  const fields = BATCH_FIELDS.map((f) => batchFieldHtml(f, keys)).join("");
+  return (
+    `<div class="hint"><b>Seleção múltipla</b><br>Arraste qualquer um destes cards para mover todos. <span class="hotkey">Shift</span>+clique adiciona ou tira um card; <span class="hotkey">Shift</span>+arraste no fundo seleciona uma área; <span class="hotkey">Del</span> exclui todos; <span class="hotkey">Esc</span> limpa a seleção.</div>` +
+    (fields ? `<div class="sectionlabel">Editar em lote</div>${fields}` : "") +
+    `<div class="sectionlabel">Selecionados · ${keys.length}</div>${rows}${more}` +
+    `<div class="sectionlabel">Ações</div><div class="rowbtn"><button type="button" class="btn" data-clear-selection>Limpar seleção</button><button class="btn danger" id="deleteButton">✕ Excluir ${keys.length} elementos</button></div>`
+  );
+}
+
+function applyBatch(fieldId: string, value: string): void {
+  const f = BATCH_FIELDS.find((x) => x.id === fieldId);
+  if (!f || !value) return;
+  const keys = selectedNodeKeys();
+  const targets = keys.filter((k) => f.appliesTo(keyKind(k)) && getByKey(k));
+  const changed = targets.filter((k) => String(getByKey(k)?.[f.field] ?? "") !== value);
+  if (!changed.length) return;
+  change(() => {
+    for (const k of changed) (getByKey(k) as AnyEntity)[f.field] = value;
+  });
+  const untouched = keys.length - targets.length;
+  notify(
+    `${f.label} “${value}” em ${changed.length} ${changed.length === 1 ? "elemento" : "elementos"}` +
+      (untouched ? ` · ${untouched} sem esse campo ficaram como estavam` : ""),
+  );
+}
+
+function kindSummary(keys: NodeKey[]): string {
+  const counts = new Map<NodeKind, number>();
+  for (const k of keys) counts.set(keyKind(k), (counts.get(keyKind(k)) || 0) + 1);
+  return [...counts].map(([kind, n]) => `${PL[kind]} ${n}`).join(" · ");
+}
+
+const selectedEdgeId = (): string | undefined => (state.selected?.kind === "edge" ? state.selected.id : undefined);
+
 export function renderInspector(): void {
   const title = $("#inspectTitle");
   const sub = $("#inspectSubtitle");
@@ -352,6 +456,12 @@ export function renderInspector(): void {
     title.textContent = "Selecione um elemento";
     sub.textContent = "Editor de conteúdo e conexões";
     body.innerHTML = emptyInspector();
+    return;
+  }
+  if (sel.kind === "nodes") {
+    title.textContent = `${sel.ids.length} elementos selecionados`;
+    sub.textContent = kindSummary(sel.ids);
+    body.innerHTML = batchInspector(sel.ids);
     return;
   }
   if (sel.kind === "edge") {
@@ -404,6 +514,7 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
     });
     return;
   }
+  if (sel.kind !== "node") return;
   const k = sel.id;
   const o = getByKey(k);
   const t = keyKind(k);
@@ -451,7 +562,7 @@ function setEdgeColor(color: string): void {
 
 function addCustomChoice(which: string): void {
   const sel = state.selected;
-  if (!sel) return;
+  if (sel?.kind !== "node") return;
   const question =
     which === "semantic"
       ? "Nome do novo tipo de elemento:"
@@ -546,10 +657,14 @@ export function bindInspector(): void {
       const color = validColor(x.value.trim());
       if (!color) {
         notify("HEX inválido. Use #RRGGBB.");
-        x.value = colorForEdge(findEdge(state.selected?.id) || {});
+        x.value = colorForEdge(findEdge(selectedEdgeId()) || {});
         return;
       }
       setEdgeColor(color);
+      return;
+    }
+    if (x.dataset.batch) {
+      applyBatch(x.dataset.batch, x.value);
       return;
     }
     if (x.dataset.field) updateField(x);
@@ -563,7 +678,7 @@ export function bindInspector(): void {
       return;
     }
     if (el.closest("#edgeAutoColor")) {
-      const edge = findEdge(state.selected?.id);
+      const edge = findEdge(selectedEdgeId());
       if (edge && edge.color)
         change(() => {
           edge.color = "";
@@ -581,7 +696,7 @@ export function bindInspector(): void {
       return;
     }
     const useLabel = el.closest<HTMLElement>("[data-use-label]");
-    const edgeSel = findEdge(state.selected?.kind === "edge" ? state.selected.id : undefined);
+    const edgeSel = findEdge(selectedEdgeId());
     if (useLabel && edgeSel) {
       change(() => {
         edgeSel.label = useLabel.dataset.useLabel as string;
@@ -596,7 +711,7 @@ export function bindInspector(): void {
       return;
     }
     const emo = el.closest<HTMLElement>("[data-emotion]");
-    const nodeSel = state.selected?.kind === "node" ? state.selected.id : "";
+    const nodeSel = selectedSingleNode() ?? "";
     if (emo && nodeSel && keyKind(nodeSel) === "scene") {
       const sc = getByKey(nodeSel) as Scene | undefined;
       const raw = emo.dataset.emotion as string;
@@ -637,10 +752,18 @@ export function bindInspector(): void {
       quickCreate(quick.dataset.quick === "next" ? "next" : "sibling");
       return;
     }
-    const sel = state.selected;
-    if (el.id === "startLinkBtn" && sel) beginConnect(sel.id);
+    const only = el.closest<HTMLElement>("[data-select-only]");
+    if (only) {
+      selectNode(only.dataset.selectOnly as string);
+      return;
+    }
+    if (el.closest("[data-clear-selection]")) {
+      selectNodes([]);
+      return;
+    }
+    if (el.id === "startLinkBtn" && nodeSel) beginConnect(nodeSel);
     if (el.id === "deleteButton") safeRemoveSelection();
     if (el.id === "duplicateButton") duplicateSelection();
-    if (el.id === "focusItemBtn" && sel) ensureVisible(sel.id);
+    if (el.id === "focusItemBtn" && nodeSel) ensureVisible(nodeSel);
   });
 }

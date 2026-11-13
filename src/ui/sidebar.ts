@@ -4,7 +4,7 @@ import { nodeKey } from "../domain/keys";
 import { childCount, collection } from "../domain/model";
 import type { Chapter, Journey, NodeKind, SidebarTab } from "../domain/types";
 import { queueViewPersist } from "../core/persistence";
-import { get, label, related, setFocus, state } from "../core/state";
+import { get, isNodeSelected, label, related, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
 import { ensureVisible, selectNode } from "../actions";
 import { ensurePositions } from "../canvas/layout";
@@ -67,7 +67,7 @@ function decisions(): string {
       const where = links.length
         ? `<small class="decision-links">↳ ${links.map(esc).join(" · ")}</small>`
         : `<small class="decision-links is-loose">Sem vínculo no canvas</small>`;
-      const selected = state.selected?.kind === "node" && state.selected.id === k;
+      const selected = isNodeSelected(k);
       return `<div class="decision-card ${selected ? "active" : ""}" data-status="${esc(d.status)}"><b><span class="decision-id">${esc(d.id)}</span> ${esc(d.title)}</b><p>${esc(d.description)}</p>${where}<span class="chip">${esc(d.status)}</span> <span class="chip">${esc(d.priority || "Média")}</span><button class="btn sm" data-select-node="${esc(k)}">Ver no canvas ↗</button></div>`;
     })
     .join("");

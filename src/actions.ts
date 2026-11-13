@@ -1,7 +1,7 @@
 // Ações do usuário sobre o grafo (seleção, conexão, exclusão, duplicação, foco).
 import { keyId, keyKind, newId, nodeKey } from "./domain/keys";
 import {
-  childCount,
+  childKeys,
   collection,
   deep,
   defaultEdgeName,
@@ -15,7 +15,7 @@ import { categoryLabel } from "./domain/grammar";
 import { newEntityId } from "./domain/factory";
 import type { AnyEntity, Chapter, EventItem, NodeKey, Scene } from "./domain/types";
 import { change, refreshUndo } from "./core/history";
-import { get, getByKey, related, setFocus, state } from "./core/state";
+import { get, getByKey, label, related, selectedNodeKeys, setFocus, state } from "./core/state";
 import { refreshAll, refreshTools } from "./app";
 import { centerOn } from "./canvas/camera";
 import { activePositions, pos } from "./canvas/layout";
@@ -144,39 +144,77 @@ export function finishConnect(k: NodeKey): void {
   } else beginConnect(k);
 }
 
+/** Seleção de vários nós: uma chave vira seleção simples; nenhuma limpa a seleção. */
+export function selectNodes(keys: NodeKey[]): void {
+  const existing = [...new Set(keys)].filter((k) => getByKey(k));
+  state.selected =
+    existing.length > 1
+      ? { kind: "nodes", ids: existing }
+      : existing.length
+        ? { kind: "node", id: existing[0] }
+        : null;
+  renderInspector();
+  renderGraph();
+  openInspectorOnMobile();
+}
+
+export function toggleNodeSelection(k: NodeKey): void {
+  const current = selectedNodeKeys();
+  selectNodes(current.includes(k) ? current.filter((x) => x !== k) : [...current, k]);
+}
+
+const SINGLE_DELETE_QUESTION =
+  "Excluir o elemento selecionado? Esta ação também remove suas setas associadas e pode ser desfeita.";
+
+function deleteNode(k: NodeKey): void {
+  const ws = state.ws;
+  const t = keyKind(k);
+  const o = getByKey(k);
+  if (!o) return;
+  collection(ws, t).splice(collection(ws, t).indexOf(o), 1);
+  ws.graph.edges = ws.graph.edges.filter((x) => x.from !== k && x.to !== k);
+  for (const lay of Object.values(ws.graph.layouts || {})) delete lay[k];
+  if (t === "event") delete ws.eventMappings[o.id];
+  if (t === "scene") delete ws.sceneMappings[o.id];
+}
+
 export function removeSelection(): void {
   const sel = state.selected;
   if (!sel) return;
-  if (sel.kind === "node") {
-    const o = getByKey(sel.id);
-    const children = o ? childCount(state.ws, keyKind(sel.id), o.id) : 0;
-    if (children) {
-      notify("Mova os " + children + " elementos filhos antes de excluir.");
-      return;
-    }
-  }
-  if (!confirm("Excluir o elemento selecionado? Esta ação também remove suas setas associadas e pode ser desfeita."))
+  if (sel.kind === "edge") {
+    if (!confirm(SINGLE_DELETE_QUESTION)) return;
+    change(() => {
+      state.ws.graph.edges = state.ws.graph.edges.filter((x) => x.id !== sel.id);
+      syncMaps(state.ws);
+      state.selected = null;
+    });
+    notify("Elemento excluído (Ctrl+Z desfaz)");
     return;
+  }
+  const keys = selectedNodeKeys().filter((k) => getByKey(k));
+  if (!keys.length) return;
+  // Filho que também está na seleção sai junto: só bloqueia quem deixaria filho órfão.
+  const orphansOf = (k: NodeKey) => childKeys(state.ws, keyKind(k), keyId(k)).filter((c) => !keys.includes(c));
+  const blocked = keys.filter((k) => orphansOf(k).length);
+  if (blocked.length) {
+    notify(
+      keys.length === 1
+        ? "Mova os " + orphansOf(keys[0]).length + " elementos filhos antes de excluir."
+        : `Mova ou selecione também os filhos de ${blocked.slice(0, 3).map(label).join(", ")}${blocked.length > 3 ? "…" : ""} antes de excluir.`,
+    );
+    return;
+  }
+  const question =
+    keys.length === 1
+      ? SINGLE_DELETE_QUESTION
+      : `Excluir os ${keys.length} elementos selecionados? As setas ligadas a eles também saem, e Ctrl+Z desfaz tudo de uma vez.`;
+  if (!confirm(question)) return;
   change(() => {
-    const ws = state.ws;
-    if (sel.kind === "edge") {
-      ws.graph.edges = ws.graph.edges.filter((x) => x.id !== sel.id);
-      syncMaps(ws);
-    } else if (sel.kind === "node") {
-      const k = sel.id;
-      const t = keyKind(k);
-      const o = getByKey(k);
-      if (!o) return;
-      collection(ws, t).splice(collection(ws, t).indexOf(o), 1);
-      ws.graph.edges = ws.graph.edges.filter((x) => x.from !== k && x.to !== k);
-      for (const lay of Object.values(ws.graph.layouts || {})) delete lay[k];
-      if (t === "event") delete ws.eventMappings[o.id];
-      if (t === "scene") delete ws.sceneMappings[o.id];
-      syncMaps(ws);
-    }
+    for (const k of keys) deleteNode(k);
+    syncMaps(state.ws);
     state.selected = null;
   });
-  notify("Elemento excluído (Ctrl+Z desfaz)");
+  notify(keys.length === 1 ? "Elemento excluído (Ctrl+Z desfaz)" : `${keys.length} elementos excluídos (Ctrl+Z desfaz)`);
 }
 
 export function duplicateSelection(): void {

@@ -408,9 +408,14 @@ function linkLegacyHotspots(ws: Workspace): void {
 }
 
 /** Quantidade de filhos diretos na hierarquia narrativa. */
+/** Filhos estruturais: capítulos da jornada, cenas do capítulo, eventos da cena. */
+export function childKeys(ws: Workspace, kind: NodeKind, id: string): NodeKey[] {
+  if (kind === "journey") return ws.chapters.filter((c) => c.journeyId === id).map((c) => nodeKey("chapter", c.id));
+  if (kind === "chapter") return ws.scenes.filter((s) => s.chapter === id).map((s) => nodeKey("scene", s.id));
+  if (kind === "scene") return ws.events.filter((e) => e.sceneId === id).map((e) => nodeKey("event", e.id));
+  return [];
+}
+
 export function childCount(ws: Workspace, kind: NodeKind, id: string): number {
-  if (kind === "journey") return ws.chapters.filter((c) => c.journeyId === id).length;
-  if (kind === "chapter") return ws.scenes.filter((s) => s.chapter === id).length;
-  if (kind === "scene") return ws.events.filter((e) => e.sceneId === id).length;
-  return 0;
+  return childKeys(ws, kind, id).length;
 }

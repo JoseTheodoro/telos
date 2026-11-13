@@ -14,7 +14,7 @@ import type {
   SystemItem,
   Table,
 } from "../domain/types";
-import { degree, getByKey, label, state } from "../core/state";
+import { degree, getByKey, isNodeSelected, label, state } from "../core/state";
 import { $, esc } from "../ui/dom";
 import { activePositions, calcBounds, isTimeline, pos, sizeOf } from "./layout";
 import { chapterBands, laneBands } from "./timeline";
@@ -147,7 +147,7 @@ function noteHtml(k: NodeKey, o: AnyEntity): string {
   const { w, h } = sizeOf(k);
   const text = String(o.text ?? "");
   const fmt = String(o.format || "text");
-  const isSelected = state.selected?.kind === "node" && state.selected.id === k;
+  const isSelected = isNodeSelected(k);
   const bad = fmt === "json" ? jsonError(text) : null;
   return `<div class="node note ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="note" data-format="${esc(fmt)}" data-code="${isCodeFormat(fmt) ? 1 : 0}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="note-head"><span class="note-fmt">${esc(formatLabel(fmt))}</span>${bad ? `<span class="note-warn" title="JSON inválido: ${esc(bad)}">⚠ inválido</span>` : ""}<span class="counter">${degree(k)}</span><button type="button" class="note-copy" data-note-copy="${esc(k)}" title="Copiar o conteúdo da nota">⧉ Copiar</button></div><div class="note-body">${renderNoteBody(text, fmt)}</div><div class="note-resize" data-note-resize="${esc(k)}" title="Arraste para redimensionar"></div></div>`;
 }
@@ -159,7 +159,7 @@ function nodeHtml(k: NodeKey): string {
   const t = keyKind(k);
   // Não repete o tipo quando o semântico diz o mesmo (ex.: "Hotspot · Hotspot").
   const sem = semanticLabel(o).toLowerCase() === PL[t].toLowerCase() ? "" : semanticLabel(o);
-  const isSelected = state.selected?.kind === "node" && state.selected.id === k;
+  const isSelected = isNodeSelected(k);
   const es = esStyle(t, o.semanticType);
   return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
 }
@@ -218,10 +218,20 @@ export function renderBands(): void {
     .join("") + (emo ? emotionHtml(emo) : "");
 }
 
+/** Ao trocar de recorte, a seleção múltipla fica só com o que continua visível (Del e arraste agem no que se vê). */
+function pruneMultiSelection(visibleKeys: Set<NodeKey>): void {
+  const sel = state.selected;
+  if (sel?.kind !== "nodes") return;
+  const kept = sel.ids.filter((k) => visibleKeys.has(k));
+  if (kept.length === sel.ids.length) return;
+  state.selected = kept.length > 1 ? { kind: "nodes", ids: kept } : kept.length ? { kind: "node", id: kept[0] } : null;
+}
+
 export function renderGraph(): void {
   const { ws } = state;
   state.visibleKeys = visible();
   const visibleKeys = state.visibleKeys;
+  pruneMultiSelection(visibleKeys);
   $("#emptyStage").hidden = !DRAWING_TYPES.every((t) => !(ws[ARR[t]] as AnyEntity[]).length);
   renderLegend();
   renderCounters();

@@ -4,7 +4,7 @@ import { deep } from "./domain/model";
 import type { LayoutMode, ToolMode } from "./domain/types";
 import { redo, refreshUndo, undo } from "./core/history";
 import { loadInitialWorkspace, persist, persistViewNow } from "./core/persistence";
-import { getByKey, setFocus, state } from "./core/state";
+import { getByKey, selectedSingleNode, setFocus, state } from "./core/state";
 import { ensureVisible, safeRemoveSelection } from "./actions";
 import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
@@ -99,8 +99,7 @@ function bindToolbar(): void {
       refreshTools();
     }),
   );
-  const sel = () => state.selected;
-  $("#addBtn").onclick = () => createModal(null, null, null, sel()?.kind === "node" ? sel()!.id : null);
+  $("#addBtn").onclick = () => createModal(null, null, null, selectedSingleNode());
   $("#quickStateBtn").onclick = () => createModal("semantic", null, null, null, "Estado");
   $("#quickActionBtn").onclick = () => createModal("semantic", null, null, null, "Ação");
   $("#quickHotspotBtn").onclick = () => addHotspot();

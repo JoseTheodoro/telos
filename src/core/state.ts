@@ -7,6 +7,7 @@ import type {
   Edge,
   NodeKey,
   NodeKind,
+  Point,
   Selection,
   SidebarTab,
   ToolMode,
@@ -46,6 +47,23 @@ export type Dragging =
       y0: number;
       snap: string;
       moved: boolean;
+    }
+  | {
+      /** Arraste de um card da seleção múltipla: todos andam juntos, com um só undo. */
+      type: "group";
+      key: NodeKey;
+      start: Point;
+      origins: Record<NodeKey, Point>;
+      snap: string;
+      moved: boolean;
+    }
+  | {
+      /** Laço retangular (Shift + arraste no fundo), em coordenadas de tela. */
+      type: "lasso";
+      x0: number;
+      y0: number;
+      x1: number;
+      y1: number;
     }
   | null;
 
@@ -92,6 +110,23 @@ export const related = (k: NodeKey): Edge[] => state.ws.graph.edges.filter((e) =
 export const degree = (k: NodeKey): number => related(k).length;
 export const findEdge = (id: string | undefined): Edge | undefined =>
   state.ws.graph.edges.find((e) => e.id === id);
+
+export function selectedNodeKeys(): NodeKey[] {
+  const sel = state.selected;
+  if (sel?.kind === "node") return [sel.id];
+  if (sel?.kind === "nodes") return sel.ids;
+  return [];
+}
+
+export function selectedSingleNode(): NodeKey | null {
+  return state.selected?.kind === "node" ? state.selected.id : null;
+}
+
+export function isNodeSelected(k: NodeKey): boolean {
+  const sel = state.selected;
+  if (sel?.kind === "node") return sel.id === k;
+  return sel?.kind === "nodes" && sel.ids.includes(k);
+}
 
 export function setFocus(journey: string, chapter: string, scene: string): void {
   state.focusJourney = journey;
