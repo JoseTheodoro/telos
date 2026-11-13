@@ -50,6 +50,7 @@ export function persistViewNow(): void {
     legendCollapsed: state.legendCollapsed,
     layoutMode: state.layoutMode,
     lanes: state.lanes,
+    emotion: state.emotion,
   };
   persist();
 }

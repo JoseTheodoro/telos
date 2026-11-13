@@ -11,7 +11,11 @@ import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
 import { editingKey, finishInlineEdit, isInlineEditing, refocusInlineEdit, startInlineEdit } from "./inline-edit";
 import { activePositions, pos } from "./layout";
-import { renderEdges, renderGraph } from "./render";
+import { renderBands, renderEdges, renderGraph } from "./render";
+import { EMO } from "./emotion";
+import { clampEmotion, emotionLevel, emotionSigned } from "../domain/emotion";
+import { nodeKey } from "../domain/keys";
+import { refreshAll } from "../app";
 
 /** Tipo sugerido ao soltar uma seta no vazio (cria o próximo nó já conectado). */
 const NEXT_KIND: Partial<Record<NodeKind, NodeKind>> = {
@@ -79,6 +83,27 @@ export function bindCanvas(): void {
       return;
     }
 
+    // #8 Ponto da curva de emoção: arrastar muda a nota; clique seleciona a cena.
+    const emo = el.closest<SVGElement>("[data-emo-scene]");
+    if (emo) {
+      e.preventDefault();
+      const sceneId = emo.dataset.emoScene as string;
+      const scene = state.ws.scenes.find((s) => s.id === sceneId);
+      if (!scene) return;
+      state.dragging = {
+        type: "emotion",
+        sceneId,
+        startY: e.clientY,
+        from: typeof scene.emotion === "number" ? scene.emotion : null,
+        snap: JSON.stringify(state.ws),
+        moved: false,
+        // Só o ponto arrasta; o chip da dor é apenas clique.
+        drag: emo.classList.contains("emo-dot"),
+      };
+      stage.setPointerCapture(e.pointerId);
+      return;
+    }
+
     const edge = el.closest<HTMLElement>("[data-edge]");
     if (edge) {
       selectEdge(edge.dataset.edge as string);
@@ -140,6 +165,19 @@ export function bindCanvas(): void {
       renderEdges();
       return;
     }
+    if (d?.type === "emotion") {
+      const dy = (e.clientY - d.startY) / state.cam.z;
+      if (!d.drag || (!d.moved && Math.abs(e.clientY - d.startY) < 4)) return;
+      const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
+      if (!scene) return;
+      d.moved = true;
+      const next = clampEmotion((d.from ?? 0) - dy / EMO.STEP);
+      if (scene.emotion !== next) {
+        scene.emotion = next;
+        renderBands();
+      }
+      return;
+    }
     if (d?.type === "link") {
       const p = localPoint(e);
       const src = pos(d.start);
@@ -172,6 +210,20 @@ export function bindCanvas(): void {
       }
       return;
     }
+    if (d?.type === "emotion") {
+      state.dragging = null;
+      const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
+      const k = nodeKey("scene", d.sceneId);
+      if (d.moved && scene && scene.emotion !== (d.from ?? undefined)) {
+        pushSnapshot(d.snap);
+        persist();
+        state.selected = { kind: "node", id: k };
+        refreshAll(false);
+        const lvl = emotionLevel(scene.emotion as number);
+        notify(`Emoção da cena: ${lvl.face} ${lvl.label} (${emotionSigned(lvl.value)}) · Ctrl+Z desfaz`);
+      } else selectNode(k);
+      return;
+    }
     if (d?.type === "node") {
       state.dragging = null;
       const now = pos(d.key);
@@ -190,6 +242,16 @@ export function bindCanvas(): void {
   });
 
   stage.addEventListener("pointercancel", () => {
+    // Arraste da curva interrompido: a nota volta ao valor de antes (nada foi salvo).
+    const d = state.dragging;
+    if (d?.type === "emotion" && d.moved) {
+      const scene = state.ws.scenes.find((s) => s.id === d.sceneId);
+      if (scene) {
+        if (d.from === null) delete scene.emotion;
+        else scene.emotion = d.from;
+        renderBands();
+      }
+    }
     state.dragging = null;
     state.panning = null;
     ghost.style.display = "none";
@@ -208,8 +270,8 @@ export function bindCanvas(): void {
   stage.addEventListener("dblclick", (e) => {
     // O alvo do dblclick pode ser o "mundo" (o card foi re-renderizado entre os cliques).
     const under = document.elementFromPoint(e.clientX, e.clientY);
-    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],#esLegend,.zoomhud")) return;
-    if (under?.closest("[data-node],[data-edge],#esLegend")) return;
+    if (isInlineEditing() || target(e).closest("[data-node],[data-edge],[data-emo-scene],#esLegend,.zoomhud")) return;
+    if (under?.closest("[data-node],[data-edge],[data-emo-scene],#esLegend")) return;
     const p = localPoint(e);
     createModal(null, Math.round(p.x), Math.round(p.y));
   });

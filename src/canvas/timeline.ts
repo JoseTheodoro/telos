@@ -29,6 +29,11 @@ export interface LaneRow {
   top: number;
   height: number;
   count: number;
+  /** Subtítulo do rótulo fixo (padrão: "N eventos"). */
+  sub?: string;
+  /** Texto curto no modo compacto (padrão: a contagem). */
+  short?: string;
+  kind?: "lane" | "emotion";
 }
 
 export const lanesOn = (): boolean => state.layoutMode === "timeline" && state.lanes;

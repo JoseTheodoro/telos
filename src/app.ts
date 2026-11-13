@@ -42,6 +42,10 @@ export function refreshTools(): void {
   lanesBtn.disabled = state.layoutMode !== "timeline";
   lanesBtn.classList.toggle("active", state.lanes && state.layoutMode === "timeline");
   lanesBtn.setAttribute("aria-pressed", String(state.lanes));
+  const emotionBtn = $<HTMLButtonElement>("#emotionBtn");
+  emotionBtn.disabled = state.layoutMode !== "timeline";
+  emotionBtn.classList.toggle("active", state.emotion && state.layoutMode === "timeline");
+  emotionBtn.setAttribute("aria-pressed", String(state.emotion));
   $("#stage").style.cursor = state.mode === "connect" ? "crosshair" : "grab";
 }
 
@@ -70,9 +74,19 @@ function toggleLanes(): void {
   notify(state.lanes ? "Raias por ator: cada evento na faixa de quem age" : "Raias desligadas: eventos numa linha só");
 }
 
+/** #8 Mostra/oculta a curva de emoção (não mexe nas posições dos cards). */
+function toggleEmotion(): void {
+  state.emotion = !state.emotion;
+  refreshTools();
+  refreshAll(false);
+  persistViewNow();
+  notify(state.emotion ? "Curva de emoção: arraste os pontos para dar nota às cenas" : "Curva de emoção oculta");
+}
+
 function bindToolbar(): void {
   $$("[data-layout]").forEach((b) => (b.onclick = () => setLayoutMode(b.dataset.layout as LayoutMode)));
   $("#lanesBtn").onclick = toggleLanes;
+  $("#emotionBtn").onclick = toggleEmotion;
   $$("[data-mode]").forEach((x) =>
     x.addEventListener("click", () => {
       state.mode = x.dataset.mode as ToolMode;
@@ -189,6 +203,7 @@ export function startApp(): void {
   );
   state.layoutMode = v.layoutMode ?? (hasLayers ? "layers" : "timeline");
   state.lanes = v.lanes ?? true;
+  state.emotion = v.emotion ?? true;
 
   bindCanvas();
   bindLegend();

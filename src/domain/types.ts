@@ -58,6 +58,10 @@ export interface Scene extends BaseEntity {
   discussed?: boolean;
   /** #7 Raia (quem age): id de `ws.lanes`. Inferida do `actor` na migração. */
   lane?: string;
+  /** #8 Como a pessoa se sente na cena: −2 (muito ruim) … +2 (muito bom). Sem nota = undefined. */
+  emotion?: number;
+  /** #8 Dor / pain point da cena (texto livre). */
+  pain?: string;
 }
 
 export interface EventItem extends BaseEntity {
@@ -185,6 +189,8 @@ export interface ViewState {
   layoutMode?: LayoutMode;
   /** #7 Raias por ator ligadas na timeline. */
   lanes?: boolean;
+  /** #8 Curva de emoção visível na timeline. */
+  emotion?: boolean;
 }
 
 /** "layers": colunas por tipo (v1.5) · "timeline": tempo da esquerda para a direita (v1.6). */

@@ -11,6 +11,7 @@ import {
 } from "./constants";
 import { newEntityId } from "./factory";
 import { upgradeLanes } from "./lanes";
+import { upgradeEmotion } from "./emotion";
 import { grammarFor, type End, type Verdict } from "./grammar";
 import { keyId, keyKind, newId, nodeKey } from "./keys";
 import type { AnyEntity, DomainRole, Edge, NodeKey, NodeKind, Table, Workspace } from "./types";
@@ -308,6 +309,7 @@ export function upgradeWorkspace(data: any): Workspace {
   data.graph.layouts = data.graph.layouts || {};
   promoteHotspotBoxes(data as Workspace);
   upgradeLanes(data as Workspace);
+  upgradeEmotion(data as Workspace);
   linkLegacyHotspots(data as Workspace);
   data.view = data.view || {};
   return data as Workspace;

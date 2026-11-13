@@ -9,6 +9,8 @@ import {
 import { ES_STYLES, esStyle, type EsCategory } from "../domain/es";
 import { categoryLabel } from "../domain/grammar";
 import { DEFAULT_LANE, laneOf } from "../domain/lanes";
+import { EMOTION_LEVELS, emotionSigned, hasEmotion } from "../domain/emotion";
+import { addHotspot } from "../canvas/hotspot";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import {
   collection,
@@ -119,6 +121,20 @@ function edgeInspector(e: Edge): string {
   );
 }
 
+/** #8 Nota de emoção da cena (−2…+2), com "sem nota". */
+function emotionField(s: Scene): string {
+  const cur = hasEmotion(s) ? s.emotion : null;
+  const btns = EMOTION_LEVELS.slice()
+    .reverse()
+    .map(
+      (l) =>
+        `<button type="button" class="emo-opt${cur === l.value ? " is-active" : ""}" data-emotion="${l.value}" data-sign="${Math.sign(l.value)}" aria-pressed="${cur === l.value}" title="${l.label} (${emotionSigned(l.value)})"><span>${l.face}</span><small>${emotionSigned(l.value)}</small></button>`,
+    )
+    .join("");
+  const now = cur === null ? "Sem nota" : EMOTION_LEVELS.find((l) => l.value === cur)!.label;
+  return `<div class="field"><label>Emoção na cena · <span class="emo-now">${esc(now)}</span></label><div class="emo-seg" role="group" aria-label="Como a pessoa se sente nesta cena">${btns}<button type="button" class="emo-opt emo-clear${cur === null ? " is-active" : ""}" data-emotion="" title="Sem nota" aria-pressed="${cur === null}"><span>—</span><small>sem</small></button></div><small class="help">Também dá para arrastar o ponto da cena na curva acima da timeline.</small></div>`;
+}
+
 /** Campos específicos por tipo de nó. */
 function kindFields(kind: NodeKind, o: AnyEntity): string {
   const v = (k: string) => o[k] as string | undefined;
@@ -150,6 +166,9 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
           state.ws.lanes.map((l): [string, string] => [l.id, l.label]),
         ) +
         `<button class="btn sm add-choice" data-add-choice="lane">＋ Cadastrar raia</button>` +
+        emotionField(o as Scene) +
+        field("Dor / pain point", "pain", v("pain"), true, "O que trava, incomoda ou gera risco para quem vive a cena…") +
+        `<button type="button" class="btn sm add-choice" data-pain-hotspot title="Cria um hotspot ligado a esta cena com o texto da dor"${(o as Scene).pain?.trim() ? "" : " disabled"}>⚡ Virar hotspot</button>` +
         field("História / o que aconteceu", "story", v("story"), true) +
         field("Perguntas (uma por linha)", "questions", (o.questions as string[] | undefined)?.join("\n") || "", true) +
         field("Respostas (uma por linha)", "answers", (o.answers as string[] | undefined)?.join("\n") || "", true) +
@@ -454,6 +473,7 @@ export function bindInspector(): void {
       const o = getByKey(sel.id);
       if (o) o[path] = path === "questions" || path === "answers" ? v.split(/\r?\n/) : v;
       $("#inspectTitle").textContent = label(sel.id);
+      if (path === "pain") body.querySelector<HTMLButtonElement>("[data-pain-hotspot]")!.disabled = !v.trim();
     }
     persist();
     renderGraph();
@@ -513,6 +533,24 @@ export function bindInspector(): void {
       change(() => {
         edgeSel.grammarException = exception.dataset.grammarException === "on";
       });
+      return;
+    }
+    const emo = el.closest<HTMLElement>("[data-emotion]");
+    const nodeSel = state.selected?.kind === "node" ? state.selected.id : "";
+    if (emo && nodeSel && keyKind(nodeSel) === "scene") {
+      const sc = getByKey(nodeSel) as Scene | undefined;
+      const raw = emo.dataset.emotion as string;
+      const val = raw === "" ? undefined : Number(raw);
+      if (sc && sc.emotion !== val)
+        change(() => {
+          if (val === undefined) delete sc.emotion;
+          else sc.emotion = val;
+        });
+      return;
+    }
+    if (el.closest("[data-pain-hotspot]") && nodeSel && keyKind(nodeSel) === "scene") {
+      const sc = getByKey(nodeSel) as Scene | undefined;
+      if (sc?.pain?.trim()) addHotspot({ target: nodeSel, name: sc.pain.trim() });
       return;
     }
     const quick = el.closest<HTMLElement>("[data-quick]");

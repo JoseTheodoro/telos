@@ -8,6 +8,7 @@ import { state } from "../core/state";
 import { notify } from "../ui/dom";
 import { renderGraph } from "./render";
 import { timelineAppend, timelineLayout } from "./timeline";
+import { emotionBand } from "./emotion";
 import { scopeKey, visible } from "./visibility";
 
 /** Chave das posições: recorte + modo (cada modo guarda seu próprio arranjo). */
@@ -135,10 +136,16 @@ export function calcBounds(): Bounds {
   const positions = activePositions();
   const xs = keys.map((k) => positions[k]?.x ?? COL[keyKind(k)]);
   const ys = keys.map((k) => positions[k]?.y ?? 100);
-  const minX = xs.length ? Math.min(...xs) : 0;
-  const minY = ys.length ? Math.min(...ys) : 0;
+  let minX = xs.length ? Math.min(...xs) : 0;
+  let minY = ys.length ? Math.min(...ys) : 0;
   const maxX = xs.length ? Math.max(...xs) + NODE_W : 2000;
   const maxY = ys.length ? Math.max(...ys) + NODE_H : 800;
+  // #8 A curva de emoção fica acima dos cards e entra no enquadramento/export.
+  const emo = emotionBand(state.visibleKeys, positions);
+  if (emo) {
+    minY = Math.min(minY, emo.top);
+    minX = Math.min(minX, emo.x);
+  }
   return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
 }
 

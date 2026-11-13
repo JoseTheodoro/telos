@@ -12,10 +12,10 @@ export function renderLaneGutter(next: LaneRow[]): void {
   if (!el) return;
   el.hidden = !rows.length;
   el.innerHTML = rows
-    .map(
-      (r) =>
-        `<div class="lane-label" data-lane="${esc(r.id)}" title="${esc(r.label)} · ${r.count} evento${r.count === 1 ? "" : "s"}"><b>${esc(r.label)}</b><small>${r.count} evento${r.count === 1 ? "" : "s"}</small><span class="lane-count">${r.count}</span></div>`,
-    )
+    .map((r) => {
+      const sub = r.sub ?? `${r.count} evento${r.count === 1 ? "" : "s"}`;
+      return `<div class="lane-label${r.kind === "emotion" ? " emotion" : ""}" data-lane="${esc(r.id)}" title="${esc(r.label)} · ${esc(sub)}"><b>${esc(r.label)}</b><small>${esc(sub)}</small><span class="lane-count">${esc(r.short ?? String(r.count))}</span></div>`;
+    })
     .join("");
   positionLaneGutter();
 }

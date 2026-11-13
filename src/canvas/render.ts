@@ -18,6 +18,8 @@ import { $, esc } from "../ui/dom";
 import { activePositions, calcBounds, isTimeline, pos } from "./layout";
 import { chapterBands, laneBands } from "./timeline";
 import { renderLaneGutter } from "./lane-gutter";
+import { emotionBand, emotionHtml } from "./emotion";
+import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { renderLegend } from "./legend";
 import { visible } from "./visibility";
 
@@ -126,6 +128,15 @@ function tableBadges(k: NodeKey): string {
   return `<div class="table-badges">${writes ? `<span class="write-tag">WRITE ${writes}</span>` : ""}${reads ? `<span class="read-tag">READ ${reads}</span>` : ""}</div>`;
 }
 
+/** #8 Emoção e dor da cena no próprio card (visível também em Camadas). */
+function sceneBadges(o: AnyEntity): string {
+  const s = o as Scene;
+  const pain = (s.pain || "").trim();
+  if (!hasEmotion(s) && !pain) return "";
+  const lvl = hasEmotion(s) ? emotionLevel(s.emotion) : null;
+  return `<div class="scene-badges">${lvl ? `<span class="emo-tag" data-emo="${Math.sign(lvl.value)}" title="Emoção: ${esc(lvl.label)} (${emotionSigned(lvl.value)})">${lvl.face} ${esc(lvl.label)}</span>` : ""}${pain ? `<span class="pain-tag" title="Dor: ${esc(pain)}">⚡ Dor</span>` : ""}</div>`;
+}
+
 function nodeHtml(k: NodeKey): string {
   const o = getByKey(k) as AnyEntity;
   const p = pos(k);
@@ -134,7 +145,7 @@ function nodeHtml(k: NodeKey): string {
   const sem = semanticLabel(o).toLowerCase() === PL[t].toLowerCase() ? "" : semanticLabel(o);
   const isSelected = state.selected?.kind === "node" && state.selected.id === k;
   const es = esStyle(t, o.semanticType);
-  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}</div>`;
+  return `<div class="node ${isSelected ? "selected" : ""}" data-node="${esc(k)}" data-kind="${esc(t)}" data-es="${es?.id ?? ""}"${t === "hotspot" ? ` data-status="${esc(o.status)}"` : ""} style="left:${p.x}px;top:${p.y}px;${esCssVars(es)}"><div class="port in" title="Entrada" data-port="in" data-key="${esc(k)}"></div><div class="port out" title="Arraste para conectar" data-port="out" data-key="${esc(k)}"></div><div class="kind">${PL[t]}${sem ? ` · ${esc(sem)}` : ""}<span class="counter">${degree(k)}</span></div><div class="name">${esc(label(k))}</div><div class="meta">${esc(nodeSummary(k, o) || "Sem descrição")}</div>${t === "table" ? tableBadges(k) : ""}${t === "scene" ? sceneBadges(o) : ""}</div>`;
 }
 
 /** Contadores do topo, da barra lateral e do rodapé (também com canvas vazio). */
@@ -150,8 +161,8 @@ function renderCounters(): void {
     `${edges.length} relações · ${count((e) => e.status === "Validado")} validadas · ${count((e) => e.accessMode === "WRITE")} WRITE · ${count((e) => e.accessMode === "READ")} READ`;
 }
 
-/** Faixas de raia e de capítulo atrás dos cards (só na timeline). */
-function renderBands(): void {
+/** Faixas de raia, de capítulo e a curva de emoção atrás dos cards (só na timeline). */
+export function renderBands(): void {
   const el = $("#bands");
   if (!isTimeline()) {
     el.innerHTML = "";
@@ -159,7 +170,24 @@ function renderBands(): void {
     return;
   }
   const lanes = laneBands(state.visibleKeys, activePositions());
-  renderLaneGutter(lanes);
+  const emo = emotionBand(state.visibleKeys, activePositions());
+  renderLaneGutter([
+    ...(emo
+      ? [
+          {
+            id: "__emotion",
+            label: "Emoção",
+            top: emo.top,
+            height: emo.height,
+            count: emo.rated,
+            sub: `${emo.rated}/${emo.points.length} cenas com nota`,
+            short: `${emo.rated}/${emo.points.length}`,
+            kind: "emotion" as const,
+          },
+        ]
+      : []),
+    ...lanes,
+  ]);
   const laneHtml = lanes
     .map(
       (b, i) =>
@@ -171,7 +199,7 @@ function renderBands(): void {
       (b, i) =>
         `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
     )
-    .join("");
+    .join("") + (emo ? emotionHtml(emo) : "");
 }
 
 export function renderGraph(): void {

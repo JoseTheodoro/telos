@@ -11,6 +11,8 @@ import { refreshAll } from "../app";
 import { activePositions, calcBounds, ensurePositions, isTimeline, pos } from "../canvas/layout";
 import { edgeGeometry } from "../canvas/render";
 import { chapterBands, laneBands } from "../canvas/timeline";
+import { emotionBand, emotionSvg } from "../canvas/emotion";
+import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { $, esc, notify, saveFile } from "../ui/dom";
 
 export function exportJson(): void {
@@ -25,6 +27,8 @@ export function csvExport(): void {
     "Jornada",
     "Capítulo",
     "Cena",
+    "Emoção da cena",
+    "Dor da cena",
     "Evento",
     "Tipo semântico",
     "Natureza",
@@ -51,6 +55,8 @@ export function csvExport(): void {
       get("journey", c?.journeyId)?.name,
       c?.label,
       s?.title,
+      hasEmotion(s) ? `${emotionSigned(s.emotion)} ${emotionLevel(s.emotion).label}` : "",
+      s?.pain,
       e.name,
       e.semanticType,
       e.type,
@@ -106,6 +112,7 @@ export function svgExport(): void {
       return `<path d="${g.d}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#svg-arrow-${esc(e.id)})"/><text x="${g.mx}" y="${g.my}" fill="${color}" font-size="11" text-anchor="middle">${esc(e.accessMode ? e.accessMode + " · " + e.label : e.label)}</text>`;
     })
     .join("");
+  const emo = emotionBand(visibleKeys, activePositions());
   // Faixas de raia e de capítulo da timeline (fundo).
   const lanes = laneBands(visibleKeys, activePositions())
     .map(
@@ -119,7 +126,7 @@ export function svgExport(): void {
           (b, i) =>
             `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="16" fill="${i % 2 ? "#f1f6f2" : "#f6f9f6"}" stroke="#dbe6dd"/><text x="${b.x + 14}" y="${b.y + 22}" font-size="12" font-weight="800" fill="#2a6e50">${esc(b.label)}${b.date ? " · " + esc(b.date) : ""}</text>`,
         )
-        .join("")
+        .join("") + (emo ? emotionSvg(emo, false) : "")
     : "";
   const markers = shown
     .map(

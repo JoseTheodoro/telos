@@ -16,6 +16,17 @@ import type {
 export type Dragging =
   | { type: "link"; start: NodeKey }
   | {
+      /** #8 Arrastar o ponto da curva de emoção para cima/baixo. */
+      type: "emotion";
+      sceneId: string;
+      startY: number;
+      /** Nota no início do arraste (null = sem nota: começa do neutro). */
+      from: number | null;
+      snap: string;
+      moved: boolean;
+      drag: boolean;
+    }
+  | {
       type: "node";
       key: NodeKey;
       dx: number;
@@ -40,6 +51,8 @@ export const state = {
   layoutMode: "timeline" as LayoutMode,
   /** #7 Raias por ator na timeline. */
   lanes: true,
+  /** #8 Curva de emoção acima da timeline. */
+  emotion: true,
   search: "",
   collapsed: new Set<string>(),
   mode: "pointer" as ToolMode,

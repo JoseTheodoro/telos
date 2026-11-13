@@ -16,13 +16,15 @@ import { visible } from "./visibility";
  * Cria um hotspot. Com um card selecionado, ele nasce ao lado, conectado
  * ("card → levanta dúvida → hotspot"); sem seleção, nasce no centro da tela.
  */
-export function addHotspot(): void {
+export function addHotspot(opts: { target?: NodeKey; name?: string } = {}): void {
   const ws = state.ws;
   const sel = state.selected;
-  const target: NodeKey | null = sel?.kind === "node" && getByKey(sel.id) && keyKind(sel.id) !== "hotspot" ? sel.id : null;
+  const target: NodeKey | null =
+    opts.target ?? (sel?.kind === "node" && getByKey(sel.id) && keyKind(sel.id) !== "hotspot" ? sel.id : null);
   const id = newEntityId(ws, "hotspot");
   const k = nodeKey("hotspot", id);
-  const obj = buildEntity("hotspot", id, DEFAULT_NAME.hotspot, "Hotspot", () => "");
+  // #8 "Virar hotspot" a partir da dor da cena já nasce com o texto da dor.
+  const obj = buildEntity("hotspot", id, opts.name || DEFAULT_NAME.hotspot, "Hotspot", () => "");
 
   change(() => {
     ws.decisions.push(obj as (typeof ws.decisions)[number]);
