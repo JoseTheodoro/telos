@@ -54,7 +54,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">H</span> hotspot no card · <span class="hotkey">P</span> apresentar · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
 function chip(c: EsCategory): string {

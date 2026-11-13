@@ -137,3 +137,83 @@
 .emo-opt.is-active[data-sign='-1']{border-color:#c2493d;background:#fde8e5;box-shadow:inset 0 0 0 1px #c2493d}
 .emo-clear span{font-size:13px;color:#8aa093}
 .emo-now{text-transform:none;letter-spacing:0;color:#8a5a1f}
+
+/* #9 Modo apresentação */
+.present-btn{color:#8a5a1f;border-color:#e6d3b4;background:#fffaf1}
+.present-btn:hover{background:#fff1dc;border-color:#d9b98a}
+body.presenting{overflow:hidden}
+.presentation{position:fixed;inset:0;z-index:60;background:#fbfaf6;color:#22362d;display:flex;flex-direction:column;padding:22px 40px 14px;overflow:auto;outline:none}
+.presentation[hidden]{display:none}
+.pres-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pres-crumbs{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;font-size:12px;color:#7d8f84}
+.pres-crumbs b{color:#2a6e50;font-size:13px}
+.pres-crumbs small{letter-spacing:1px;color:#a0b0a6}
+.pres-controls{display:flex;align-items:center;gap:8px}
+.pres-count{font-size:12px;font-weight:800;color:#56695f;margin-right:6px}
+.pres-btn{border:1px solid #dfe6df;background:#fff;color:#3c5a4b;border-radius:9px;padding:8px 11px;font-size:11.5px;font-weight:750}
+.pres-btn:hover{background:#eef5ef}
+.pres-progress{height:4px;background:#ebeee8;border-radius:3px;margin:14px 0 22px;overflow:hidden}
+.pres-progress span{display:block;height:100%;background:#2a6e50;transition:width .2s}
+.pres-main{flex:1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:36px;min-height:0}
+.pres-scene{min-width:0}
+.pres-chapter-title{font-size:13px;color:#8a5a1f;font-weight:700;margin:0 0 10px}
+.pres-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pres-meta span{font-size:11.5px;padding:4px 9px;border-radius:7px;background:#eef3ee;color:#4c6a5a;font-weight:700}
+.pres-meta .pres-lane{background:#eef2f7;color:#4a5d75}
+.pres-meta .pres-discussed{background:#e3f4e8;color:#2d7a55}
+.pres-scene h1{font-size:clamp(26px,3.4vw,44px);line-height:1.12;letter-spacing:-1.4px;margin:0 0 10px}
+.pres-actor{font-size:15px;color:#6a7f73;margin:0 0 20px;font-weight:700}
+.pres-story{font-size:clamp(15px,1.45vw,19px);line-height:1.65;color:#2e4339;max-width:68ch;white-space:pre-line}
+.pres-empty{color:#9aaba1!important;font-style:italic}
+.pres-qa{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}
+.pres-qa h3,.pres-card h3{font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:#7b9184;margin:0 0 9px}
+.pres-qa ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:#3d5448}
+.pres-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.pres-card{background:#fff;border:1px solid #e3e9e2;border-radius:14px;padding:15px 17px;box-shadow:0 6px 18px rgba(30,60,45,.05)}
+.pres-emotion-now{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pres-big-face{font-size:44px;line-height:1}
+.pres-big-face.muted{display:grid;place-items:center;width:52px;height:52px;border:2px dashed #c9d4cd;border-radius:50%;font-size:22px;color:#9aaba1;font-weight:800}
+.pres-emotion-now b{font-size:18px}
+.pres-emotion-now small{font-size:12px;color:#8a9a90;font-weight:800}
+.pres-emotion[data-sign='1']{background:#f2faf4;border-color:#cfe8d7}
+.pres-emotion[data-sign='-1']{background:#fdf4f2;border-color:#f0cfc9}
+.pres-faces{display:flex;gap:6px}
+.pres-face{flex:1;font-size:20px;padding:6px 0;border:1px solid #e0e7e1;border-radius:9px;background:#fff}
+.pres-face:hover{background:#f3f7f3}
+.pres-face.is-active{border-color:#7a6248;box-shadow:inset 0 0 0 1px #7a6248;background:#fff6e8}
+.pres-face.is-active[data-sign='1']{border-color:#3d956b;box-shadow:inset 0 0 0 1px #3d956b;background:#e3f4e8}
+.pres-face.is-active[data-sign='-1']{border-color:#c2493d;box-shadow:inset 0 0 0 1px #c2493d;background:#fde8e5}
+.pres-pain{background:#fdf1ef;border-color:#f0c3bd}
+.pres-pain h3{color:#a83d35}
+.pres-pain p{margin:0;font-size:15px;line-height:1.5;color:#7f2f28;font-weight:700}
+.pres-events{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.pres-events li{background:#fff4de;border:1px solid #ead1a2;border-left:4px solid #ae7c34;border-radius:9px;padding:9px 11px}
+.pres-events b{display:block;font-size:13px;color:#4a3412}
+.pres-events small{display:block;font-size:10.5px;color:#8f7247;margin-top:3px}
+.pres-tech{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.pres-tech i{font-style:normal;font-size:10px;background:#ebf2fa;color:#3f6690;border-radius:5px;padding:2px 6px}
+.pres-hotspots{border-color:#f0c3bd}
+.pres-hotspots h3{color:#a83d35}
+.pres-hotspots ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.pres-hotspots li{display:grid;grid-template-columns:auto 1fr;gap:2px 9px;align-items:baseline}
+.pres-hid{grid-row:span 2;font-size:10px;font-weight:900;color:#fff;background:#c2493d;border-radius:5px;padding:2px 6px}
+.pres-hotspots b{font-size:13px;color:#5c2620}
+.pres-hotspots small{font-size:10.5px;color:#a0716b}
+.pres-bottom{display:flex;align-items:center;gap:14px;margin-top:20px}
+.pres-nav{width:46px;height:46px;flex-shrink:0;border-radius:50%;border:1px solid #d6e0d8;background:#fff;font-size:26px;line-height:1;color:#2a6e50}
+.pres-nav:hover:not(:disabled){background:#eaf4ec}
+.pres-strip{flex:1;min-width:0;height:92px}
+.pres-strip-zero{stroke:#ddd3c2;stroke-width:1.2}
+.pres-strip-sep{stroke:#e6ebe5;stroke-width:1;stroke-dasharray:3 4}
+.pres-strip-line{fill:none;stroke:#7a6248;stroke-width:2;stroke-linejoin:round}
+.pres-dot{cursor:pointer}
+.pres-dot circle{fill:#f1f3f1;stroke:#8a9a90;stroke-width:2}
+.pres-dot[data-sign='1'] circle{fill:#e3f4e8;stroke:#3d956b}
+.pres-dot[data-sign='-1'] circle{fill:#fde8e5;stroke:#c2493d}
+.pres-dot.unrated circle{fill:#fff;stroke:#c3cec7;stroke-dasharray:2 2}
+.pres-dot.current circle{stroke:#1f4f3d;stroke-width:3}
+.pres-dot:hover circle{stroke-width:3}
+.pres-strip-pain{font-size:11px}
+.pres-keys{text-align:center;font-size:10.5px;color:#9aaba1;margin:8px 0 0}
+.pres-keys kbd{font:inherit;font-size:10px;border:1px solid #d3ddd5;border-radius:4px;padding:1px 5px;background:#fff;color:#5d7466}
+@media(max-width:900px){.presentation{padding:16px}.pres-main{grid-template-columns:1fr}}

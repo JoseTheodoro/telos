@@ -11,6 +11,7 @@ import { bindCanvas } from "./canvas/interactions";
 import { startInlineEdit } from "./canvas/inline-edit";
 import { quickCreate } from "./canvas/quick-create";
 import { addHotspot } from "./canvas/hotspot";
+import { bindPresentation, startPresentation } from "./ui/presentation";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
@@ -112,6 +113,7 @@ function bindToolbar(): void {
   $("#svgBtn").onclick = svgExport;
   $("#undo").onclick = () => undo();
   $("#redo").onclick = redo;
+  $("#presentBtn").onclick = startPresentation;
   $("#inspectorBtn").onclick = () => $("#inspector").classList.toggle("open");
 }
 
@@ -154,6 +156,7 @@ function bindKeyboard(): void {
       h: () => addHotspot(),
       c: () => setMode("connect"),
       v: () => setMode("pointer"),
+      p: startPresentation,
     };
     if (!mod && !e.altKey && single[key]) {
       e.preventDefault();
@@ -213,6 +216,7 @@ export function startApp(): void {
   bindInspector();
   bindImport();
   bindKeyboard();
+  bindPresentation();
   window.addEventListener("beforeunload", persistViewNow);
   window.addEventListener("resize", () => cameraApply());
 
