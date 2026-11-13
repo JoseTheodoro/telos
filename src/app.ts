@@ -9,6 +9,7 @@ import { safeRemoveSelection } from "./actions";
 import { cameraApply, fit, zoom } from "./canvas/camera";
 import { bindCanvas } from "./canvas/interactions";
 import { startInlineEdit } from "./canvas/inline-edit";
+import { quickCreate } from "./canvas/quick-create";
 import { bindLegend } from "./canvas/legend";
 import { autoLayout, ensurePositions, pos } from "./canvas/layout";
 import { renderGraph } from "./canvas/render";
@@ -63,7 +64,7 @@ function bindToolbar(): void {
   $("#jsonCSV").onclick = csvExport;
   $("#exportBtn").onclick = exportJson;
   $("#svgBtn").onclick = svgExport;
-  $("#undo").onclick = undo;
+  $("#undo").onclick = () => undo();
   $("#redo").onclick = redo;
   $("#inspectorBtn").onclick = () => $("#inspector").classList.toggle("open");
 }
@@ -81,6 +82,14 @@ function bindKeyboard(): void {
     if (mod && key === "y") {
       e.preventDefault();
       redo();
+      return;
+    }
+    // #3 Criação encadeada: Tab = próximo conectado, Enter = irmão.
+    const onControl = !!target(e).closest?.("button, a, summary, [tabindex]");
+    if ((e.key === "Tab" || e.key === "Enter") && !mod && !e.altKey && !onControl && state.selected?.kind === "node") {
+      if (e.key === "Tab" && e.shiftKey) return;
+      e.preventDefault();
+      quickCreate(e.key === "Tab" ? "next" : "sibling");
       return;
     }
     if (e.key === "F2" && state.selected?.kind === "node") {

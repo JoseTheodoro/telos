@@ -49,6 +49,26 @@ export function localPoint(evt: { clientX: number; clientY: number }): Point {
   return { x: (evt.clientX - r.left - cam.x) / cam.z, y: (evt.clientY - r.top - cam.y) / cam.z };
 }
 
+/**
+ * Se o nó estiver fora da tela (ou quase), centraliza com zoom legível.
+ * `minZoom`: também aproxima quando o zoom atual está abaixo dele (ex.: para digitar).
+ */
+export function bringIntoView(k: NodeKey, minZoom = 0): void {
+  const pp = pos(k);
+  const stage = $("#stage").getBoundingClientRect();
+  const cam = state.cam;
+  const sx = pp.x * cam.z + cam.x;
+  const sy = pp.y * cam.z + cam.y;
+  const offscreen =
+    sx < 25 || sx > stage.width - NODE_W * cam.z - 25 || sy < 25 || sy > stage.height - NODE_H * cam.z - 25;
+  if (offscreen || cam.z < minZoom) {
+    cam.z = Math.max(0.65, minZoom, Math.min(0.95, cam.z));
+    cam.x = stage.width / 2 - (pp.x + NODE_W / 2) * cam.z;
+    cam.y = stage.height / 2 - (pp.y + NODE_H / 2) * cam.z;
+    cameraApply();
+  }
+}
+
 /** Centraliza a câmera num nó, mantendo o zoom atual. */
 export function centerOn(k: NodeKey): void {
   const p = pos(k);

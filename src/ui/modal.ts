@@ -1,15 +1,16 @@
 // Modal: criação de elementos, lista de conexões e limpeza do canvas.
-import { ARR, CONTAINMENT_LABEL, COL, NODE_H, NODE_W, PL, TYPES } from "../domain/constants";
+import { ARR, CONTAINMENT_LABEL, COL, PL, TYPES } from "../domain/constants";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import { CONTAINMENT, colorForEdge, deep, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
+import { PARENT_FIELD, buildEntity, initMappings } from "../domain/factory";
 import type { AnyEntity, Chapter, NodeKind, Scene } from "../domain/types";
 import { change } from "../core/history";
 import { cancelViewPersist, persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
 import { refreshAll, refreshTools } from "../app";
 import { selectNode } from "../actions";
-import { cameraApply } from "../canvas/camera";
-import { activePositions, pos } from "../canvas/layout";
+import { bringIntoView } from "../canvas/camera";
+import { activePositions } from "../canvas/layout";
 import { exportJson } from "../io/files";
 import { picker, registryOptions, semOptions } from "./inspector";
 import { $, $$, esc, field, notify, options, target } from "./dom";
@@ -90,52 +91,6 @@ function updateModalExtra(): void {
   $("#newExtra").innerHTML = extra;
 }
 
-/** Monta a entidade nova com os campos padrão do tipo. */
-function buildEntity(t: NodeKind, id: string, name: string, semantic: string, val: (k: string) => string): AnyEntity {
-  const base = { id, semanticType: semantic };
-  const inventory = { origin: "Criado no Atlas Studio", status: "A validar", notes: "" };
-  switch (t) {
-    case "journey":
-      return { ...base, name, description: "", status: "Em descoberta" };
-    case "chapter":
-      return { ...base, label: name, title: name, journeyId: val("journeyId"), date: "DATA A DEFINIR", deck: "", mood: "Descobrir" };
-    case "scene":
-      return { ...base, title: name, chapter: val("chapter"), time: "A definir", story: "", actor: "", questions: [], answers: [], discussed: false };
-    case "event":
-      return {
-        ...base,
-        name,
-        sceneId: val("sceneId"),
-        type: val("type") || "unknown",
-        destination: val("destination") || "open",
-        note: "",
-        reviewStatus: "Em discussão",
-        reviewOwner: "",
-        pepReason: "",
-        source: "Criado no Atlas Studio",
-      };
-    case "domain":
-      return { ...base, name, description: "", ...inventory };
-    case "system":
-      return { ...base, name, kind: "Sistema a investigar", domainId: "", ...inventory };
-    case "screen":
-      return { ...base, name, route: "", systemId: "", ...inventory };
-    case "table":
-      return {
-        ...base,
-        name,
-        physicalName: val("physical"),
-        primaryKey: "",
-        systemId: "",
-        defaultAccess: val("defaultAccess") as "" | "READ" | "WRITE",
-        ...inventory,
-      };
-    case "semantic":
-      return { ...base, name, description: "", status: "Em descoberta", notes: "", origin: "Criado no Atlas Studio" };
-  }
-}
-
-const PARENT_FIELD: Partial<Record<NodeKind, string>> = { chapter: "journeyId", scene: "chapter", event: "sceneId" };
 
 function makeNew(): void {
   const ds = modal().dataset;
@@ -173,19 +128,7 @@ function makeNew(): void {
     for (const [from, to] of CONTAINMENT)
       if (t === to)
         ws.graph.edges.push(edgeFor(ws, nodeKey(from, String(obj[PARENT_FIELD[t] as string])), k, CONTAINMENT_LABEL, "Registrado", "Cadastro manual"));
-    if (t === "event")
-      ws.eventMappings[id] = {
-        domainId: "",
-        systemId: "",
-        screenIds: [],
-        tableIds: [],
-        consumerDomainIds: [],
-        relationshipStatus: "Hipótese",
-        notes: "",
-        operation: "A identificar",
-      };
-    if (t === "scene")
-      ws.sceneMappings[id] = { domainId: "", systemIds: [], screenIds: [], tableIds: [], status: "Hipótese", notes: "" };
+    initMappings(ws, t, id);
     if (parent && parent !== k && getByKey(parent) && !ws.graph.edges.some((e) => e.from === parent && e.to === k))
       ws.graph.edges.push(edgeFor(ws, parent, k, defaultEdgeName(parent, k), "Hipótese", "Cadastro manual"));
     syncMaps(ws);
@@ -204,23 +147,14 @@ function makeNew(): void {
     }
   });
   modal().close();
+  // O <dialog> devolve o foco ao botão que o abriu; solta para Tab/Enter encadearem a partir do card novo.
+  (document.activeElement as HTMLElement | null)?.blur?.();
   if (!state.visibleKeys.has(k)) {
     setFocus("", "", "");
     refreshAll(false);
   }
   selectNode(k);
-  // Traz o nó para a área visível se ele nasceu fora da tela.
-  const pp = pos(k);
-  const stage = $("#stage").getBoundingClientRect();
-  const cam = state.cam;
-  const sx = pp.x * cam.z + cam.x;
-  const sy = pp.y * cam.z + cam.y;
-  if (sx < 25 || sx > stage.width - NODE_W * cam.z - 25 || sy < 25 || sy > stage.height - NODE_H * cam.z - 25) {
-    cam.z = Math.max(0.65, Math.min(0.95, cam.z));
-    cam.x = stage.width / 2 - (pp.x + NODE_W / 2) * cam.z;
-    cam.y = stage.height / 2 - (pp.y + NODE_H / 2) * cam.z;
-    cameraApply();
-  }
+  bringIntoView(k);
   notify(`${PL[t]} criado e salvo no navegador`);
 }
 

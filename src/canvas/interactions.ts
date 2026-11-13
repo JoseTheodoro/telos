@@ -9,7 +9,7 @@ import { finishConnect, linkCreate, selectEdge, selectNode } from "../actions";
 import { createModal } from "../ui/modal";
 import { $, notify, target } from "../ui/dom";
 import { cameraApply, localPoint, zoom } from "./camera";
-import { finishInlineEdit, isInlineEditing, startInlineEdit } from "./inline-edit";
+import { editingKey, finishInlineEdit, isInlineEditing, refocusInlineEdit, startInlineEdit } from "./inline-edit";
 import { activePositions, pos } from "./layout";
 import { renderEdges, renderGraph } from "./render";
 
@@ -52,7 +52,17 @@ export function bindCanvas(): void {
     if (el.closest("#emptyStage, #esLegend, .name-editor")) return;
     // Clique fora do campo em edição confirma antes de qualquer outra ação
     // (o preventDefault do arraste impediria o blur).
-    if (isInlineEditing()) finishInlineEdit(true);
+    if (isInlineEditing()) {
+      // Clique em outra parte do card em edição (ex.: clique triplo) mantém a edição.
+      if (el.closest<HTMLElement>("[data-node]")?.dataset.node === editingKey()) {
+        e.preventDefault();
+        refocusInlineEdit();
+        return;
+      }
+      finishInlineEdit(true);
+    }
+    // O canvas assume o teclado (Tab/Enter/Del): solta o foco de botões e campos.
+    (document.activeElement as HTMLElement | null)?.blur?.();
 
     const port = el.closest<HTMLElement>("[data-port]");
     if (port) {

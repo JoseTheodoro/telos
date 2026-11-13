@@ -10,6 +10,7 @@ import { degree, findEdge, getByKey, label, related, state } from "../core/state
 import { beginConnect, duplicateSelection, ensureVisible, safeRemoveSelection, selectEdge } from "../actions";
 import { renderEdges, renderGraph } from "../canvas/render";
 import { renderSidebar } from "./sidebar";
+import { nextLabel, quickCreate } from "../canvas/quick-create";
 import { $, $$, esc, field, notify, options, target } from "./dom";
 
 const ACCESS_OPTIONS: [string, string][] = [
@@ -33,7 +34,7 @@ export function semOptions(current: string | undefined): [string, string][] {
 }
 
 function emptyInspector(): string {
-  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
+  return `<div class="hint"><b>Mapeamento guiado</b><br>Crie jornadas, capítulos, cenas e eventos. Conecte sistemas, telas e tabelas por setas com estado, cor, evidência e modo de acesso.</div><div class="sectionlabel">ATALHOS</div><div class="sub">Duplo clique: criar nó<br><br><span class="hotkey">C</span> conectar · <span class="hotkey">V</span> selecionar · <span class="hotkey">N</span> novo · <span class="hotkey">F2</span> renomear · <span class="hotkey">Tab</span> próximo conectado · <span class="hotkey">Enter</span> irmão · <span class="hotkey">Del</span> excluir · <span class="hotkey">Ctrl+Z</span> desfazer<br><br>Duplo clique no card: renomear</div>`;
 }
 
 function edgeInspector(e: Edge): string {
@@ -182,7 +183,13 @@ function nodeInspector(k: string, o: AnyEntity): string {
       return `<div class="rel"><span title="${esc(label(neighbor))}">${e.from === k ? "→" : "←"} ${esc(label(neighbor))}<br><small style="color:${colorForEdge(e)};font-weight:700">${esc(e.accessMode ? e.accessMode + " · " : "")}${esc(e.label)} · ${esc(e.status)}</small></span><button title="Inspecionar relação" data-inspect-edge="${esc(e.id)}">↗</button></div>`;
     })
     .join("");
+  const next = nextLabel(kind);
   content +=
+    `<div class="sectionlabel">Criar em sequência</div><div class="rowbtn">` +
+    (next
+      ? `<button class="btn sm primary" data-quick="next" title="Cria e conecta (Tab)">⇥ ${esc(next)} <span class="hotkey">Tab</span></button>`
+      : "") +
+    `<button class="btn sm" data-quick="sibling" title="Mesmo tipo e mesmo pai (Enter)">↵ Irmão <span class="hotkey">Enter</span></button></div>` +
     `<div class="sectionlabel">Setas deste elemento · ${rels.length}</div><div class="rowbtn"><button class="btn sm primary" id="startLinkBtn">⇢ Conectar a outro</button><button class="btn sm" id="focusItemBtn">◎ Focar</button></div>` +
     relRows +
     `<div class="sectionlabel">Ações</div><div class="rowbtn"><button class="btn" id="duplicateButton">⧉ Duplicar</button><button class="btn danger" id="deleteButton">✕ Excluir nó</button></div>`;
@@ -429,6 +436,11 @@ export function bindInspector(): void {
     const add = el.closest<HTMLElement>("[data-add-choice]");
     if (add) {
       addCustomChoice(add.dataset.addChoice as string);
+      return;
+    }
+    const quick = el.closest<HTMLElement>("[data-quick]");
+    if (quick) {
+      quickCreate(quick.dataset.quick === "next" ? "next" : "sibling");
       return;
     }
     const sel = state.selected;

@@ -23,14 +23,14 @@ export function undoPush(): void {
   pushSnapshot(JSON.stringify(state.ws));
 }
 
-export function undo(): void {
+export function undo(silent = false): void {
   if (!state.undoStack.length) return;
   state.redoStack.push(JSON.stringify(state.ws));
   state.ws = upgradeWorkspace(JSON.parse(state.undoStack.pop() as string));
   state.selected = null;
   persist();
   refreshAll(false);
-  notify("Alteração desfeita e salva");
+  if (!silent) notify("Alteração desfeita e salva");
 }
 
 export function redo(): void {
