@@ -89,7 +89,7 @@ try {
   r.organizeKeeps = JSON.stringify(before[key][`note:${j.id}`]) === JSON.stringify(after[key][`note:${j.id}`]);
   await page.screenshot({ path: `${SHOTS}/notes-1.png` });
   // recorte: some em outro capítulo, aparece no mapa completo e em Camadas
-  await page.click('[data-focus-chapter="inicio"]').catch(async () => { const w = await ws(); await page.click(`[data-focus-chapter="${w.chapters[0].id}"]`); });
+  await page.click('[data-focus-chapter="cadastro"]', { timeout: 5000 }).catch((err) => { throw new Error(`recorte do capítulo cadastro indisponível na árvore: ${err.message}`); });
   r.hiddenElsewhere = await page.$$eval('[data-node^="note:"]', (x) => x.length);
   await page.click('[data-focus-all="yes"]');
   r.fullMap = await page.$$eval('[data-node^="note:"]', (x) => x.length);

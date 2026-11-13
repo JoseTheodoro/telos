@@ -4,11 +4,17 @@ const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
 await page.goto(`file://${ROOT}/dist/index.html`); await page.waitForSelector(".node");
 await page.click('[data-focus-scene="preconsulta"]');
+const chaptersBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")).chapters.length);
 const b = await page.locator('.node[data-kind="chapter"]').boundingBox(); const x = b.x + b.width / 2, y = b.y + 22;
 await page.mouse.click(x, y); await page.mouse.dblclick(x, y);       // clique + duplo clique rápido
 const editorOpen = await page.locator(".name-editor").count();
 const focused = await page.evaluate(() => document.activeElement?.className);
 await page.keyboard.press("Escape");
 const chapters = await page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")).chapters.length);
-console.log({ editorOpen, focused, chapters });
+const r = { editorOpen, focused, chapters };
+const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
+if (editorOpen !== 1) fail("clique + duplo clique não abriu o editor do capítulo");
+if (focused !== "name-editor") fail(`foco deveria estar no editor: ${focused}`);
+if (chapters !== chaptersBefore) fail(`clique + duplo clique criou capítulo: ${chaptersBefore} → ${chapters}`);
+console.log(r);
 await browser.close();

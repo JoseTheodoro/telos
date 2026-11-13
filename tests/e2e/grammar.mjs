@@ -83,7 +83,6 @@ try {
 
   // 6) Tab em evento → "precede", sem aviso
   await page.click('[data-tab="journey"]'); await page.click('[data-focus-scene="preconsulta"]');
-  await page.fill("#search", "").catch(() => {});
   await page.click('[data-tab="inventory"]'); await page.fill("#search", "PréConsultaIniciada"); await page.click('.inventory-item[data-select-node^="event:"]');
   const evKey = await page.$eval(".node.selected", (n) => n.dataset.node);
   await page.keyboard.press("Tab"); await page.keyboard.type("Pulseira conferida"); await page.keyboard.press("Enter");

@@ -39,7 +39,7 @@ try {
   await page.click('[data-focus-scene="preconsulta"]');
   await page.click('[data-emotion="-1"]');
   r.inspectorSet = (await sc("preconsulta")).emotion;
-  await page.click('[data-focus-scene="identidade"]').catch(() => {});
+  await page.click('[data-focus-scene="identidade"]', { timeout: 5000 }).catch((err) => { throw new Error(`cena identidade indisponível na árvore: ${err.message}`); });
   // dor + virar hotspot
   await page.click('[data-focus-scene="preconsulta"]');
   await page.fill('[data-field="pain"]', "Paciente espera sem saber quanto falta para ser chamado");
@@ -54,7 +54,7 @@ try {
   const h = w.decisions[w.decisions.length - 1];
   r.hotspot = { created: w.decisions.length === before + 1, name: h.title, linked: w.graph.edges.some((e) => e.from === "scene:preconsulta" && e.to === "hotspot:" + h.id) };
   // dar nota +2 numa outra cena pelo inspetor e ver a curva (path)
-  await page.click('[data-focus-scene="chamada-medico"]').catch(() => {});
+  await page.click('[data-focus-scene="chamada-medico"]', { timeout: 5000 }).catch((err) => { throw new Error(`cena chamada-medico indisponível na árvore: ${err.message}`); });
   const other = (await ws()).scenes.find((s) => s.chapter === "consulta" && s.id !== "preconsulta");
   await page.click(`[data-focus-scene="${other.id}"]`);
   await page.click('[data-emotion="2"]');

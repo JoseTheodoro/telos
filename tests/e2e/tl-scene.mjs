@@ -16,11 +16,19 @@ const sel = await page.$eval(".node.selected", (n) => n.dataset.node);
 await page.keyboard.press("Enter"); await page.keyboard.type("Enfermagem confere pulseira"); await page.keyboard.press("Enter");
 w = await ws();
 const ns = w.scenes.find((s) => s.title === "Enfermagem confere pulseira");
-console.log({ sel, scope: await page.inputValue("#chapterFilter"), newSceneX: C()["scene:" + ns.id].x, expected: lastEvX + 290, rowY: C()["scene:" + ns.id].y, nextScenePushed: C()["scene:" + nextScene.id].x - nextBefore, orderOk: w.scenes[idx + 1].id === ns.id, errors });
+const r = { sel, scope: await page.inputValue("#chapterFilter"), newSceneX: C()["scene:" + ns.id].x, expected: lastEvX + 290, rowY: C()["scene:" + ns.id].y, nextScenePushed: C()["scene:" + nextScene.id].x - nextBefore, orderOk: w.scenes[idx + 1].id === ns.id };
+const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
+if (r.sel !== "scene:preconsulta") fail(`clique deveria selecionar a cena preconsulta: ${r.sel}`);
+if (r.scope !== "consulta") fail(`recorte deveria continuar no capítulo consulta: ${r.scope}`);
+if (r.newSceneX !== r.expected) fail(`nova cena fora do lugar: x=${r.newSceneX}, esperado ${r.expected}`);
+if (r.nextScenePushed !== 290) fail(`cena seguinte deveria andar 290px: ${r.nextScenePushed}`);
+if (!r.orderOk) fail("nova cena não ficou logo depois da cena de origem");
 // chapter selecionado → Tab cria cena no fim do capítulo
 await page.click('[data-focus-chapter="consulta"]'); // seleciona capítulo
 const lastX = Math.max(...Object.entries(C()).filter(([k]) => k.startsWith("scene:") || k.startsWith("event:")).map(([, p]) => p.x));
 await page.keyboard.press("Tab"); await page.keyboard.type("Fim da consulta"); await page.keyboard.press("Enter");
 w = await ws(); const fs2 = w.scenes.find((s) => s.title === "Fim da consulta");
-console.log({ childScene: C()["scene:" + fs2.id], expectedX: lastX + 290 });
+r.childScene = C()["scene:" + fs2.id]; r.childExpectedX = lastX + 290;
+if (r.childScene?.x !== r.childExpectedX) fail(`Tab no capítulo deveria criar a cena no fim: x=${r.childScene?.x}, esperado ${r.childExpectedX}`);
+console.log(r, "\nerrors:", errors);
 await browser.close();

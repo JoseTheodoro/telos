@@ -41,7 +41,8 @@ try {
   const nextSceneX = C()["scene:" + nextScene.id].x;
   await page.click('[data-focus-scene="preconsulta"]'); await page.click('[data-focus-chapter="consulta"]');
   await page.click('[data-tab="inventory"]'); await page.fill("#search", "A enfermagem acolhe"); await page.click('.inventory-item[data-select-node^="scene:"]');
-  await page.click('[data-focus-chapter="consulta"]').catch(() => {});
+  await page.click('[data-tab="journey"]');
+  await page.click('[data-focus-chapter="consulta"]', { timeout: 5000 }).catch((err) => { throw new Error(`recorte do capítulo consulta indisponível na árvore: ${err.message}`); });
   r.scopeBeforeEnter = await page.inputValue("#sceneFilter");
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
 // alternar modos preserva posições de cada um

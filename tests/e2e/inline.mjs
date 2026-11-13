@@ -10,6 +10,19 @@ const results = {};
 const node = (kind, i = 0) => page.locator(`.node[data-kind="${kind}"]`).nth(i);
 const center = async (loc) => { const b = await loc.boundingBox(); return [b.x + b.width / 2, b.y + 22]; };
 const undoDisabled = () => page.locator("#undo").isDisabled();
+const emptyStagePoint = () =>
+  page.evaluate(() => {
+    const stage = document.querySelector("#stage").getBoundingClientRect();
+    for (let y = stage.bottom - 24; y > stage.top + 24; y -= 16)
+      for (let x = stage.left + 24; x < stage.right - 24; x += 16) {
+        const el = document.elementFromPoint(x, y);
+        if (el?.closest("#stage") && !el.closest("[data-node],[data-edge],[data-emo-scene],#esLegend,.zoomhud,button")) return [x, y];
+      }
+    throw new Error("nenhum ponto vazio no canvas");
+  });
+const originalScene = await node("scene").locator(".name").textContent();
+const originalEvent = await node("event").locator(".name").textContent();
+const originalChapter = await node("chapter").locator(".name").textContent();
 
 // 1) duplo clique abre editor com texto selecionado e não abre modal
 let [x, y] = await center(node("scene"));
@@ -53,10 +66,10 @@ results.emptyRejected = await node("chapter").locator(".name").textContent();
 await page.mouse.dblclick(x, y);
 await page.keyboard.press("End");
 await page.keyboard.type(" ✓");
-await page.mouse.click(700, 760);
+await page.mouse.click(...(await emptyStagePoint()));
 results.afterBlurBackground = await node("journey").locator(".name").textContent();
 // 8) duplo clique no fundo ainda abre modal de criação
-await page.mouse.dblclick(500, 720);
+await page.mouse.dblclick(...(await emptyStagePoint()));
 results.bgDblclickModal = await page.$eval("#modal", (m) => m.open);
 await page.keyboard.press("Escape");
 // 9) inspetor: título acompanha digitação; focar sem alterar não cria undo
@@ -69,5 +82,17 @@ await page.click('[data-field="title"]'); await page.keyboard.press("End"); awai
 results.inspectorLiveTitle = await page.textContent("#inspectTitle");
 results.undoAfterTyping = await undoDisabled();
 await page.screenshot({ path: `${SHOTS}/inline-2.png` });
+const fail = (msg) => { if (!results.FAILED) results.FAILED = msg; };
+if (results.editorOpen !== 1 || results.modalOpen) fail("duplo clique no card deveria abrir o editor, sem modal");
+if (results.selectedText !== originalScene) fail(`editor deveria abrir com o nome inteiro selecionado: ${results.selectedText}`);
+if (results.afterEnter !== "Enfermagem afere os sinais vitais" || !results.sidebarUpdated || results.inspectorTitle !== results.afterEnter) fail("Enter não gravou o nome no card, na árvore e no inspetor");
+if (results.afterUndo !== originalScene) fail(`Ctrl+Z não desfez a edição: ${results.afterUndo}`);
+if (results.afterEscape !== originalEvent) fail(`Escape deveria descartar a edição: ${results.afterEscape}`);
+if (results.afterF2ClickOther !== "PreConsultaIniciada (F2)" || results.selectedAfter !== "chapter") fail("F2 + clique em outro card deveria gravar e selecionar o outro card");
+if (results.emptyRejected !== originalChapter) fail(`nome vazio deveria ser rejeitado: ${results.emptyRejected}`);
+if (!results.afterBlurBackground.endsWith(" ✓")) fail(`clique no fundo deveria gravar a edição: ${results.afterBlurBackground}`);
+if (!results.bgDblclickModal) fail("duplo clique no fundo deveria abrir o modal de criação");
+if (!results.undoBeforeFocus || !results.undoAfterFocusOnly) fail("focar campos do inspetor sem alterar não pode criar undo");
+if (!results.inspectorLiveTitle.includes("(ao vivo)") || results.undoAfterTyping) fail("título do inspetor deveria acompanhar a digitação e habilitar o undo");
 console.log(results, "\nerrors:", errors);
 await browser.close();

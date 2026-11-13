@@ -13,7 +13,7 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const only = process.argv.slice(2);
 const scripts = fs
   .readdirSync(here)
-  .filter((f) => f.endsWith(".mjs") && f !== "run-all.mjs" && f !== "smoke.mjs")
+  .filter((f) => f.endsWith(".mjs") && f !== "run-all.mjs")
   .filter((f) => !only.length || only.includes(f.replace(".mjs", "")));
 
 let bad = 0;
