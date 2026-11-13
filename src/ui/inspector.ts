@@ -8,6 +8,7 @@ import {
 } from "../domain/constants";
 import { ES_STYLES, esStyle, type EsCategory } from "../domain/es";
 import { categoryLabel } from "../domain/grammar";
+import { DEFAULT_LANE, laneOf } from "../domain/lanes";
 import { keyKind, newId, nodeKey } from "../domain/keys";
 import {
   collection,
@@ -20,7 +21,7 @@ import {
   syncMaps,
   validColor,
 } from "../domain/model";
-import type { AnyEntity, Edge, NodeKind, RegistryOption } from "../domain/types";
+import type { AnyEntity, Edge, NodeKind, RegistryOption, Scene } from "../domain/types";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, state } from "../core/state";
@@ -142,6 +143,13 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
         options("Capítulo", "chapter", v("chapter"), picker("chapter")) +
         field("Momento / data", "time", v("time")) +
         field("Ator / equipe", "actor", v("actor")) +
+        options(
+          "Raia na timeline (quem age)",
+          "lane",
+          laneOf(state.ws, o as Scene),
+          state.ws.lanes.map((l): [string, string] => [l.id, l.label]),
+        ) +
+        `<button class="btn sm add-choice" data-add-choice="lane">＋ Cadastrar raia</button>` +
         field("História / o que aconteceu", "story", v("story"), true) +
         field("Perguntas (uma por linha)", "questions", (o.questions as string[] | undefined)?.join("\n") || "", true) +
         field("Respostas (uma por linha)", "answers", (o.answers as string[] | undefined)?.join("\n") || "", true) +
@@ -325,6 +333,7 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
   const t = keyKind(k);
   if (!o || String(o[path] ?? "") === value) return;
   change(() => {
+    if (path === "lane") resetLaneLayouts();
     if (path === "questions" || path === "answers") o[path] = value.split(/\r?\n/);
     else if (path === "discussed") o[path] = value === "true";
     else o[path] = value;
@@ -344,6 +353,15 @@ function updateField(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElem
   });
 }
 
+/**
+ * A raia de uma cena mudou: arranjos com raias ficam desatualizados e são refeitos
+ * (o recorte atual é reorganizado já no re-render).
+ */
+function resetLaneLayouts(): void {
+  const layouts = state.ws.graph.layouts;
+  for (const key of Object.keys(layouts)) if (key.startsWith("lanes|")) delete layouts[key];
+}
+
 function setEdgeColor(color: string): void {
   if (state.selected?.kind !== "edge" || !validColor(color)) return;
   const edge = findEdge(state.selected.id);
@@ -360,9 +378,11 @@ function addCustomChoice(which: string): void {
   const question =
     which === "semantic"
       ? "Nome do novo tipo de elemento:"
-      : which === "nature"
-        ? "Nome da nova natureza do evento:"
-        : "Nome do novo destino do evento:";
+      : which === "lane"
+        ? "Nome da nova raia (quem age):"
+        : which === "nature"
+          ? "Nome da nova natureza do evento:"
+          : "Nome do novo destino do evento:";
   const name = prompt(question)?.trim();
   if (!name) return;
   change(() => {
@@ -370,6 +390,13 @@ function addCustomChoice(which: string): void {
     if (which === "semantic") {
       if (!state.ws.elementTypes.includes(name)) state.ws.elementTypes.push(name);
       o.semanticType = name;
+    } else if (which === "lane") {
+      // Nova raia entra antes de "Outros" (que fica sempre por último).
+      const id = "lane-" + newId();
+      const at = state.ws.lanes.findIndex((l) => l.id === DEFAULT_LANE);
+      state.ws.lanes.splice(at < 0 ? state.ws.lanes.length : at, 0, { id, label: name });
+      o.lane = id;
+      resetLaneLayouts();
     } else {
       const list = which === "nature" ? state.ws.natureOptions : state.ws.destinationOptions;
       const val = "custom-" + newId();

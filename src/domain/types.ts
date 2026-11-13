@@ -56,6 +56,8 @@ export interface Scene extends BaseEntity {
   questions?: string[];
   answers?: string[];
   discussed?: boolean;
+  /** #7 Raia (quem age): id de `ws.lanes`. Inferida do `actor` na migração. */
+  lane?: string;
 }
 
 export interface EventItem extends BaseEntity {
@@ -181,6 +183,8 @@ export interface ViewState {
   sidebarTab?: SidebarTab;
   legendCollapsed?: boolean;
   layoutMode?: LayoutMode;
+  /** #7 Raias por ator ligadas na timeline. */
+  lanes?: boolean;
 }
 
 /** "layers": colunas por tipo (v1.5) · "timeline": tempo da esquerda para a direita (v1.6). */
@@ -221,6 +225,8 @@ export interface Workspace {
   elementTypes: string[];
   natureOptions: RegistryOption[];
   destinationOptions: RegistryOption[];
+  /** #7 Catálogo de raias da timeline (ordem = de cima para baixo). */
+  lanes: RegistryOption[];
   view: ViewState;
   [extra: string]: unknown;
 }

@@ -10,7 +10,7 @@ import { get, getByKey, label, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
 import { activePositions, calcBounds, ensurePositions, isTimeline, pos } from "../canvas/layout";
 import { edgeGeometry } from "../canvas/render";
-import { chapterBands } from "../canvas/timeline";
+import { chapterBands, laneBands } from "../canvas/timeline";
 import { $, esc, notify, saveFile } from "../ui/dom";
 
 export function exportJson(): void {
@@ -106,9 +106,15 @@ export function svgExport(): void {
       return `<path d="${g.d}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#svg-arrow-${esc(e.id)})"/><text x="${g.mx}" y="${g.my}" fill="${color}" font-size="11" text-anchor="middle">${esc(e.accessMode ? e.accessMode + " · " + e.label : e.label)}</text>`;
     })
     .join("");
-  // Faixas de capítulo da timeline (fundo).
+  // Faixas de raia e de capítulo da timeline (fundo).
+  const lanes = laneBands(visibleKeys, activePositions())
+    .map(
+      (b, i) =>
+        `<rect x="${b.x}" y="${b.top}" width="${b.w}" height="${b.height}" fill="${i % 2 ? "#f3f6fa" : "#f8fafc"}" stroke="#e1e7ef"/><text x="${b.x + 12}" y="${b.top + 16}" font-size="11" font-weight="800" fill="#4a5d75">${esc(b.label)}</text>`,
+    )
+    .join("");
   const bands = isTimeline()
-    ? chapterBands(visibleKeys, activePositions())
+    ? lanes + chapterBands(visibleKeys, activePositions())
         .map(
           (b, i) =>
             `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="16" fill="${i % 2 ? "#f1f6f2" : "#f6f9f6"}" stroke="#dbe6dd"/><text x="${b.x + 14}" y="${b.y + 22}" font-size="12" font-weight="800" fill="#2a6e50">${esc(b.label)}${b.date ? " · " + esc(b.date) : ""}</text>`,

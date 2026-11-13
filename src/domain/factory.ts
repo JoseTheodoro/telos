@@ -42,7 +42,18 @@ export function buildEntity(t: NodeKind, id: string, name: string, semantic: str
     case "chapter":
       return { ...base, label: name, title: name, journeyId: val("journeyId"), date: "DATA A DEFINIR", deck: "", mood: "Descobrir" };
     case "scene":
-      return { ...base, title: name, chapter: val("chapter"), time: "A definir", story: "", actor: "", questions: [], answers: [], discussed: false };
+      return {
+        ...base,
+        title: name,
+        chapter: val("chapter"),
+        time: "A definir",
+        story: "",
+        actor: "",
+        questions: [],
+        answers: [],
+        discussed: false,
+        lane: val("lane") || "outros",
+      };
     case "event":
       return {
         ...base,

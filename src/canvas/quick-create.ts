@@ -13,7 +13,7 @@ import { notify } from "../ui/dom";
 import { bringIntoView } from "./camera";
 import { startInlineEdit } from "./inline-edit";
 import { activePositions, freeSpot, isTimeline, pos } from "./layout";
-import { TL, makeRoom } from "./timeline";
+import { TL, makeRoom, rowYFor } from "./timeline";
 import { visible } from "./visibility";
 
 export type QuickMode = "next" | "sibling";
@@ -128,7 +128,7 @@ function timelineSpot(origin: NodeKey, k: NodeKey, kind: NodeKind, mode: QuickMo
     x = hasChildren ? lastX(origin) + TL.COLW : o.x;
   }
   makeRoom(positions, x, k);
-  return { x, y: TL.ROW[kind] ?? o.y };
+  return { x, y: kind === "event" ? rowYFor(k, visible()) : (TL.ROW[kind] ?? o.y) };
 }
 
 /** Abre o recorte (cena → capítulo → jornada → mapa completo) até o nó aparecer. */

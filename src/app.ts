@@ -38,6 +38,10 @@ export function refreshTools(): void {
     b.classList.toggle("active", on);
     b.setAttribute("aria-pressed", String(on));
   });
+  const lanesBtn = $<HTMLButtonElement>("#lanesBtn");
+  lanesBtn.disabled = state.layoutMode !== "timeline";
+  lanesBtn.classList.toggle("active", state.lanes && state.layoutMode === "timeline");
+  lanesBtn.setAttribute("aria-pressed", String(state.lanes));
   $("#stage").style.cursor = state.mode === "connect" ? "crosshair" : "grab";
 }
 
@@ -57,8 +61,18 @@ function setLayoutMode(mode: LayoutMode): void {
   notify(mode === "timeline" ? "Timeline: o tempo corre da esquerda para a direita" : "Camadas: uma coluna por tipo");
 }
 
+/** #7 Liga/desliga as raias por ator (cada estado guarda seu arranjo). */
+function toggleLanes(): void {
+  state.lanes = !state.lanes;
+  refreshTools();
+  refreshAll(true);
+  persistViewNow();
+  notify(state.lanes ? "Raias por ator: cada evento na faixa de quem age" : "Raias desligadas: eventos numa linha só");
+}
+
 function bindToolbar(): void {
   $$("[data-layout]").forEach((b) => (b.onclick = () => setLayoutMode(b.dataset.layout as LayoutMode)));
+  $("#lanesBtn").onclick = toggleLanes;
   $$("[data-mode]").forEach((x) =>
     x.addEventListener("click", () => {
       state.mode = x.dataset.mode as ToolMode;
@@ -171,9 +185,10 @@ export function startApp(): void {
   state.legendCollapsed = v.legendCollapsed ?? window.innerWidth < 930;
   // Mapas que já têm arranjo em camadas abrem em Camadas; mapas novos abrem na Timeline.
   const hasLayers = Object.entries(state.ws.graph.layouts || {}).some(
-    ([key, pos]) => !key.startsWith("timeline|") && Object.keys(pos).length > 0,
+    ([key, pos]) => !key.startsWith("timeline|") && !key.startsWith("lanes|") && Object.keys(pos).length > 0,
   );
   state.layoutMode = v.layoutMode ?? (hasLayers ? "layers" : "timeline");
+  state.lanes = v.lanes ?? true;
 
   bindCanvas();
   bindLegend();

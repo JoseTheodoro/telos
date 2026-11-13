@@ -11,7 +11,8 @@ import { timelineAppend, timelineLayout } from "./timeline";
 import { scopeKey, visible } from "./visibility";
 
 /** Chave das posições: recorte + modo (cada modo guarda seu próprio arranjo). */
-export const positionsKey = (): string => (state.layoutMode === "timeline" ? "timeline|" : "") + scopeKey();
+export const positionsKey = (): string =>
+  (state.layoutMode === "timeline" ? (state.lanes ? "lanes|" : "timeline|") : "") + scopeKey();
 
 export const isTimeline = (): boolean => state.layoutMode === "timeline";
 

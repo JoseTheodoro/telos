@@ -93,3 +93,18 @@
 .chapter-band.alt{background:#eef5f0cc}
 .chapter-band-label{position:absolute;left:14px;top:10px;font-size:12px;font-weight:800;color:#2a6e50;letter-spacing:.2px;white-space:nowrap}
 .chapter-band-label small{margin-left:9px;font-size:10px;font-weight:700;color:#7d978a;letter-spacing:.8px}
+
+/* v1.6 · #7 Raias por ator */
+#lanesBtn.active{background:#24644d;color:#fff;border-color:#24644d}
+#lanesBtn:disabled{opacity:.45;cursor:not-allowed}
+.lane-band{position:absolute;background:#f6f8fbcc;border-top:1px solid #e1e7ef;border-bottom:1px solid #e1e7ef}
+.lane-band.alt{background:#eef2f7cc}
+.lane-gutter{position:absolute;left:0;top:0;bottom:0;width:150px;pointer-events:none;z-index:3}
+.lane-label{position:absolute;left:8px;transform:translateY(-50%);display:flex;flex-direction:column;justify-content:center;max-width:136px;padding:3px 9px;border-left:3px solid #6b7f99;border-radius:0 8px 8px 0;background:#ffffffe6;box-shadow:0 2px 8px rgba(30,50,80,.08);overflow:hidden}
+.lane-label b{font-size:10.5px;color:#34465e;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lane-label small{font-size:9px;color:#7d8ea6}
+.lane-label .lane-count{display:none;font-size:9px;font-weight:800;color:#5d6f88;margin-left:6px}
+.lane-label.compact{flex-direction:row;align-items:center;padding:1px 7px}
+.lane-label.compact small{display:none}
+.lane-label.compact .lane-count{display:inline}
+.lane-label.compact b{font-size:9px}

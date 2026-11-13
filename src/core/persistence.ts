@@ -49,6 +49,7 @@ export function persistViewNow(): void {
     sidebarTab: state.sidebarTab,
     legendCollapsed: state.legendCollapsed,
     layoutMode: state.layoutMode,
+    lanes: state.lanes,
   };
   persist();
 }

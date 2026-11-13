@@ -38,6 +38,8 @@ export const state = {
   sidebarTab: "journey" as SidebarTab,
   legendCollapsed: false,
   layoutMode: "timeline" as LayoutMode,
+  /** #7 Raias por ator na timeline. */
+  lanes: true,
   search: "",
   collapsed: new Set<string>(),
   mode: "pointer" as ToolMode,

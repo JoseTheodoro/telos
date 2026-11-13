@@ -1,9 +1,11 @@
 // #6 Timeline horizontal da jornada: o tempo corre da esquerda para a direita.
 // Linhas (de cima para baixo): hotspots · jornada · capítulos · cenas · EVENTOS ·
 // fluxo ES (caixas livres) · domínios · sistemas · telas · tabelas.
+// #7 Com raias, a linha de EVENTOS vira uma faixa por ator (quem age na cena).
 import { NARRATIVE_KINDS, NODE_H, NODE_W } from "../domain/constants";
 import { keyKind, nodeKey } from "../domain/keys";
-import type { Chapter, NodeKey, NodeKind, Point, Positions } from "../domain/types";
+import { laneOf } from "../domain/lanes";
+import type { Chapter, EventItem, NodeKey, NodeKind, Point, Positions, Scene } from "../domain/types";
 import { related, state } from "../core/state";
 
 export const TL = {
@@ -15,7 +17,58 @@ export const TL = {
   STACK: NODE_H + 34,
   ROW: { hotspot: 0, journey: 150, chapter: 300, scene: 450, event: 600 } as Record<string, number>,
   FLOW_Y: 760,
+  /** Altura de uma raia (um evento + respiro). */
+  LANE_H: NODE_H + 46,
+  /** Deslocamento do card dentro da raia. */
+  LANE_PAD: 22,
 };
+
+export interface LaneRow {
+  id: string;
+  label: string;
+  top: number;
+  height: number;
+  count: number;
+}
+
+export const lanesOn = (): boolean => state.layoutMode === "timeline" && state.lanes;
+
+function sceneOfEvent(k: NodeKey): Scene | undefined {
+  const ev = state.ws.events.find((e) => nodeKey("event", e.id) === k) as EventItem | undefined;
+  return state.ws.scenes.find((s) => s.id === ev?.sceneId);
+}
+
+/** Raias usadas no recorte (eventos visíveis), na ordem do catálogo. */
+export function laneRows(keys: Set<NodeKey>): LaneRow[] {
+  const ws = state.ws;
+  const counts = new Map<string, number>();
+  for (const k of keys) {
+    if (keyKind(k) !== "event") continue;
+    const lane = laneOf(ws, sceneOfEvent(k));
+    counts.set(lane, (counts.get(lane) || 0) + 1);
+  }
+  return ws.lanes
+    .filter((l) => counts.has(l.id))
+    .map((l, i) => ({ id: l.id, label: l.label, top: TL.ROW.event + i * TL.LANE_H, height: TL.LANE_H, count: counts.get(l.id)! }));
+}
+
+/** y de um nó na timeline (eventos respeitam a raia quando ela está ligada). */
+export function rowYFor(k: NodeKey, keys: Set<NodeKey>): number {
+  const kind = keyKind(k);
+  if (kind === "event" && lanesOn()) {
+    const lane = laneOf(state.ws, sceneOfEvent(k));
+    const row = laneRows(new Set([...keys, k])).find((r) => r.id === lane);
+    if (row) return row.top + TL.LANE_PAD;
+  }
+  return TL.ROW[kind] ?? flowTop(keys);
+}
+
+/** Topo da linha do fluxo ES (abaixo da última raia, quando houver raias). */
+function flowTop(keys: Set<NodeKey>): number {
+  if (!lanesOn()) return TL.FLOW_Y;
+  const rows = laneRows(keys);
+  return rows.length ? rows[rows.length - 1].top + TL.LANE_H + 40 : TL.FLOW_Y;
+}
 
 const TECH_KINDS: NodeKind[] = ["domain", "system", "screen", "table"];
 
@@ -41,6 +94,8 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   for (const k of keys) delete positions[k];
   const placed = () => [...keys].filter((k) => positions[k]);
   const { COLW, ROW } = TL;
+  const eventY = (k: NodeKey) => rowYFor(k, keys);
+  const FLOW_Y = flowTop(keys);
 
   // 1) Narrativa: capítulos → cenas → eventos, em colunas sequenciais.
   const jIndex = (id: string) => ws.journeys.findIndex((j) => j.id === id);
@@ -53,7 +108,8 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
     const events = ws.events.filter((e) => e.sceneId === sceneId && has(nodeKey("event", e.id)));
     if (!events.length) x += COLW;
     for (const e of events) {
-      positions[nodeKey("event", e.id)] = { x, y: ROW.event };
+      const ek = nodeKey("event", e.id);
+      positions[ek] = { x, y: eventY(ek) };
       x += COLW;
     }
   };
@@ -70,7 +126,7 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   for (const e of ws.events) {
     const k = nodeKey("event", e.id);
     if (has(k) && !positions[k]) {
-      positions[k] = { x, y: ROW.event };
+      positions[k] = { x, y: eventY(k) };
       x += COLW;
     }
   }
@@ -94,7 +150,7 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   const flowTarget = (k: NodeKey): Point | null => {
     const ns = neighbors(k).filter((n) => positions[n]);
     const anchors = ns.filter((n) => NARRATIVE_KINDS.includes(keyKind(n)));
-    if (anchors.length) return { x: avg(anchors.map((n) => positions[n].x)), y: TL.FLOW_Y };
+    if (anchors.length) return { x: avg(anchors.map((n) => positions[n].x)), y: FLOW_Y };
     const flow = ns.find((n) => keyKind(n) === "semantic");
     return flow ? { x: positions[flow].x + COLW, y: positions[flow].y } : null;
   };
@@ -111,7 +167,7 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
     if (!progress && pending.size) {
       // Componente solto: começa no fim da linha do tempo.
       const first = [...pending][0];
-      placeFlow(first, { x: endX, y: TL.FLOW_Y });
+      placeFlow(first, { x: endX, y: FLOW_Y });
       endX += COLW;
       progress = true;
     }
@@ -126,7 +182,7 @@ export function timelineLayout(keys: Set<NodeKey>, positions: Positions): void {
   }
 
   // 4) Rastreabilidade técnica: uma linha por tipo, alinhada à média dos eventos ligados.
-  const flowBottom = Math.max(TL.FLOW_Y - TL.STACK, ...semantic.map((k) => positions[k]?.y ?? 0));
+  const flowBottom = Math.max(FLOW_Y - TL.STACK, ...semantic.map((k) => positions[k]?.y ?? 0));
   let rowY = flowBottom + TL.STACK + 40;
   for (const t of TECH_KINDS) {
     const items = [...keys]
@@ -154,7 +210,7 @@ export function timelineAppend(k: NodeKey, positions: Positions, keys: Set<NodeK
   const kind = keyKind(k);
   const same = [...keys].filter((o) => o !== k && keyKind(o) === kind && positions[o]);
   const all = [...keys].filter((o) => positions[o]);
-  const y = same.length ? positions[same[0]].y : (TL.ROW[kind] ?? TL.FLOW_Y);
+  const y = kind === "event" || !same.length ? rowYFor(k, keys) : positions[same[0]].y;
   const x = all.length ? Math.max(...all.map((o) => positions[o].x)) + TL.COLW : TL.X0;
   positions[k] = { x, y };
 }
@@ -162,6 +218,21 @@ export function timelineAppend(k: NodeKey, positions: Positions, keys: Set<NodeK
 /** Insere uma coluna: empurra para a direita tudo que está a partir de `fromX`. */
 export function makeRoom(positions: Positions, fromX: number, except: NodeKey): void {
   for (const [k, p] of Object.entries(positions)) if (k !== except && p.x >= fromX - 1) p.x += TL.COLW;
+}
+
+export interface LaneBand extends LaneRow {
+  x: number;
+  w: number;
+}
+
+/** Faixas horizontais das raias, cobrindo toda a largura ocupada no recorte. */
+export function laneBands(keys: Set<NodeKey>, positions: Positions): LaneBand[] {
+  if (!lanesOn()) return [];
+  const xs = [...keys].map((k) => positions[k]?.x).filter((x): x is number => x !== undefined);
+  if (!xs.length) return [];
+  const x = Math.min(...xs) - 60;
+  const w = Math.max(...xs) + NODE_W + 60 - x;
+  return laneRows(keys).map((r) => ({ ...r, x, w }));
 }
 
 export interface ChapterBand {

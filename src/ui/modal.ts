@@ -58,12 +58,19 @@ function updateModalExtra(): void {
       picker("journey"),
     );
   if (t === "scene")
-    extra += options(
-      "Capítulo",
-      "new.chapter",
-      parent.startsWith("chapter:") ? parent.slice(8) : state.focusChapter || "",
-      picker("chapter"),
-    );
+    extra +=
+      options(
+        "Capítulo",
+        "new.chapter",
+        parent.startsWith("chapter:") ? parent.slice(8) : state.focusChapter || "",
+        picker("chapter"),
+      ) +
+      options(
+        "Raia na timeline (quem age)",
+        "new.lane",
+        "outros",
+        ws.lanes.map((l): [string, string] => [l.id, l.label]),
+      );
   if (t === "event")
     extra +=
       options(

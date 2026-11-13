@@ -16,7 +16,8 @@ import type {
 import { degree, getByKey, label, state } from "../core/state";
 import { $, esc } from "../ui/dom";
 import { activePositions, calcBounds, isTimeline, pos } from "./layout";
-import { chapterBands } from "./timeline";
+import { chapterBands, laneBands } from "./timeline";
+import { renderLaneGutter } from "./lane-gutter";
 import { renderLegend } from "./legend";
 import { visible } from "./visibility";
 
@@ -149,14 +150,23 @@ function renderCounters(): void {
     `${edges.length} relações · ${count((e) => e.status === "Validado")} validadas · ${count((e) => e.accessMode === "WRITE")} WRITE · ${count((e) => e.accessMode === "READ")} READ`;
 }
 
-/** Faixas de capítulo atrás dos cards (só na timeline). */
+/** Faixas de raia e de capítulo atrás dos cards (só na timeline). */
 function renderBands(): void {
   const el = $("#bands");
   if (!isTimeline()) {
     el.innerHTML = "";
+    renderLaneGutter([]);
     return;
   }
-  el.innerHTML = chapterBands(state.visibleKeys, activePositions())
+  const lanes = laneBands(state.visibleKeys, activePositions());
+  renderLaneGutter(lanes);
+  const laneHtml = lanes
+    .map(
+      (b, i) =>
+        `<div class="lane-band ${i % 2 ? "alt" : ""}" data-lane="${esc(b.id)}" style="left:${b.x}px;top:${b.top}px;width:${b.w}px;height:${b.height}px"></div>`,
+    )
+    .join("");
+  el.innerHTML = laneHtml + chapterBands(state.visibleKeys, activePositions())
     .map(
       (b, i) =>
         `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
@@ -174,6 +184,7 @@ export function renderGraph(): void {
   if (!visibleKeys.size) {
     $("#nodes").innerHTML = "";
     $("#bands").innerHTML = "";
+    renderLaneGutter([]);
     renderEdges();
     return;
   }

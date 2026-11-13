@@ -5,11 +5,13 @@ import { queueViewPersist } from "../core/persistence";
 import { state } from "../core/state";
 import { $ } from "../ui/dom";
 import { calcBounds, pos } from "./layout";
+import { positionLaneGutter } from "./lane-gutter";
 
 export function cameraApply(): void {
   const { cam } = state;
   $("#world").style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.z})`;
   $("#zoomLabel").textContent = Math.round(cam.z * 100) + "%";
+  positionLaneGutter();
   queueViewPersist();
 }
 
