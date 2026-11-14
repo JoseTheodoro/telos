@@ -1,8 +1,8 @@
 {
-  "name": "pep-atlas-studio",
+  "name": "telos",
   "version": "1.6.0",
   "private": true,
-  "description": "Atlas Studio — Event Storming guiado por jornadas de usuário. Build gera um único HTML estático.",
+  "description": "Telos — Event Storming num canvas limpo.",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build --mode server && npm run build -w @pep-atlas/server",
-    "build:portable": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build --mode portable",
+    "build": "npm run build -w @telos/domain && tsc --noEmit && vite build --mode server && npm run build -w @telos/server",
+    "build:portable": "npm run build -w @telos/domain && tsc --noEmit && vite build --mode portable",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "vitest run",

@@ -13,7 +13,7 @@ import {
   type NodeKey,
   type Positions,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { state } from "../core/state";
 import { esc } from "../ui/dom";
 

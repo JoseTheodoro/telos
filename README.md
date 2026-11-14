@@ -1,6 +1,8 @@
-# PEP Atlas Studio v1.6
+# Telos
 
-Ferramenta de **Event Storming guiada por jornadas de usuário**: Jornada → Capítulo → Cena → Evento, conectados a domínios, sistemas, telas, tabelas e **caixas semânticas livres** por setas editáveis.
+Parede digital de **Event Storming** num canvas limpo, para qualquer domínio. A direção do produto está no [PRD](docs/prd.md) e os conceitos, no [glossário](docs/glossario.md).
+
+> O código ainda carrega o modelo narrativo herdado do Atlas (Jornada → Capítulo → Cena → Evento). A troca pelo modelo canônico está na FD-05 do PRD.
 
 ## Abrir (uso)
 

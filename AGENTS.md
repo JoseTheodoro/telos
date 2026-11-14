@@ -26,6 +26,12 @@ and FigJam-like visual editors.
 - Validate changes with tests and typechecking.
 - Avoid large rewrites without approval.
 
+## GitHub (non-negotiable)
+- A task is done only when its work is on GitHub (`origin`): committed, pushed and with an open PR.
+- This is standing authorization to commit and push; it does not need to be asked for again.
+- Branch from an up-to-date `main`, one branch per task, then push and open the PR against `main`.
+- Keep `npm run check` green before every push.
+
 ## Code Comments Policy
 
 - Avoid code comments by default.

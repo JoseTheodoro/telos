@@ -11,7 +11,7 @@ export const FIXTURE_ASSET_JS = "export const synthetic = true;";
 let createdRoots: string[] = [];
 
 export function createWebRootFixture(): string {
-  const parentDir = mkdtempSync(path.join(tmpdir(), "atlas-web-"));
+  const parentDir = mkdtempSync(path.join(tmpdir(), "telos-web-"));
   writeFileSync(path.join(parentDir, OUTSIDE_FILE_NAME), OUTSIDE_FILE_MARKER);
   const webRoot = path.join(parentDir, "web");
   mkdirSync(path.join(webRoot, "assets"), { recursive: true });

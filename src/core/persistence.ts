@@ -1,5 +1,5 @@
 // Persistência no localStorage (mesma chave da v1.5 → dados existentes continuam válidos).
-import { INVALID_STORE, LEGACY_STORE, SCHEMA, STORE, upgradeWorkspace, type Workspace, parseWorkspace } from "@pep-atlas/domain";
+import { INVALID_STORE, LEGACY_STORE, SCHEMA, STORE, upgradeWorkspace, type Workspace, parseWorkspace } from "@telos/domain";
 import { $, notify } from "../ui/dom";
 import { state } from "./state";
 

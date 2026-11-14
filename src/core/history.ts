@@ -1,5 +1,5 @@
 // Desfazer/refazer por snapshot do workspace + helper `change` para mutações.
-import { UNDO_LIMIT, upgradeWorkspace } from "@pep-atlas/domain";
+import { UNDO_LIMIT, upgradeWorkspace } from "@telos/domain";
 import { refreshAll } from "../app";
 import { $, notify } from "../ui/dom";
 import { persist } from "./persistence";

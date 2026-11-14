@@ -1,6 +1,8 @@
 # ADR-003 — Persistência: documento JSONB versionado com travamento otimista
 
-**Status:** Aceita. **Data:** 2026-11-13. **Decisor:** Tech Lead.
+**Status:** A revisar. Aceita em 2026-11-13 pelo Tech Lead.
+
+**Por que revisar:** O Cloud SQL era o padrão corporativo; o modelo de documento versionado e a visão fora do documento continuam valendo.
 
 ## Decisão
 

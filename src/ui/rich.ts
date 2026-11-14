@@ -97,7 +97,7 @@ const md = new Marked({
   },
 });
 
-// Links do Markdown abrem fora do Atlas (sem acesso à janela de origem).
+// Links do Markdown abrem fora do Telos (sem acesso à janela de origem).
 DOMPurify.addHook("afterSanitizeAttributes", (node) => {
   if (node.tagName === "A" && node.getAttribute("href")) {
     node.setAttribute("target", "_blank");

@@ -1,5 +1,5 @@
 // Orquestração: render completo, carga inicial, barra de ferramentas e teclado.
-import { NODE_H, deep, type LayoutMode, type ToolMode, keyKind, nodeKey } from "@pep-atlas/domain";
+import { NODE_H, deep, type LayoutMode, type ToolMode, keyKind, nodeKey } from "@telos/domain";
 import { redo, refreshUndo, undo } from "./core/history";
 import { loadInitialWorkspace, persist, persistViewNow } from "./core/persistence";
 import { getByKey, selectedSingleNode, setFocus, state } from "./core/state";

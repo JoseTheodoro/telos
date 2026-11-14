@@ -1,5 +1,5 @@
 // Eventos do canvas: seleção, arrastar nó, puxar seta, pan, zoom, duplo clique.
-import { keyKind, type NodeKind, type PortSide, clampEmotion, emotionLevel, emotionSigned, nodeKey } from "@pep-atlas/domain";
+import { keyKind, type NodeKind, type PortSide, clampEmotion, emotionLevel, emotionSigned, nodeKey } from "@telos/domain";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
 import { getByKey, state, type Dragging } from "../core/state";

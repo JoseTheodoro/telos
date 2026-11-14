@@ -10,7 +10,7 @@ import {
   edgeFor,
   syncMaps,
   type NodeKey,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change } from "../core/history";
 import { getByKey, state } from "../core/state";
 import { $, notify } from "../ui/dom";

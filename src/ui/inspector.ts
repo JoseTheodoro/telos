@@ -36,7 +36,7 @@ import {
   type NoteItem,
   type RegistryOption,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { addHotspot } from "../canvas/hotspot";
 import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
 import { containedKeys } from "../canvas/frame";
