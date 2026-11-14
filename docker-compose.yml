@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:18@sha256:b9f6b8ff03b62f3cfd9d9ba3fe56226a9991c79d3fb46fd46536263bf02be553
+    env_file: .env.local
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - atlas-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  atlas-db-data:

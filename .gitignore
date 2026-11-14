@@ -3,3 +3,6 @@ dist/
 .DS_Store
 tests/e2e/node_modules/
 tests/e2e/shots/
+
+.env*
+!.env.example
