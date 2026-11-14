@@ -23,7 +23,13 @@ async function startServerWithSlowRoute(slowRouteMs: number, options: CreateAppO
       return true;
     });
   });
-  const app = await createApp(loadEnv({ NODE_ENV: "test" }), { logStream: collectLogLines().stream, ...options });
+  const app = await createApp(loadEnv({ NODE_ENV: "test" }), {
+    logStream: collectLogLines().stream,
+    shutdownTelemetry: async () => {
+      events.push("telemetry-flushed");
+    },
+    ...options,
+  });
   app.getHttpAdapter().get("/slow", (_request: unknown, reply: { send(payload: unknown): void }) => {
     setTimeout(() => {
       events.push("handler-finished");
@@ -56,7 +62,20 @@ describe("graceful shutdown", () => {
     await running.killedAfterClose;
 
     expect(await inFlight).toEqual({ finished: true });
-    expect(running.events).toEqual(["handler-finished", "shutdown-completed"]);
+    expect(running.events).toEqual(["handler-finished", "telemetry-flushed", "shutdown-completed"]);
+  });
+
+  it("still completes shutdown when the telemetry flush fails", async () => {
+    const logs = collectLogLines();
+    running = await startServerWithSlowRoute(50, {
+      logStream: logs.stream,
+      shutdownTelemetry: () => Promise.reject(new Error("collector offline")),
+    });
+
+    process.emit("SIGTERM", "SIGTERM");
+    await running.killedAfterClose;
+
+    expect(logs.lines.some((line) => line.msg === "Falha ao encerrar a telemetria")).toBe(true);
   });
 
   it("force-closes connections still open once the grace period ends", async () => {

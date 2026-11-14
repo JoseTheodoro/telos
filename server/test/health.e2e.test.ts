@@ -94,6 +94,36 @@ describe("GET /health", () => {
     expect(response.body).not.toContain("synthetic-query-marker");
   });
 
+  it("returns the error format with X-Correlation-ID for a malformed URL", async () => {
+    app = await createReadyApp();
+
+    const response = await app.inject({ method: "GET", url: "/%zz", headers: { "x-correlation-id": "bad-url-1" } });
+    const body = response.json<Record<string, unknown>>();
+
+    expect(response.statusCode).toBe(400);
+    expect(response.headers["x-correlation-id"]).toBe("bad-url-1");
+    expect(Object.keys(body).sort()).toEqual(["message", "path", "statusCode", "timestamp"]);
+    expect(body.message).toBe("Bad Request");
+    expect(response.body).not.toContain("not a valid url component");
+  });
+
+  it("returns the error format with X-Correlation-ID for a malformed JSON body", async () => {
+    app = await createReadyApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/health",
+      headers: { "content-type": "application/json", "x-correlation-id": "bad-json-1" },
+      payload: "{bad",
+    });
+    const body = response.json<Record<string, unknown>>();
+
+    expect(response.statusCode).toBe(400);
+    expect(response.headers["x-correlation-id"]).toBe("bad-json-1");
+    expect(Object.keys(body).sort()).toEqual(["message", "path", "statusCode", "timestamp"]);
+    expect(body.path).toBe("/health");
+  });
+
   it("rejects a JSON body carrying __proto__", async () => {
     app = await createApp(loadEnv({ NODE_ENV: "test" }), { logStream: collectLogLines().stream });
     app.getHttpAdapter().post("/echo", (_request: unknown, reply: { send(payload: unknown): void }) => reply.send({ ok: true }));

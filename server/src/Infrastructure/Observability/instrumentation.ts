@@ -1,5 +1,11 @@
 import { register } from "node:module";
 
+let sdk: { shutdown(): Promise<void> } | undefined;
+
+export async function shutdownTelemetry(): Promise<void> {
+  await sdk?.shutdown();
+}
+
 const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 const isDisabled = process.env.OTEL_SDK_DISABLED === "true";
 
@@ -14,14 +20,11 @@ if (endpoint && !isDisabled) {
     import("@fastify/otel"),
   ]);
 
-  const sdk = new NodeSDK({
+  const nodeSdk = new NodeSDK({
     serviceName: process.env.OTEL_SERVICE_NAME ?? "atlas-studio",
     traceExporter: new OTLPTraceExporter(),
     instrumentations: [new HttpInstrumentation(), new FastifyOtelInstrumentation({ registerOnInitialization: true })],
   });
-  sdk.start();
-
-  process.once("SIGTERM", () => {
-    void sdk.shutdown();
-  });
+  nodeSdk.start();
+  sdk = nodeSdk;
 }

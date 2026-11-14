@@ -7,6 +7,7 @@ import { type FastifyInstance, LogController } from "fastify";
 import { AppModule } from "./app.module.js";
 import type { Env } from "./Infrastructure/Config/env.js";
 import { echoCorrelationId, resolveCorrelationId } from "./Infrastructure/Http/correlation-id.middleware.js";
+import { frameworkErrorHandler } from "./Infrastructure/Http/framework-error.handler.js";
 import { GlobalExceptionFilter } from "./Infrastructure/Http/global-exception.filter.js";
 import { securityHeadersOptions } from "./Infrastructure/Http/security-headers.js";
 
@@ -15,6 +16,7 @@ export const SHUTDOWN_GRACE_MS = 10_000;
 export interface CreateAppOptions {
   logStream?: { write(message: string): void };
   shutdownGraceMs?: number;
+  shutdownTelemetry?: () => Promise<void>;
 }
 
 export async function createApp(env: Env, options: CreateAppOptions = {}): Promise<NestFastifyApplication> {
@@ -25,6 +27,7 @@ export async function createApp(env: Env, options: CreateAppOptions = {}): Promi
     genReqId: resolveCorrelationId,
     onProtoPoisoning: "error",
     onConstructorPoisoning: "error",
+    frameworkErrors: frameworkErrorHandler,
   });
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { logger: ["error", "warn"] });
 
@@ -32,6 +35,7 @@ export async function createApp(env: Env, options: CreateAppOptions = {}): Promi
   const fastify = app.getHttpAdapter().getInstance();
   fastify.addHook("onRequest", echoCorrelationId);
   closeLingeringConnectionsAfter(fastify, options.shutdownGraceMs ?? SHUTDOWN_GRACE_MS);
+  flushTelemetryAfterDrain(fastify, options.shutdownTelemetry);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -47,4 +51,16 @@ function closeLingeringConnectionsAfter(fastify: FastifyInstance, graceMs: numbe
     timer.unref();
   });
   fastify.addHook("onClose", () => clearTimeout(timer));
+}
+
+// onClose roda depois que o servidor drenou as requisições em andamento; o flush antes disso perderia os spans delas.
+function flushTelemetryAfterDrain(fastify: FastifyInstance, shutdownTelemetry: (() => Promise<void>) | undefined): void {
+  if (!shutdownTelemetry) return;
+  fastify.addHook("onClose", async () => {
+    try {
+      await shutdownTelemetry();
+    } catch (error) {
+      fastify.log.error({ err: error }, "Falha ao encerrar a telemetria");
+    }
+  });
 }
