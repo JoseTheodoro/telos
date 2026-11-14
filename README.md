@@ -4,7 +4,7 @@ Ferramenta de **Event Storming guiada por jornadas de usuário**: Jornada → Ca
 
 ## Abrir (uso)
 
-O build gera **um único HTML estático**: `dist/index.html`. Abra com duplo clique (`file://`) ou publique em qualquer host estático. Não é preciso servidor.
+O build portátil gera **um único HTML estático**: `dist/portable/index.html`. Abra com duplo clique (`file://`) ou publique em qualquer host estático. Não é preciso servidor. O build do servidor (`dist/web`, com arquivos em hash) é entregue pelo servidor NestJS.
 
 ## Desenvolver
 
@@ -13,15 +13,18 @@ Requer Node 20+.
 ```bash
 npm install
 npm run dev        # servidor local com recarga (http://localhost:5173)
-npm run build      # typecheck + gera dist/index.html autocontido
+npm run build          # typecheck + dist/web (multiarquivo, com hash) + build do servidor
+npm run build:portable # typecheck + dist/portable/index.html autocontido
 npm run typecheck  # só o TypeScript
 ```
 
 ```bash
-cd tests/e2e && npm install && node run-all.mjs   # testes e2e (Chrome do sistema)
+cd tests/e2e && npm install && cd ../..
+npm run build:portable && npm run test:e2e   # e2e contra file:// (Chrome do sistema)
+npm run build && npm run test:e2e:server     # e2e contra o servidor compilado (valida a CSP)
 ```
 
-> O `index.html` da raiz é a entrada do Vite e **não abre via `file://`**. Use `npm run dev` ou o `dist/index.html`.
+> O `index.html` da raiz é a entrada do Vite e **não abre via `file://`**. Use `npm run dev` ou o `dist/portable/index.html`.
 >
 > O `localStorage` é separado por origem: `localhost:5173` e `file://` têm dados diferentes. Para mover um mapa entre eles, use **Backup JSON** e depois **Importar**.
 
@@ -61,7 +64,7 @@ tests/e2e/               roteiros Playwright + run-all.mjs
 - **#15 Conectores nos 4 lados.** Cada card e cada nota têm quatro bolinhas de conexão, uma no meio de cada lado, que aparecem ao passar o mouse (e no card selecionado). Puxe a seta de qualquer uma delas: ela sai por aquele lado. Soltando **numa bolinha** do destino, a seta entra por aquele lado; soltando **no corpo** do card, a entrada fica automática, pelo lado voltado para a origem. Durante o arraste, as bolinhas de todos os cards aparecem para dar onde soltar. No modo Conectar, clicar numa bolinha do destino também fixa a entrada. O inspetor da seta tem **Sai por** e **Entra por** (Automático, Cima, Direita, Baixo, Esquerda), cada troca com um `Ctrl+Z`. As setas que já existiam e as criadas por Tab, Enter, `H` ou no modo Conectar continuam automáticas, com o mesmo desenho de antes. As pontas de cima e de baixo usam a altura real do card, e a seta acompanha o card arrastado e sai no SVG exportado.
 - **Correção: salvamento do caderno.** O caderno grava 300 ms depois da última tecla, em vez de regravar o mapa inteiro a cada tecla. Fechar ou recarregar a página grava o que estiver pendente. Quando o mapa passa de 4 MB (o navegador guarda cerca de 5 MB), o indicador de salvamento fica em alerta e um aviso sugere exportar o Backup JSON.
 - **Correção: "Limpar canvas" apaga tudo o que está no canvas.** Antes, as notas livres sobravam, embora a prévia as contasse entre as caixas apagadas, e com isso a tela de canvas vazio nem aparecia. Agora saem jornadas, capítulos, cenas, eventos, domínios, sistemas, telas, tabelas, **hotspots e suas decisões**, notas livres, molduras, setas e posições. **Isso muda o comportamento herdado da v1.5**, que preservava os hotspots: use o botão de Backup JSON que o modal oferece antes de confirmar. Ficam o caderno e as classificações personalizadas (tipos, naturezas, destinos e raias).
-- **Dependências** (embutidas no `dist/index.html`, então o app funciona offline): `highlight.js` 11.12.0 (core + 14 linguagens), `marked` 18.1.2 e `dompurify` 3.4.17, com versões fixadas.
+- **Dependências** (embutidas no `dist/portable/index.html`, então o app funciona offline): `highlight.js` 11.12.0 (core + 14 linguagens), `marked` 18.1.2 e `dompurify` 3.4.17, com versões fixadas.
 
 ### Onda 2 · É uma jornada
 

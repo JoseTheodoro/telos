@@ -2,8 +2,7 @@ import type { AddressInfo } from "node:net";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, type CreateAppOptions } from "../src/create-app.js";
-import { loadEnv } from "../src/Infrastructure/Config/env.js";
-import { collectLogLines } from "./support/test-app.js";
+import { collectLogLines, loadTestEnv } from "./support/test-app.js";
 
 const SLOW_ROUTE_MS = 600;
 
@@ -23,7 +22,7 @@ async function startServerWithSlowRoute(slowRouteMs: number, options: CreateAppO
       return true;
     });
   });
-  const app = await createApp(loadEnv({ NODE_ENV: "test" }), {
+  const app = await createApp(loadTestEnv(), {
     logStream: collectLogLines().stream,
     shutdownTelemetry: async () => {
       events.push("telemetry-flushed");

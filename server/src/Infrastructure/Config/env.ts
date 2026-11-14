@@ -18,6 +18,10 @@ export class Env {
   HOST: string = "0.0.0.0";
 
   @IsOptional()
+  @IsString()
+  WEB_DIST_DIR?: string;
+
+  @IsOptional()
   @IsUrl({ require_tld: false, require_protocol: true, protocols: ["http", "https"] })
   OTEL_EXPORTER_OTLP_ENDPOINT?: string;
 }

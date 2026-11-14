@@ -10,6 +10,7 @@ import { echoCorrelationId, resolveCorrelationId } from "./Infrastructure/Http/c
 import { frameworkErrorHandler } from "./Infrastructure/Http/framework-error.handler.js";
 import { GlobalExceptionFilter } from "./Infrastructure/Http/global-exception.filter.js";
 import { securityHeadersOptions } from "./Infrastructure/Http/security-headers.js";
+import { defaultWebDistDir, registerStatic } from "./Infrastructure/Http/static.module.js";
 
 export const SHUTDOWN_GRACE_MS = 10_000;
 
@@ -36,6 +37,7 @@ export async function createApp(env: Env, options: CreateAppOptions = {}): Promi
   fastify.addHook("onRequest", echoCorrelationId);
   closeLingeringConnectionsAfter(fastify, options.shutdownGraceMs ?? SHUTDOWN_GRACE_MS);
   flushTelemetryAfterDrain(fastify, options.shutdownTelemetry);
+  await registerStatic(fastify, env.WEB_DIST_DIR ?? defaultWebDistDir());
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(new GlobalExceptionFilter());

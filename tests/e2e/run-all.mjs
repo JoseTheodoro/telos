@@ -1,4 +1,4 @@
-// Roda todos os roteiros contra ../../dist/index.html (faça `npm run build` na raiz antes) ou contra E2E_BASE_URL.
+// Roda todos os roteiros contra ../../dist/portable/index.html (faça `npm run build:portable` na raiz antes) ou contra E2E_BASE_URL.
 // Cada roteiro imprime um JSON de verificações; falha = linha "FAILED" ou erros de console.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";

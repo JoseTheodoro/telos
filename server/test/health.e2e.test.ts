@@ -1,8 +1,7 @@
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/create-app.js";
-import { loadEnv } from "../src/Infrastructure/Config/env.js";
-import { collectLogLines, createReadyApp } from "./support/test-app.js";
+import { collectLogLines, createReadyApp, loadTestEnv } from "./support/test-app.js";
 
 const EXPECTED_CSP_DIRECTIVES = [
   "default-src 'self'",
@@ -61,7 +60,7 @@ describe("GET /health", () => {
   it("sets X-Correlation-ID on a 404 for an unknown route", async () => {
     app = await createReadyApp();
 
-    const response = await app.inject({ method: "GET", url: "/unknown", headers: { "x-correlation-id": "missing-route-1" } });
+    const response = await app.inject({ method: "GET", url: "/v1/unknown", headers: { "x-correlation-id": "missing-route-1" } });
 
     expect(response.statusCode).toBe(404);
     expect(response.headers["x-correlation-id"]).toBe("missing-route-1");
@@ -84,12 +83,12 @@ describe("GET /health", () => {
   it("returns errors as { statusCode, message, timestamp, path }", async () => {
     app = await createReadyApp();
 
-    const response = await app.inject({ method: "GET", url: "/unknown?token=synthetic-query-marker" });
+    const response = await app.inject({ method: "GET", url: "/v1/unknown?token=synthetic-query-marker" });
     const body = response.json<Record<string, unknown>>();
 
     expect(Object.keys(body).sort()).toEqual(["message", "path", "statusCode", "timestamp"]);
     expect(body.statusCode).toBe(404);
-    expect(body.path).toBe("/unknown");
+    expect(body.path).toBe("/v1/unknown");
     expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(response.body).not.toContain("synthetic-query-marker");
   });
@@ -125,7 +124,7 @@ describe("GET /health", () => {
   });
 
   it("rejects a JSON body carrying __proto__", async () => {
-    app = await createApp(loadEnv({ NODE_ENV: "test" }), { logStream: collectLogLines().stream });
+    app = await createApp(loadTestEnv(), { logStream: collectLogLines().stream });
     app.getHttpAdapter().post("/echo", (_request: unknown, reply: { send(payload: unknown): void }) => reply.send({ ok: true }));
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
@@ -142,7 +141,7 @@ describe("GET /health", () => {
 
   it("logs the correlationId on request lines and never the request body", async () => {
     const { lines, stream } = collectLogLines();
-    app = await createApp(loadEnv({ NODE_ENV: "test" }), { logStream: stream });
+    app = await createApp(loadTestEnv(), { logStream: stream });
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
 

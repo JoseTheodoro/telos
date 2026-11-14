@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { appUrl, watchCspViolations } from "./target.mjs";
 
 const STORE = "pep-atlas-studio-v4";
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +19,7 @@ page.on("dialog", (d) => { dialogs.push(d.message()); d.accept(); });
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 try {
+  await watchCspViolations(page);
   await page.addInitScript(([key, raw]) => {
     if (sessionStorage.getItem("seeded")) return;
     sessionStorage.setItem("seeded", "1");

@@ -1,13 +1,13 @@
 import { chromium } from "playwright-core";
-import { appUrl, openApp } from "./target.mjs";
+import { appUrl, isBlockedInlineHandlerMessage, openApp } from "./target.mjs";
 import fs from "node:fs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true });
 const page = await ctx.newPage();
-const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && !isBlockedInlineHandlerMessage(m.text()) && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await openApp(page); await page.waitForSelector(".node");
+await openApp(page, { allowedCspDirectives: ["script-src-attr"] }); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 try {

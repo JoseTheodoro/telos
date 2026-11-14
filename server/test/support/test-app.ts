@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { createApp, type CreateAppOptions } from "../../src/create-app.js";
-import { loadEnv } from "../../src/Infrastructure/Config/env.js";
+import { type Env, loadEnv } from "../../src/Infrastructure/Config/env.js";
+import { createWebRootFixture } from "./web-root.js";
 
 export function collectLogLines() {
   const lines: Record<string, unknown>[] = [];
@@ -12,9 +13,13 @@ export function collectLogLines() {
   return { lines, stream };
 }
 
-export async function createReadyApp(options: CreateAppOptions = {}): Promise<NestFastifyApplication> {
+export function loadTestEnv(overrides: Record<string, string> = {}): Env {
+  return loadEnv({ NODE_ENV: "test", WEB_DIST_DIR: createWebRootFixture(), ...overrides });
+}
+
+export async function createReadyApp(options: CreateAppOptions = {}, env: Env = loadTestEnv()): Promise<NestFastifyApplication> {
   const { stream } = collectLogLines();
-  const app = await createApp(loadEnv({ NODE_ENV: "test" }), { logStream: stream, ...options });
+  const app = await createApp(env, { logStream: stream, ...options });
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

@@ -1,6 +1,6 @@
 // Primeira abertura sem nada salvo: o canvas nasce limpo, sem mapa de exemplo, e continua limpo no reload.
 import { chromium } from "playwright-core";
-import { appUrl } from "./target.mjs";
+import { appUrl, watchCspViolations } from "./target.mjs";
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1540, height: 920 } })).newPage();
@@ -16,6 +16,7 @@ const snapshot = async () => ({
 const r = {};
 const fail = (msg) => { if (!r.FAILED) r.FAILED = msg; };
 try {
+  await watchCspViolations(page);
   await page.goto(appUrl());
   await page.waitForSelector("#emptyStage:not([hidden])", { timeout: 5000 });
   r.first = await snapshot();

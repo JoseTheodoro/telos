@@ -6,6 +6,7 @@ export default defineConfig({
     include: ["test/**/*.test.ts"],
     environment: "node",
     pool: "forks",
+    setupFiles: ["test/support/cleanup-web-roots.ts"],
   },
   plugins: [swc.vite({ module: { type: "es6" } })],
 });

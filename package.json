@@ -10,12 +10,14 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build",
+    "build": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build --mode server && npm run build -w @pep-atlas/server",
+    "build:portable": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build --mode portable",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm test && npm test --workspaces --if-present",
     "test:e2e": "node tests/e2e/run-all.mjs",
+    "test:e2e:server": "node tests/e2e/support/run-against-server.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
