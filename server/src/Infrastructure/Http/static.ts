@@ -2,9 +2,11 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import fastifyStatic from "@fastify/static";
 import type { FastifyInstance, FastifyReply } from "fastify";
+import { HEALTH_PATH } from "./health.js";
+import { pathnameOf } from "./url.js";
 
 const INDEX_FILE = "index.html";
-const API_PREFIXES = ["/v1", "/health"];
+const API_PREFIXES = ["/v1", HEALTH_PATH];
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const REVALIDATE_CACHE_CONTROL = "no-cache";
 
@@ -52,8 +54,4 @@ function isAssetPath(url: string): boolean {
 function isApiPath(url: string): boolean {
   const pathname = pathnameOf(url);
   return API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-function pathnameOf(url: string): string {
-  return url.split("?")[0] ?? "";
 }
