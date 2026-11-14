@@ -7,6 +7,7 @@ export const FIXTURE_INDEX_HTML =
 export const OUTSIDE_FILE_NAME = "outside.txt";
 export const OUTSIDE_FILE_MARKER = "synthetic-outside-root-marker";
 export const FIXTURE_ASSET_JS = "export const synthetic = true;";
+export const FIXTURE_TELOS_HTML = "<!doctype html><html><body>synthetic-telos-entry</body></html>";
 
 let createdRoots: string[] = [];
 
@@ -16,6 +17,7 @@ export function createWebRootFixture(): string {
   const webRoot = path.join(parentDir, "web");
   mkdirSync(path.join(webRoot, "assets"), { recursive: true });
   writeFileSync(path.join(webRoot, "index.html"), FIXTURE_INDEX_HTML);
+  writeFileSync(path.join(webRoot, "telos.html"), FIXTURE_TELOS_HTML);
   writeFileSync(path.join(webRoot, "assets", "app-7b2e4d.js"), FIXTURE_ASSET_JS);
   writeFileSync(path.join(webRoot, "assets", "app-3f9a1c.css"), "body{margin:0}");
   writeFileSync(path.join(webRoot, ".secret"), "synthetic-dotfile-marker");

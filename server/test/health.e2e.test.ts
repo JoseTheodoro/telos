@@ -1,7 +1,6 @@
-import type { NestFastifyApplication } from "@nestjs/platform-fastify";
+import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp } from "../src/create-app.js";
-import { collectLogLines, createReadyApp, loadTestEnv } from "./support/test-app.js";
+import { collectLogLines, createTestApp } from "./support/test-app.js";
 
 const EXPECTED_CSP_DIRECTIVES = [
   "default-src 'self'",
@@ -17,14 +16,14 @@ const EXPECTED_CSP_DIRECTIVES = [
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 describe("GET /health", () => {
-  let app: NestFastifyApplication;
+  let app: FastifyInstance;
 
   afterEach(async () => {
     await app.close();
   });
 
   it("returns 200 with status ok", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health" });
 
@@ -34,7 +33,7 @@ describe("GET /health", () => {
   });
 
   it("echoes X-Correlation-ID when provided", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health", headers: { "x-correlation-id": "trace-123.abc_DEF" } });
 
@@ -42,7 +41,7 @@ describe("GET /health", () => {
   });
 
   it("generates X-Correlation-ID when absent", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health" });
 
@@ -50,7 +49,7 @@ describe("GET /health", () => {
   });
 
   it.each(["has space", "a".repeat(129), "semi;colon"])("replaces an invalid X-Correlation-ID (%s)", async (invalidId) => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health", headers: { "x-correlation-id": invalidId } });
 
@@ -58,7 +57,7 @@ describe("GET /health", () => {
   });
 
   it("sets X-Correlation-ID on a 404 for an unknown route", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/v1/unknown", headers: { "x-correlation-id": "missing-route-1" } });
 
@@ -67,7 +66,7 @@ describe("GET /health", () => {
   });
 
   it("sets Content-Security-Policy with script-src 'self'", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health" });
 
@@ -81,20 +80,21 @@ describe("GET /health", () => {
   });
 
   it("returns errors as { statusCode, message, timestamp, path }", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/v1/unknown?token=synthetic-query-marker" });
     const body = response.json<Record<string, unknown>>();
 
     expect(Object.keys(body).sort()).toEqual(["message", "path", "statusCode", "timestamp"]);
     expect(body.statusCode).toBe(404);
+    expect(body.message).toBe("Cannot GET /v1/unknown");
     expect(body.path).toBe("/v1/unknown");
     expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(response.body).not.toContain("synthetic-query-marker");
   });
 
   it("returns the error format with X-Correlation-ID for a malformed URL", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/%zz", headers: { "x-correlation-id": "bad-url-1" } });
     const body = response.json<Record<string, unknown>>();
@@ -107,7 +107,7 @@ describe("GET /health", () => {
   });
 
   it("returns the error format with X-Correlation-ID for a malformed JSON body", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({
       method: "POST",
@@ -123,11 +123,30 @@ describe("GET /health", () => {
     expect(body.path).toBe("/health");
   });
 
+  it("answers an unhandled error with 500 and logs it with the correlationId", async () => {
+    const { lines, stream } = collectLogLines();
+    app = createTestApp({ logStream: stream });
+    app.get("/boom", () => {
+      throw new Error("synthetic-internal-detail");
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/boom?token=synthetic-query-marker",
+      headers: { "x-correlation-id": "boom-1" },
+    });
+    const body = response.json<Record<string, unknown>>();
+
+    expect(response.statusCode).toBe(500);
+    expect(response.headers["x-correlation-id"]).toBe("boom-1");
+    expect(body).toMatchObject({ statusCode: 500, message: "Internal server error", path: "/boom" });
+    expect(response.body).not.toContain("synthetic-internal-detail");
+    expect(lines.some((line) => line.correlationId === "boom-1" && line.msg === "Erro não tratado na requisição")).toBe(true);
+  });
+
   it("rejects a JSON body carrying __proto__", async () => {
-    app = await createApp(loadTestEnv(), { logStream: collectLogLines().stream });
-    app.getHttpAdapter().post("/echo", (_request: unknown, reply: { send(payload: unknown): void }) => reply.send({ ok: true }));
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    app = createTestApp();
+    app.post("/echo", () => ({ ok: true }));
 
     const response = await app.inject({
       method: "POST",
@@ -141,9 +160,7 @@ describe("GET /health", () => {
 
   it("logs the correlationId on request lines and never the request body", async () => {
     const { lines, stream } = collectLogLines();
-    app = await createApp(loadTestEnv(), { logStream: stream });
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    app = createTestApp({ logStream: stream });
 
     await app.inject({
       method: "POST",

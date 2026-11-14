@@ -1,23 +1,23 @@
 import { rmSync } from "node:fs";
 import path from "node:path";
-import type { NestFastifyApplication } from "@nestjs/platform-fastify";
+import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp } from "../src/create-app.js";
+import { createApp } from "../src/app.js";
 import { loadEnv } from "../src/Infrastructure/Config/env.js";
-import { collectLogLines, createReadyApp } from "./support/test-app.js";
-import { createWebRootFixture, FIXTURE_ASSET_JS, FIXTURE_INDEX_HTML, OUTSIDE_FILE_MARKER } from "./support/web-root.js";
+import { collectLogLines, createTestApp } from "./support/test-app.js";
+import { createWebRootFixture, FIXTURE_ASSET_JS, FIXTURE_INDEX_HTML, FIXTURE_TELOS_HTML, OUTSIDE_FILE_MARKER } from "./support/web-root.js";
 
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 
 describe("static SPA delivery", () => {
-  let app: NestFastifyApplication;
+  let app: FastifyInstance;
 
   afterEach(async () => {
     await app.close();
   });
 
   it("serves index.html with no-cache", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/" });
 
@@ -28,7 +28,7 @@ describe("static SPA delivery", () => {
   });
 
   it("serves /index.html with no-cache", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/index.html" });
 
@@ -36,8 +36,19 @@ describe("static SPA delivery", () => {
     expect(response.headers["cache-control"]).toBe("no-cache");
   });
 
+  it("serves another HTML entry point with no-cache", async () => {
+    app = createTestApp();
+
+    const response = await app.inject({ method: "GET", url: "/telos.html" });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toContain("text/html");
+    expect(response.headers["cache-control"]).toBe("no-cache");
+    expect(response.body).toBe(FIXTURE_TELOS_HTML);
+  });
+
   it("serves hashed asset as immutable", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/assets/app-7b2e4d.js" });
 
@@ -48,7 +59,7 @@ describe("static SPA delivery", () => {
   });
 
   it("serves a hashed stylesheet as immutable", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/assets/app-3f9a1c.css" });
 
@@ -58,7 +69,7 @@ describe("static SPA delivery", () => {
   });
 
   it("answers HEAD for index.html and assets", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const index = await app.inject({ method: "HEAD", url: "/" });
     const asset = await app.inject({ method: "HEAD", url: "/assets/app-7b2e4d.js" });
@@ -71,7 +82,7 @@ describe("static SPA delivery", () => {
   });
 
   it("falls back to index.html for unknown non-API route", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/mapas/oficina-sintetica/jornada" });
 
@@ -81,7 +92,7 @@ describe("static SPA delivery", () => {
   });
 
   it("returns JSON 404 for unknown /v1 route", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/v1/nope?token=synthetic-query-marker" });
     const body = response.json<Record<string, unknown>>();
@@ -94,7 +105,7 @@ describe("static SPA delivery", () => {
   });
 
   it.each(["/v1", "/health/nope"])("returns JSON 404 for API prefix %s", async (url) => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url });
 
@@ -103,7 +114,7 @@ describe("static SPA delivery", () => {
   });
 
   it("does not treat a path that merely starts with /health as API", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/healthy-living" });
 
@@ -112,7 +123,7 @@ describe("static SPA delivery", () => {
   });
 
   it("returns JSON 404 for a missing asset", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/assets/app-000000.js" });
 
@@ -122,7 +133,7 @@ describe("static SPA delivery", () => {
   });
 
   it("returns JSON 404 for non-GET methods on unknown paths", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "POST", url: "/qualquer-coisa", payload: {} });
 
@@ -131,7 +142,7 @@ describe("static SPA delivery", () => {
   });
 
   it("does not serve dotfiles", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/.secret" });
 
@@ -147,7 +158,7 @@ describe("static SPA delivery", () => {
     "/assets/%2e%2e%2f%2e%2e%2foutside.txt",
     "/../outside.txt",
   ])("does not serve files outside the web root (%s)", async (url) => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url });
 
@@ -155,7 +166,7 @@ describe("static SPA delivery", () => {
   });
 
   it("index.html carries the CSP and X-Correlation-ID", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/", headers: { "x-correlation-id": "static-check-1" } });
 
@@ -165,7 +176,7 @@ describe("static SPA delivery", () => {
   });
 
   it("assets carry the security headers and X-Correlation-ID", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/assets/app-7b2e4d.js", headers: { "x-correlation-id": "static-check-2" } });
 
@@ -174,7 +185,7 @@ describe("static SPA delivery", () => {
   });
 
   it("keeps /health working", async () => {
-    app = await createReadyApp();
+    app = createTestApp();
 
     const response = await app.inject({ method: "GET", url: "/health" });
 
@@ -183,12 +194,12 @@ describe("static SPA delivery", () => {
 });
 
 describe("web root validation", () => {
-  it("fails fast naming the directory when index.html is missing", async () => {
+  it("fails fast naming the directory when index.html is missing", () => {
     const webRoot = createWebRootFixture();
     rmSync(path.join(webRoot, "index.html"));
 
-    const startup = createApp(loadEnv({ NODE_ENV: "test", WEB_DIST_DIR: webRoot }), { logStream: collectLogLines().stream });
+    const startup = () => createApp(loadEnv({ NODE_ENV: "test", WEB_DIST_DIR: webRoot }), { logStream: collectLogLines().stream });
 
-    await expect(startup).rejects.toThrowError(new RegExp(`index\\.html.*${webRoot.replaceAll("\\", "\\\\")}`));
+    expect(startup).toThrowError(new RegExp(`index\\.html.*${webRoot.replaceAll("\\", "\\\\")}`));
   });
 });

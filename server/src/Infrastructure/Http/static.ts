@@ -13,13 +13,13 @@ export function defaultWebDistDir(): string {
   return path.resolve(import.meta.dirname, "../../../../dist/web");
 }
 
-export async function registerStatic(fastify: FastifyInstance, webDistDir: string): Promise<void> {
+export function registerStatic(fastify: FastifyInstance, webDistDir: string): void {
   if (!existsSync(path.join(webDistDir, INDEX_FILE))) {
     throw new Error(`Build da SPA não encontrado: ${INDEX_FILE} ausente em ${webDistDir}. Rode "npm run build" na raiz.`);
   }
 
-  // wildcard:false registra uma rota por arquivo existente; o que não existe cai no 404 do Nest, sem alcançar o disco com input do usuário.
-  await fastify.register(fastifyStatic, {
+  // wildcard:false registra uma rota por arquivo existente; o que não existe cai no 404 JSON, sem alcançar o disco com input do usuário.
+  void fastify.register(fastifyStatic, {
     root: webDistDir,
     wildcard: false,
     index: false,
