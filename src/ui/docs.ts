@@ -314,9 +314,9 @@ function applyTool(ta: HTMLTextAreaElement, tool: string): void {
 }
 
 export function bindDocs(): void {
-  document.querySelectorAll<HTMLElement>("[data-area]").forEach((b) =>
-    b.addEventListener("click", () => setArea(b.dataset.area as "canvas" | "docs")),
-  );
+  document
+    .querySelectorAll<HTMLElement>("[data-area]")
+    .forEach((b) => b.addEventListener("click", () => setArea(b.dataset.area as "canvas" | "docs")));
   const view = $("#docsView");
 
   // Undo: snapshot ao entrar num campo, empilhado só na primeira alteração (como no inspetor).

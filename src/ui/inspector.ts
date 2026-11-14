@@ -46,15 +46,7 @@ import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, selectedNodeKeys, selectedSingleNode, state } from "../core/state";
-import {
-  beginConnect,
-  duplicateSelection,
-  ensureVisible,
-  safeRemoveSelection,
-  selectEdge,
-  selectNode,
-  selectNodes,
-} from "../actions";
+import { beginConnect, duplicateSelection, ensureVisible, safeRemoveSelection, selectEdge, selectNode, selectNodes } from "../actions";
 import { renderEdges, renderGraph } from "../canvas/render";
 import { renderSidebar } from "./sidebar";
 import { nextLabel, quickCreate } from "../canvas/quick-create";
@@ -95,9 +87,7 @@ function grammarBlock(e: Edge): string {
   if (!v.applies) return "";
   if (v.ok) {
     const useLabel =
-      e.label !== v.label
-        ? `<button type="button" class="btn sm" data-use-label="${esc(v.label)}">Usar “${esc(v.label)}”</button>`
-        : "";
+      e.label !== v.label ? `<button type="button" class="btn sm" data-use-label="${esc(v.label)}">Usar “${esc(v.label)}”</button>` : "";
     return `<div class="grammar ok"><b>✓ Fluxo Event Storming</b><div class="grammar-flow">${chip(v.from)}<span>→ ${esc(v.label)} →</span>${chip(v.to)}</div>${useLabel}</div>`;
   }
   if (e.grammarException)
@@ -211,12 +201,7 @@ function kindFields(kind: NodeKind, o: AnyEntity): string {
         options("Cena onde ocorreu", "sceneId", v("sceneId"), picker("scene")) +
         options("Natureza do evento", "type", v("type"), registryOptions(state.ws.natureOptions, v("type"))) +
         `<button class="btn sm add-choice" data-add-choice="nature">＋ Cadastrar natureza</button>` +
-        options(
-          "Destino do evento",
-          "destination",
-          v("destination"),
-          registryOptions(state.ws.destinationOptions, v("destination")),
-        ) +
+        options("Destino do evento", "destination", v("destination"), registryOptions(state.ws.destinationOptions, v("destination"))) +
         `<button class="btn sm add-choice" data-add-choice="destination">＋ Cadastrar destino</button>` +
         field("Observação original da oficina", "note", v("note"), true) +
         field("Revisão", "reviewStatus", v("reviewStatus") || "Em discussão") +
@@ -458,7 +443,9 @@ function arrangeHtml(count: number): string {
     ([edge, text, hint]) => `<button type="button" class="btn sm" data-align="${edge}" title="${esc(hint)}">${esc(text)}</button>`,
   ).join("");
   const canDistribute = count >= MIN_TO_DISTRIBUTE;
-  const distributeHint = canDistribute ? "Espaços iguais entre os elementos; o primeiro e o último ficam onde estão" : `Precisa de ${MIN_TO_DISTRIBUTE} ou mais elementos`;
+  const distributeHint = canDistribute
+    ? "Espaços iguais entre os elementos; o primeiro e o último ficam onde estão"
+    : `Precisa de ${MIN_TO_DISTRIBUTE} ou mais elementos`;
   const distribute = DISTRIBUTE_BUTTONS.map(
     ([axis, text]) =>
       `<button type="button" class="btn sm" data-distribute="${axis}" title="${esc(distributeHint)}"${canDistribute ? "" : " disabled"}>${esc(text)}</button>`,
@@ -676,8 +663,7 @@ export function bindInspector(): void {
   let pendingSnapshot: string | null = null;
   body.addEventListener("focusin", (e) => {
     const x = target(e);
-    pendingSnapshot =
-      x.dataset.field && (x.matches("textarea") || x.matches("input")) ? JSON.stringify(state.ws) : null;
+    pendingSnapshot = x.dataset.field && (x.matches("textarea") || x.matches("input")) ? JSON.stringify(state.ws) : null;
   });
 
   // Edição ao vivo (a cada tecla) sem re-render do inspetor.

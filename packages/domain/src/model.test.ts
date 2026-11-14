@@ -73,7 +73,17 @@ describe("upgradeWorkspace", () => {
 
 describe("syncMaps", () => {
   it("syncMaps derives sceneMappings from edges", () => {
-    const edge = (from: string, to: string) => ({ id: from + to, from, to, label: "", status: "Hipótese", source: "", evidence: "", color: "", accessMode: "" });
+    const edge = (from: string, to: string) => ({
+      id: from + to,
+      from,
+      to,
+      label: "",
+      status: "Hipótese",
+      source: "",
+      evidence: "",
+      color: "",
+      accessMode: "",
+    });
     const workspace = upgradeWorkspace({
       schema: "pep-atlas-studio-v4",
       journeys: [{ id: "j1", name: "Jornada", semanticType: "Processo" }],

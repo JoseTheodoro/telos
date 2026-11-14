@@ -77,12 +77,7 @@ function updateModalExtra(): void {
     );
   if (t === "scene")
     extra +=
-      options(
-        "Capítulo",
-        "new.chapter",
-        parent.startsWith("chapter:") ? parent.slice(8) : state.focusChapter || "",
-        picker("chapter"),
-      ) +
+      options("Capítulo", "new.chapter", parent.startsWith("chapter:") ? parent.slice(8) : state.focusChapter || "", picker("chapter")) +
       options(
         "Raia na timeline (quem age)",
         "new.lane",
@@ -114,10 +109,9 @@ function updateModalExtra(): void {
   if (t !== "hotspot")
     extra +=
       options("Tipo semântico", "new.semanticType", preferred, semOptions(preferred)) +
-    `<div class="field"><label>Ou criar tipo semântico personalizado</label><input class="input" id="newCustomSemantic" placeholder="Ex.: Transição de estado"></div>`;
+      `<div class="field"><label>Ou criar tipo semântico personalizado</label><input class="input" id="newCustomSemantic" placeholder="Ex.: Transição de estado"></div>`;
   $("#newExtra").innerHTML = extra;
 }
-
 
 function makeNew(): void {
   const ds = modal().dataset;
@@ -155,7 +149,9 @@ function makeNew(): void {
     activePositions()[k] = p;
     for (const [from, to] of CONTAINMENT)
       if (t === to)
-        ws.graph.edges.push(edgeFor(ws, nodeKey(from, String(obj[PARENT_FIELD[t] as string])), k, CONTAINMENT_LABEL, "Registrado", "Cadastro manual"));
+        ws.graph.edges.push(
+          edgeFor(ws, nodeKey(from, String(obj[PARENT_FIELD[t] as string])), k, CONTAINMENT_LABEL, "Registrado", "Cadastro manual"),
+        );
     initMappings(ws, t, id);
     if (parent && parent !== k && getByKey(parent) && !ws.graph.edges.some((e) => e.from === parent && e.to === k))
       ws.graph.edges.push(edgeFor(ws, parent, k, defaultEdgeName(ws, parent, k), "Hipótese", "Cadastro manual"));
@@ -189,8 +185,7 @@ function makeNew(): void {
 export function listConnections(): void {
   const txt = state.ws.graph.edges
     .map(
-      (e) =>
-        `${label(e.from)} → ${label(e.to)} [${e.accessMode ? e.accessMode + " · " : ""}${e.label} · ${e.status} · ${colorForEdge(e)}]`,
+      (e) => `${label(e.from)} → ${label(e.to)} [${e.accessMode ? e.accessMode + " · " : ""}${e.label} · ${e.status} · ${colorForEdge(e)}]`,
     )
     .join("\n");
   $("#modalBody").innerHTML =
@@ -276,7 +271,6 @@ export function bindModal(): void {
   });
   modal().addEventListener("input", (e) => {
     const el = target(e) as HTMLInputElement;
-    if (el.id === "confirmWipeInput")
-      $<HTMLButtonElement>("#executeWipe").disabled = el.value.trim().toUpperCase() !== "APAGAR";
+    if (el.id === "confirmWipeInput") $<HTMLButtonElement>("#executeWipe").disabled = el.value.trim().toUpperCase() !== "APAGAR";
   });
 }

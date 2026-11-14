@@ -20,8 +20,7 @@ export function visible(): Set<NodeKey> {
   const { ws, focusScene, focusChapter, focusJourney } = state;
   const set = new Set<NodeKey>();
   let first: NodeKey[];
-  const eventKeysOf = (sceneIds: string[]) =>
-    ws.events.filter((e) => sceneIds.includes(e.sceneId)).map((e) => nodeKey("event", e.id));
+  const eventKeysOf = (sceneIds: string[]) => ws.events.filter((e) => sceneIds.includes(e.sceneId)).map((e) => nodeKey("event", e.id));
 
   if (focusScene && get("scene", focusScene)) {
     const sc = ws.scenes.find((s) => s.id === focusScene)!;

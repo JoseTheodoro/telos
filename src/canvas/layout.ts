@@ -1,15 +1,5 @@
 // Posições por recorte e layout automático em camadas.
-import {
-  COL,
-  FREE_PLACED_KINDS,
-  TYPES,
-  keyId,
-  keyKind,
-  type NodeKey,
-  type NodeKind,
-  type Point,
-  type Positions,
-} from "@pep-atlas/domain";
+import { COL, FREE_PLACED_KINDS, TYPES, keyId, keyKind, type NodeKey, type NodeKind, type Point, type Positions } from "@pep-atlas/domain";
 import { persist } from "../core/persistence";
 import { undoPush } from "../core/history";
 import { state } from "../core/state";
@@ -23,8 +13,7 @@ import { sizeOf } from "./size";
 export { sizeOf };
 
 /** Chave das posições: recorte + modo (cada modo guarda seu próprio arranjo). */
-export const positionsKey = (): string =>
-  (state.layoutMode === "timeline" ? (state.lanes ? "lanes|" : "timeline|") : "") + scopeKey();
+export const positionsKey = (): string => (state.layoutMode === "timeline" ? (state.lanes ? "lanes|" : "timeline|") : "") + scopeKey();
 
 export const isTimeline = (): boolean => state.layoutMode === "timeline";
 
@@ -58,10 +47,7 @@ function layersLayout(): void {
   const { ws } = state;
   const keys = visible();
   const positions = activePositions();
-  const groups = Object.fromEntries(TYPES.map((t) => [t, [...keys].filter((k) => keyKind(k) === t)])) as Record<
-    NodeKind,
-    NodeKey[]
-  >;
+  const groups = Object.fromEntries(TYPES.map((t) => [t, [...keys].filter((k) => keyKind(k) === t)])) as Record<NodeKind, NodeKey[]>;
   const sceneIndex = (k: NodeKey) => ws.scenes.findIndex((s) => s.id === keyId(k));
   const orderScenes = groups.scene.sort((a, b) => sceneIndex(a) - sceneIndex(b));
 
@@ -198,4 +184,3 @@ export function freeSpot(start: Point, ignore: NodeKey, dir: 1 | -1 = 1): Point 
   for (let i = 0; i < 40 && collides(p); i++) p.y += dir * (self.h + GAP_Y);
   return p;
 }
-

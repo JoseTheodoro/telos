@@ -25,6 +25,12 @@ describe("edgeVerdict", () => {
       bridge: "politica",
       expected: ["politica", "leitura", "evento", "externo"],
     });
-    expect(edgeVerdict(ws, "event:e1", "semantic:pol")).toEqual({ applies: true, ok: true, from: "evento", to: "politica", label: "dispara" });
+    expect(edgeVerdict(ws, "event:e1", "semantic:pol")).toEqual({
+      applies: true,
+      ok: true,
+      from: "evento",
+      to: "politica",
+      label: "dispara",
+    });
   });
 });

@@ -1,10 +1,8 @@
 // Utilitários de DOM e de templates HTML.
 
-export const $ = <T extends HTMLElement = HTMLElement>(selector: string): T =>
-  document.querySelector(selector) as T;
+export const $ = <T extends HTMLElement = HTMLElement>(selector: string): T => document.querySelector(selector) as T;
 
-export const $$ = <T extends HTMLElement = HTMLElement>(selector: string): T[] =>
-  Array.from(document.querySelectorAll<T>(selector));
+export const $$ = <T extends HTMLElement = HTMLElement>(selector: string): T[] => Array.from(document.querySelectorAll<T>(selector));
 
 export const esc = (s: unknown): string =>
   String(s ?? "")

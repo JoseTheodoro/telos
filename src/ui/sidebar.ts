@@ -114,11 +114,8 @@ export function renderFilters(): void {
 
   const scenes = focusChapter
     ? ws.scenes.filter((s) => s.chapter === focusChapter)
-    : ws.scenes.filter(
-        (s) => !focusJourney || ws.chapters.some((c) => c.id === s.chapter && c.journeyId === focusJourney),
-      );
-  $("#sceneFilter").innerHTML =
-    `<option value="">Todas as cenas</option>` + scenes.map((s) => opt(s.id, s.title, focusScene)).join("");
+    : ws.scenes.filter((s) => !focusJourney || ws.chapters.some((c) => c.id === s.chapter && c.journeyId === focusJourney));
+  $("#sceneFilter").innerHTML = `<option value="">Todas as cenas</option>` + scenes.map((s) => opt(s.id, s.title, focusScene)).join("");
 }
 
 /** Troca o recorte, reposiciona, re-renderiza e enquadra. */
@@ -187,7 +184,6 @@ export function bindSidebar(): void {
       ensureVisible(k.dataset.selectNode as string);
       return;
     }
-
   });
 
   $("#sidebarBody").addEventListener("input", (e) => {

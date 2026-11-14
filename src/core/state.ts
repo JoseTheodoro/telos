@@ -113,14 +113,12 @@ export const state = {
 };
 
 // Atalhos ligados ao workspace atual.
-export const get = (kind: NodeKind, id: string | undefined): AnyEntity | undefined =>
-  getEntity(state.ws, kind, id);
+export const get = (kind: NodeKind, id: string | undefined): AnyEntity | undefined => getEntity(state.ws, kind, id);
 export const getByKey = (k: NodeKey): AnyEntity | undefined => getEntityByKey(state.ws, k);
 export const label = (k: NodeKey): string => entityLabel(state.ws, k);
 export const related = (k: NodeKey): Edge[] => state.ws.graph.edges.filter((e) => e.from === k || e.to === k);
 export const degree = (k: NodeKey): number => related(k).length;
-export const findEdge = (id: string | undefined): Edge | undefined =>
-  state.ws.graph.edges.find((e) => e.id === id);
+export const findEdge = (id: string | undefined): Edge | undefined => state.ws.graph.edges.find((e) => e.id === id);
 
 export function selectedNodeKeys(): NodeKey[] {
   const sel = state.selected;

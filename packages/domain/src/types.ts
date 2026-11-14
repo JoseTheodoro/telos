@@ -2,18 +2,7 @@
 // Mantido compatível com backups JSON da v1.5 e anteriores.
 
 export type NodeKind =
-  | "journey"
-  | "chapter"
-  | "scene"
-  | "event"
-  | "domain"
-  | "system"
-  | "screen"
-  | "table"
-  | "semantic"
-  | "hotspot"
-  | "note"
-  | "frame";
+  "journey" | "chapter" | "scene" | "event" | "domain" | "system" | "screen" | "table" | "semantic" | "hotspot" | "note" | "frame";
 
 /** Chave de nó no grafo: `${kind}:${id}` (ex.: "scene:preconsulta"). */
 export type NodeKey = string;
@@ -141,18 +130,7 @@ export interface DocNote {
 }
 
 export type AnyEntity =
-  | Journey
-  | Chapter
-  | Scene
-  | EventItem
-  | Domain
-  | SystemItem
-  | Screen
-  | Table
-  | SemanticNode
-  | Decision
-  | NoteItem
-  | FrameItem;
+  Journey | Chapter | Scene | EventItem | Domain | SystemItem | Screen | Table | SemanticNode | Decision | NoteItem | FrameItem;
 
 export interface Edge {
   id: string;

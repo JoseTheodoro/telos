@@ -49,11 +49,7 @@ function startPoint(): { jid: string; sceneId: string } {
   if (!sceneId) sceneId = state.focusScene;
   if (!sceneId && state.focusChapter) sceneId = ws.scenes.find((s) => s.chapter === state.focusChapter)?.id ?? "";
   const chapterOf = (sid: string) => ws.chapters.find((c) => c.id === ws.scenes.find((s) => s.id === sid)?.chapter);
-  const jid =
-    chapterOf(sceneId)?.journeyId ||
-    state.focusJourney ||
-    ws.journeys.find((j) => sequenceFor(j.id).length)?.id ||
-    "";
+  const jid = chapterOf(sceneId)?.journeyId || state.focusJourney || ws.journeys.find((j) => sequenceFor(j.id).length)?.id || "";
   return { jid, sceneId };
 }
 
@@ -156,7 +152,8 @@ function strip(): string {
   // Separadores de capítulo.
   let prev = "";
   for (const p of pts) {
-    if (p.s.chapter !== prev && p.i > 0) out += `<line x1="${p.x - STEP / 2}" x2="${p.x - STEP / 2}" y1="6" y2="${H - 22}" class="pres-strip-sep"/>`;
+    if (p.s.chapter !== prev && p.i > 0)
+      out += `<line x1="${p.x - STEP / 2}" x2="${p.x - STEP / 2}" y1="6" y2="${H - 22}" class="pres-strip-sep"/>`;
     prev = p.s.chapter;
   }
   if (rated.length > 1) out += `<path d="${path}" class="pres-strip-line"/>`;
@@ -197,7 +194,10 @@ function render(): void {
     : `<p class="pres-empty">Nenhum evento registrado nesta cena.</p>`;
   const hotspotsHtml = hotspots.length
     ? `<section class="pres-card pres-hotspots"><h3>Hotspots · dúvidas e riscos</h3><ul>${hotspots
-        .map((h) => `<li><span class="pres-hid">${esc(h.id)}</span><b>${esc(h.title)}</b><small>${esc(h.status || "Aberta")}${h.priority ? " · " + esc(h.priority) : ""}</small></li>`)
+        .map(
+          (h) =>
+            `<li><span class="pres-hid">${esc(h.id)}</span><b>${esc(h.title)}</b><small>${esc(h.status || "Aberta")}${h.priority ? " · " + esc(h.priority) : ""}</small></li>`,
+        )
         .join("")}</ul></section>`
     : "";
   const qa =

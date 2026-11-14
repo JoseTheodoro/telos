@@ -69,8 +69,7 @@ export function validColor(c: string | undefined | null): string {
 
 /** Cor padrão das setas que tocam um hotspot (mesmo vermelho do post-it). */
 const HOTSPOT_EDGE = "#b3261e";
-const touchesHotspot = (e: Partial<Edge>) =>
-  (!!e.from && keyKind(e.from) === "hotspot") || (!!e.to && keyKind(e.to) === "hotspot");
+const touchesHotspot = (e: Partial<Edge>) => (!!e.from && keyKind(e.from) === "hotspot") || (!!e.to && keyKind(e.to) === "hotspot");
 
 export function colorForEdge(e: Partial<Edge>): string {
   return (
@@ -122,8 +121,7 @@ export function edgeFor(
 }
 
 /** Seta evento → domínio (a única que carrega papel de domínio). */
-export const isEventDomain = (e: Pick<Edge, "from" | "to">): boolean =>
-  keyKind(e.from) === "event" && keyKind(e.to) === "domain";
+export const isEventDomain = (e: Pick<Edge, "from" | "to">): boolean => keyKind(e.from) === "event" && keyKind(e.to) === "domain";
 
 /** Papel inferido do rótulo legado (só para migração e criação). */
 function roleFromLabel(label: string): DomainRole {
@@ -190,9 +188,7 @@ export function syncMaps(ws: Workspace): void {
     const m = ws.eventMappings[e.id] || ({} as Workspace["eventMappings"][string]);
     const edges = ws.graph.edges.filter((x) => x.from === nodeKey("event", e.id));
     m.domainId = keyIdOr(edges.find((x) => keyKind(x.to) === "domain" && x.role === "owner")?.to);
-    m.consumerDomainIds = edges
-      .filter((x) => keyKind(x.to) === "domain" && x.role === "consumer")
-      .map((x) => keyId(x.to));
+    m.consumerDomainIds = edges.filter((x) => keyKind(x.to) === "domain" && x.role === "consumer").map((x) => keyId(x.to));
     m.systemId = keyIdOr(edges.find((x) => keyKind(x.to) === "system")?.to);
     m.screenIds = edges.filter((x) => keyKind(x.to) === "screen").map((x) => keyId(x.to));
     m.tableIds = edges.filter((x) => keyKind(x.to) === "table").map((x) => keyId(x.to));
@@ -230,8 +226,7 @@ export function graphInit(data: any): Workspace {
   if (!Array.isArray(result.journeys) || !result.journeys.length) result.journeys = [defaultJourney()];
   result.graph = { positions: {}, edges: [] };
   const g = result.graph;
-  const present = (k: NodeKey) =>
-    (result[ARR[keyKind(k)]] as AnyEntity[] | undefined)?.some((x) => x.id === keyId(k));
+  const present = (k: NodeKey) => (result[ARR[keyKind(k)]] as AnyEntity[] | undefined)?.some((x) => x.id === keyId(k));
   const sig = new Set<string>();
   const add = (a: NodeKey, b: NodeKey, l: string, sta = "Hipótese", source = "Oficina / sugestão") => {
     if (!present(a) || !present(b) || a === b) return;
@@ -261,12 +256,9 @@ export function graphInit(data: any): Workspace {
     for (const x of m.screenIds || []) add(a, nodeKey("screen", x), "registrado na tela?");
     for (const x of m.tableIds || []) add(a, nodeKey("table", x), "persistido em?");
   }
-  for (const s of result.systems || [])
-    if (s.domainId) add(nodeKey("domain", s.domainId), nodeKey("system", s.id), "domínio do sistema?");
-  for (const s of result.screens || [])
-    if (s.systemId) add(nodeKey("system", s.systemId), nodeKey("screen", s.id), "expõe tela?");
-  for (const t of result.tables || [])
-    if (t.systemId) add(nodeKey("system", t.systemId), nodeKey("table", t.id), "armazena?");
+  for (const s of result.systems || []) if (s.domainId) add(nodeKey("domain", s.domainId), nodeKey("system", s.id), "domínio do sistema?");
+  for (const s of result.screens || []) if (s.systemId) add(nodeKey("system", s.systemId), nodeKey("screen", s.id), "expõe tela?");
+  for (const t of result.tables || []) if (t.systemId) add(nodeKey("system", t.systemId), nodeKey("table", t.id), "armazena?");
   return result as Workspace;
 }
 
@@ -318,9 +310,7 @@ export function upgradeWorkspace(data: any): Workspace {
   }
   // "Hotspot" deixou de ser tipo de caixa livre: hotspot é um nó próprio (tecla H).
   data.elementTypes = [...new Set([...SEMANTIC_BASE, ...(data.elementTypes || [])])].filter((t) => t !== "Hotspot");
-  data.natureOptions = Array.isArray(data.natureOptions)
-    ? data.natureOptions
-    : NATURE_BASE.map((x) => ({ id: x[0], label: x[1] }));
+  data.natureOptions = Array.isArray(data.natureOptions) ? data.natureOptions : NATURE_BASE.map((x) => ({ id: x[0], label: x[1] }));
   data.destinationOptions = Array.isArray(data.destinationOptions)
     ? data.destinationOptions
     : DEST_BASE.map((x) => ({ id: x[0], label: x[1] }));
@@ -340,8 +330,7 @@ export function upgradeWorkspace(data: any): Workspace {
     // v1.6 · #5: papel do domínio deixa de depender do texto do rótulo.
     if (isEventDomain(e) && e.role === undefined) e.role = roleFromLabel(String(e.label ?? ""));
   }
-  const hasContainment = (a: NodeKey, b: NodeKey) =>
-    data.graph.edges.some((e: Edge) => e.from === a && e.to === b && e.label === "contém");
+  const hasContainment = (a: NodeKey, b: NodeKey) => data.graph.edges.some((e: Edge) => e.from === a && e.to === b && e.label === "contém");
   for (const c of data.chapters) {
     if (!c.journeyId) continue;
     const a = "journey:" + c.journeyId;

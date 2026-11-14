@@ -55,8 +55,6 @@ export function selectEdge(id: string): void {
   openInspectorOnMobile();
 }
 
-
-
 /** Ajusta o recorte para que o nó apareça, seleciona e centraliza. */
 export function ensureVisible(k: NodeKey): void {
   const kind = keyKind(k);
@@ -129,14 +127,7 @@ export function linkCreate(a: NodeKey, b: NodeKey, sides: LinkSides = {}): void 
       else if (na === "chapter") (child as Scene).chapter = keyId(a);
       else (child as EventItem).sceneId = keyId(a);
     }
-    const relation = edgeFor(
-      ws,
-      a,
-      b,
-      defaultEdgeName(ws, a, b),
-      containment ? "Registrado" : "Hipótese",
-      "Criada manualmente no canvas",
-    );
+    const relation = edgeFor(ws, a, b, defaultEdgeName(ws, a, b), containment ? "Registrado" : "Hipótese", "Criada manualmente no canvas");
     if (sides.fromSide) relation.fromSide = sides.fromSide;
     if (sides.toSide) relation.toSide = sides.toSide;
     ws.graph.edges.push(relation);
@@ -174,12 +165,7 @@ export function finishConnect(k: NodeKey, toSide?: PortSide): void {
 /** Seleção de vários nós: uma chave vira seleção simples; nenhuma limpa a seleção. */
 export function selectNodes(keys: NodeKey[]): void {
   const existing = [...new Set(keys)].filter((k) => getByKey(k));
-  state.selected =
-    existing.length > 1
-      ? { kind: "nodes", ids: existing }
-      : existing.length
-        ? { kind: "node", id: existing[0] }
-        : null;
+  state.selected = existing.length > 1 ? { kind: "nodes", ids: existing } : existing.length ? { kind: "node", id: existing[0] } : null;
   renderInspector();
   renderGraph();
   openInspectorOnMobile();
@@ -190,8 +176,7 @@ export function toggleNodeSelection(k: NodeKey): void {
   selectNodes(current.includes(k) ? current.filter((x) => x !== k) : [...current, k]);
 }
 
-const SINGLE_DELETE_QUESTION =
-  "Excluir o elemento selecionado? Esta ação também remove suas setas associadas e pode ser desfeita.";
+const SINGLE_DELETE_QUESTION = "Excluir o elemento selecionado? Esta ação também remove suas setas associadas e pode ser desfeita.";
 const FRAME_DELETE_QUESTION = "Excluir a moldura? Os cards que estão dentro dela continuam no canvas. Ctrl+Z desfaz.";
 
 function deleteNode(k: NodeKey): void {

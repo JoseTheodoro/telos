@@ -31,7 +31,10 @@ describe("parseWorkspace", () => {
   });
 
   it("rejects Infinity and NaN coordinates", () => {
-    const input = validDocument({}, { positions: { "event:b": { x: 1, y: Infinity } }, layouts: { all: { "scene:a": { x: Number.NaN, y: 3 } } } });
+    const input = validDocument(
+      {},
+      { positions: { "event:b": { x: 1, y: Infinity } }, layouts: { all: { "scene:a": { x: Number.NaN, y: 3 } } } },
+    );
 
     expect(issuesOf(input)).toEqual([
       { path: "graph.positions.event:b.y", code: "not_finite" },
@@ -42,7 +45,9 @@ describe("parseWorkspace", () => {
   it("rejects w/h non-numeric on notes and frames", () => {
     const input = validDocument({
       canvasNotes: [{ id: "n1", text: "", format: "text", w: "320px", h: 180, scope: "all", semanticType: "Nota" }],
-      frames: [{ id: "f1", title: "Área", color: "#dbeafe", w: 560, h: "1\"><img src=x onerror=alert(1)>", scope: "all", semanticType: "Moldura" }],
+      frames: [
+        { id: "f1", title: "Área", color: "#dbeafe", w: 560, h: '1"><img src=x onerror=alert(1)>', scope: "all", semanticType: "Moldura" },
+      ],
     });
 
     expect(issuesOf(input)).toEqual([
@@ -70,7 +75,17 @@ describe("parseWorkspace", () => {
   });
 
   it("normalizes invalid edge color to default", () => {
-    const edge = (id: string, color: string) => ({ id, from: "scene:a", to: "journey:j1", label: "", status: "Hipótese", source: "", evidence: "", color, accessMode: "" });
+    const edge = (id: string, color: string) => ({
+      id,
+      from: "scene:a",
+      to: "journey:j1",
+      label: "",
+      status: "Hipótese",
+      source: "",
+      evidence: "",
+      color,
+      accessMode: "",
+    });
     const input = validDocument({}, { edges: [edge("r1", "red;}</style><script>alert(1)</script>"), edge("r2", "#AABBCC")] });
 
     const workspace = workspaceOf(input);
@@ -79,7 +94,14 @@ describe("parseWorkspace", () => {
   });
 
   it("rejects unknown schema", () => {
-    for (const input of [{ schema: "outro-app" }, {}, null, "pep-atlas-studio-v4", [validDocument()], { ...validDocument(), schema: ["pep-atlas-studio-v4"] }]) {
+    for (const input of [
+      { schema: "outro-app" },
+      {},
+      null,
+      "pep-atlas-studio-v4",
+      [validDocument()],
+      { ...validDocument(), schema: ["pep-atlas-studio-v4"] },
+    ]) {
       expect(issuesOf(input)).toEqual([{ path: "schema", code: "unknown_schema" }]);
     }
   });
@@ -92,19 +114,46 @@ describe("parseWorkspace", () => {
       scenes: [{ id: "s1", title: "Cena", chapter: "c1", time: "", semanticType: "Cena" }],
     };
 
-    for (const input of [validDocument(), { ...validDocument(), schema: "pep-atlas-studio-v3" }, v3WithoutGraph, workshop, fixtureWithHotspotBox]) {
+    for (const input of [
+      validDocument(),
+      { ...validDocument(), schema: "pep-atlas-studio-v3" },
+      v3WithoutGraph,
+      workshop,
+      fixtureWithHotspotBox,
+    ]) {
       const workspace = workspaceOf(input);
       expect(workspace.schema).toBe("pep-atlas-studio-v4");
       expect(Array.isArray(workspace.graph.edges)).toBe(true);
     }
     expect(workspaceOf(workshop).graph.edges.length).toBeGreaterThan(0);
-    expect(workspaceOf(v3WithoutGraph).graph.edges).toContainEqual(expect.objectContaining({ from: "chapter:c1", to: "scene:s1", label: "contém" }));
+    expect(workspaceOf(v3WithoutGraph).graph.edges).toContainEqual(
+      expect.objectContaining({ from: "chapter:c1", to: "scene:s1", label: "contém" }),
+    );
   });
 
   it("round-trips unknown fields", () => {
     const input = validDocument(
-      { customTopLevel: { owner: "produto" }, scenes: [{ id: "a", title: "Cena", chapter: "", time: "", semanticType: "Cena", customSceneField: [1, 2] }] },
-      { edges: [{ id: "r1", from: "scene:a", to: "journey:j1", label: "", status: "", source: "", evidence: "", color: "", accessMode: "", customEdgeField: true }], customGraphField: "g" },
+      {
+        customTopLevel: { owner: "produto" },
+        scenes: [{ id: "a", title: "Cena", chapter: "", time: "", semanticType: "Cena", customSceneField: [1, 2] }],
+      },
+      {
+        edges: [
+          {
+            id: "r1",
+            from: "scene:a",
+            to: "journey:j1",
+            label: "",
+            status: "",
+            source: "",
+            evidence: "",
+            color: "",
+            accessMode: "",
+            customEdgeField: true,
+          },
+        ],
+        customGraphField: "g",
+      },
     );
     const original = structuredClone(input);
 
@@ -145,7 +194,9 @@ describe("parseWorkspace", () => {
       expect(() => parseWorkspace(input), path).not.toThrow();
       expect(issuesOf(input), path).toContainEqual({ path, code: "invalid_structure" });
     }
-    expect(issuesOf(validDocument({}, { edges: [{ id: "r1", to: "scene:a" }] }))).toEqual([{ path: "graph.edges.0.from", code: "not_string" }]);
+    expect(issuesOf(validDocument({}, { edges: [{ id: "r1", to: "scene:a" }] }))).toEqual([
+      { path: "graph.edges.0.from", code: "not_string" },
+    ]);
   });
 
   it("drops note and frame sizes saved as null", () => {
@@ -162,7 +213,14 @@ describe("parseWorkspace", () => {
 
   it("drops view options outside the known values", () => {
     const injected = validDocument({
-      view: { docsMode: 'split"><img src=x onerror=alert(1)>', area: "x", layoutMode: "grid", sidebarTab: "z", camera: { x: "1", y: 0, z: 1 }, docId: "d1" },
+      view: {
+        docsMode: 'split"><img src=x onerror=alert(1)>',
+        area: "x",
+        layoutMode: "grid",
+        sidebarTab: "z",
+        camera: { x: "1", y: 0, z: 1 },
+        docId: "d1",
+      },
     });
     const knownView = { docsMode: "edit", area: "docs", layoutMode: "timeline", sidebarTab: "inventory", camera: { x: 10, y: -5, z: 0.5 } };
 

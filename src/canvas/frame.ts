@@ -54,8 +54,7 @@ export function frameCarriers(keys: NodeKey[]): Map<NodeKey, NodeKey> {
   const area = (k: NodeKey): number => sizeOf(k).w * sizeOf(k).h;
   const frames = keys.filter((k) => keyKind(k) === "frame").sort((a, b) => area(a) - area(b));
   const carrier = new Map<NodeKey, NodeKey>();
-  for (const frame of frames)
-    for (const k of containedKeys(frame)) if (!chosen.has(k) && !carrier.has(k)) carrier.set(k, frame);
+  for (const frame of frames) for (const k of containedKeys(frame)) if (!chosen.has(k) && !carrier.has(k)) carrier.set(k, frame);
   return carrier;
 }
 

@@ -126,6 +126,5 @@ export function initMappings(ws: Workspace, kind: NodeKind, id: string): void {
       notes: "",
       operation: "A identificar",
     };
-  if (kind === "scene")
-    ws.sceneMappings[id] = { domainId: "", systemIds: [], screenIds: [], tableIds: [], status: "Hipótese", notes: "" };
+  if (kind === "scene") ws.sceneMappings[id] = { domainId: "", systemIds: [], screenIds: [], tableIds: [], status: "Hipótese", notes: "" };
 }

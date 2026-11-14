@@ -1,13 +1,5 @@
 // Eventos do canvas: seleção, arrastar nó, puxar seta, pan, zoom, duplo clique.
-import {
-  keyKind,
-  type NodeKind,
-  type PortSide,
-  clampEmotion,
-  emotionLevel,
-  emotionSigned,
-  nodeKey,
-} from "@pep-atlas/domain";
+import { keyKind, type NodeKind, type PortSide, clampEmotion, emotionLevel, emotionSigned, nodeKey } from "@pep-atlas/domain";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
 import { getByKey, state, type Dragging } from "../core/state";
@@ -80,11 +72,7 @@ function finishLasso(d: LassoDrag): void {
     return;
   }
   selectNodes(inside);
-  notify(
-    inside.length === 1
-      ? "1 elemento selecionado"
-      : `${inside.length} elementos selecionados · arraste um deles para mover todos`,
-  );
+  notify(inside.length === 1 ? "1 elemento selecionado" : `${inside.length} elementos selecionados · arraste um deles para mover todos`);
 }
 
 /** Elementos do card no DOM (a moldura tem também o fundo, numa camada atrás das setas). */
@@ -163,7 +151,16 @@ export function bindCanvas(): void {
       const k = grip.dataset.noteResize as string;
       const size = sizeOf(k);
       selectNode(k);
-      state.dragging = { type: "resize", key: k, x0: e.clientX, y0: e.clientY, w0: size.w, h0: size.h, snap: JSON.stringify(state.ws), moved: false };
+      state.dragging = {
+        type: "resize",
+        key: k,
+        x0: e.clientX,
+        y0: e.clientY,
+        w0: size.w,
+        h0: size.h,
+        snap: JSON.stringify(state.ws),
+        moved: false,
+      };
       stage.setPointerCapture(e.pointerId);
       return;
     }

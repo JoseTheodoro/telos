@@ -56,7 +56,12 @@ export function csvExport(): void {
     "Acessos de dados",
     "Situação",
   ];
-  const q = (x: unknown) => '"' + String(x ?? "").replaceAll('"', '""').replaceAll(/\r?\n/g, " ") + '"';
+  const q = (x: unknown) =>
+    '"' +
+    String(x ?? "")
+      .replaceAll('"', '""')
+      .replaceAll(/\r?\n/g, " ") +
+    '"';
   const rows = ws.events.map((e) => {
     const s = get("scene", e.sceneId) as Scene | undefined;
     const c = get("chapter", s?.chapter) as Chapter | undefined;
@@ -90,11 +95,7 @@ export function csvExport(): void {
       .map(q)
       .join(",");
   });
-  saveFile(
-    "pep-atlas-rastreabilidade.csv",
-    "﻿" + cols.map(q).join(",") + "\n" + rows.join("\n"),
-    "text/csv;charset=utf-8",
-  );
+  saveFile("pep-atlas-rastreabilidade.csv", "﻿" + cols.map(q).join(",") + "\n" + rows.join("\n"), "text/csv;charset=utf-8");
   notify("CSV com jornadas, tipos, destinos e acessos exportado");
 }
 
@@ -151,12 +152,14 @@ export function svgExport(): void {
     )
     .join("");
   const bands = isTimeline()
-    ? lanes + chapterBands(visibleKeys, activePositions())
+    ? lanes +
+      chapterBands(visibleKeys, activePositions())
         .map(
           (b, i) =>
             `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="16" fill="${i % 2 ? "#f1f6f2" : "#f6f9f6"}" stroke="#dbe6dd"/><text x="${b.x + 14}" y="${b.y + 22}" font-size="12" font-weight="800" fill="#2a6e50">${esc(b.label)}${b.date ? " · " + esc(b.date) : ""}</text>`,
         )
-        .join("") + (emo ? emotionSvg(emo, false) : "")
+        .join("") +
+      (emo ? emotionSvg(emo, false) : "")
     : "";
   const markers = shown
     .map(

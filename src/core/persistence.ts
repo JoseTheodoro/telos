@@ -1,13 +1,5 @@
 // Persistência no localStorage (mesma chave da v1.5 → dados existentes continuam válidos).
-import {
-  INVALID_STORE,
-  LEGACY_STORE,
-  SCHEMA,
-  STORE,
-  upgradeWorkspace,
-  type Workspace,
-  parseWorkspace,
-} from "@pep-atlas/domain";
+import { INVALID_STORE, LEGACY_STORE, SCHEMA, STORE, upgradeWorkspace, type Workspace, parseWorkspace } from "@pep-atlas/domain";
 import { $, notify } from "../ui/dom";
 import { state } from "./state";
 
@@ -83,8 +75,7 @@ export function persist(): void {
     saveIndicator.classList.toggle("warn", nearStorageLimit);
     if (!nearStorageLimit) {
       saveIndicator.textContent = "● Salvo no navegador · " + time;
-      saveIndicator.title =
-        "As alterações persistem neste navegador. Exporte JSON para backup ou uso em outro computador.";
+      saveIndicator.title = "As alterações persistem neste navegador. Exporte JSON para backup ou uso em outro computador.";
       return;
     }
     const sizeMb = (serializedWorkspace.length / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 });

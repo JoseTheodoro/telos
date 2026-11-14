@@ -105,8 +105,7 @@ function narrativeDescendants(k: NodeKey): NodeKey[] {
   const ws = state.ws;
   const kind = keyKind(k);
   const id = keyId(k);
-  const eventsOf = (sceneIds: string[]) =>
-    ws.events.filter((e) => sceneIds.includes(e.sceneId)).map((e) => nodeKey("event", e.id));
+  const eventsOf = (sceneIds: string[]) => ws.events.filter((e) => sceneIds.includes(e.sceneId)).map((e) => nodeKey("event", e.id));
   if (kind === "scene") return eventsOf([id]);
   if (kind === "chapter") {
     const scenes = ws.scenes.filter((s) => s.chapter === id).map((s) => s.id);
@@ -131,12 +130,10 @@ function timelineSpot(origin: NodeKey, k: NodeKey, kind: NodeKind, mode: QuickMo
   const sequence = (["journey", "chapter", "scene", "event"] as NodeKind[]).includes(kind);
   const parallelEvent = kind === "event" && originKind === "event" && mode === "sibling";
   if (!sequence || parallelEvent) {
-    const start =
-      kind === originKind && mode === "next" ? { x: o.x + TL.COLW, y: o.y } : { x: o.x, y: o.y + TL.STACK };
+    const start = kind === originKind && mode === "next" ? { x: o.x + TL.COLW, y: o.y } : { x: o.x, y: o.y + TL.STACK };
     return freeSpot(start, k);
   }
-  const lastX = (from: NodeKey) =>
-    Math.max(...[from, ...narrativeDescendants(from)].map((d) => positions[d]?.x ?? -Infinity));
+  const lastX = (from: NodeKey) => Math.max(...[from, ...narrativeDescendants(from)].map((d) => positions[d]?.x ?? -Infinity));
   let x: number;
   if (kind === originKind) x = lastX(origin) + TL.COLW + (kind === "chapter" ? TL.CHAPTER_GAP : 0);
   else {
@@ -208,9 +205,7 @@ export function quickCreate(mode: QuickMode): void {
       ws.graph.edges.push(edgeFor(ws, nodeKey(parentKind, plan.parent.id), k, "contém", "Registrado", "Criação rápida"));
     }
     if (plan.linkFrom)
-      ws.graph.edges.push(
-        edgeFor(ws, plan.linkFrom, k, defaultEdgeName(ws, plan.linkFrom, k), plan.linkStatus, "Criação rápida"),
-      );
+      ws.graph.edges.push(edgeFor(ws, plan.linkFrom, k, defaultEdgeName(ws, plan.linkFrom, k), plan.linkStatus, "Criação rápida"));
     syncMaps(ws);
     widenUntilVisible(k);
     activePositions()[k] = isTimeline() ? timelineSpot(origin, k, plan.kind, mode) : layersSpot(origin, k, plan.direction);

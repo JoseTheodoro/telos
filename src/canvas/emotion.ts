@@ -152,7 +152,8 @@ export function emotionSvg(b: EmotionBand, interactive: boolean, selectedScene =
       out += `<g class="emo-pain"${dataAttr(p.sceneId)}><title>Dor: ${esc(p.pain)}</title><rect x="${p.x - cw / 2}" y="${painY}" width="${cw}" height="${EMO.PAIN_H}" rx="8" fill="#fdecea" stroke="#e3a59d"/><text x="${p.x}" y="${painY + 20.5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#a83d35">⚡ ${esc(truncate(p.pain, 28))}</text></g>`;
     }
     out += `<g class="emo-dot${p.value === null ? " unrated" : ""}${sel ? " selected" : ""}"${dataAttr(p.sceneId)}><title>${esc(tip)}</title>`;
-    if (sel) out += `<circle cx="${p.x}" cy="${p.y}" r="${EMO.DOT_R + 6}" fill="none" stroke="#34815a" stroke-opacity=".35" stroke-width="5"/>`;
+    if (sel)
+      out += `<circle cx="${p.x}" cy="${p.y}" r="${EMO.DOT_R + 6}" fill="none" stroke="#34815a" stroke-opacity=".35" stroke-width="5"/>`;
     out += `<circle cx="${p.x}" cy="${p.y}" r="${EMO.DOT_R}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="2"${p.value === null ? ' stroke-dasharray="3 3"' : ""}/>`;
     out += lvl
       ? `<text x="${p.x}" y="${p.y + 7}" text-anchor="middle" font-size="20">${lvl.face}</text>`

@@ -191,7 +191,9 @@ export function linkGhostPath(start: NodeKey, side: PortSide, pointer: Point): s
 const PORT_TITLE = "Arraste até outro card para ligar (solte numa bolinha para escolher o lado de entrada)";
 
 function portsHtml(k: NodeKey): string {
-  return PORT_SIDES.map((side) => `<div class="port ${side}" title="${PORT_TITLE}" data-port="${side}" data-key="${esc(k)}"></div>`).join("");
+  return PORT_SIDES.map((side) => `<div class="port ${side}" title="${PORT_TITLE}" data-port="${side}" data-key="${esc(k)}"></div>`).join(
+    "",
+  );
 }
 
 export function renderEdges(): void {
@@ -210,8 +212,7 @@ export function renderEdges(): void {
     // #5: ligação fora da gramática ES ganha só um ⚠ discreto na legenda da seta.
     const verdict = edgeVerdict(ws, e.from, e.to);
     const offGrammar = verdict.applies && !verdict.ok && !e.grammarException;
-    const caption =
-      (offGrammar ? "⚠ " : "") + (e.accessMode ? e.accessMode + " · " + e.label : e.label || "relaciona");
+    const caption = (offGrammar ? "⚠ " : "") + (e.accessMode ? e.accessMode + " · " + e.label : e.label || "relaciona");
     out += `<g data-edge="${esc(e.id)}"><path class="edge-hit" d="${p}" data-edge="${esc(e.id)}"/><path class="edge-line ${cls}" style="stroke:${esc(color)};stroke-width:${active ? 3.6 : 2.3}" d="${p}" marker-end="url(#head-${esc(e.id)})"/><text class="edge-caption${offGrammar ? " off-grammar" : ""}" x="${svgNumber(mx)}" y="${svgNumber(my)}" text-anchor="middle">${offGrammar ? "<title>Fora do padrão Event Storming — veja no inspetor</title>" : ""}${esc(caption)}</text></g>`;
   }
   $("#edgePaths").innerHTML = out;
@@ -357,12 +358,15 @@ export function renderBands(): void {
         `<div class="lane-band ${i % 2 ? "alt" : ""}" data-lane="${esc(b.id)}" style="left:${px(b.x)};top:${px(b.top)};width:${px(b.w)};height:${px(b.height)}"></div>`,
     )
     .join("");
-  el.innerHTML = laneHtml + chapterBands(state.visibleKeys, activePositions())
-    .map(
-      (b, i) =>
-        `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${px(b.x)};top:${px(b.y)};width:${px(b.w)};height:${px(b.h)}"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
-    )
-    .join("") + (emo ? emotionHtml(emo) : "");
+  el.innerHTML =
+    laneHtml +
+    chapterBands(state.visibleKeys, activePositions())
+      .map(
+        (b, i) =>
+          `<div class="chapter-band ${i % 2 ? "alt" : ""}" style="left:${px(b.x)};top:${px(b.y)};width:${px(b.w)};height:${px(b.h)}"><span class="chapter-band-label">${esc(b.label)}${b.date ? `<small>${esc(b.date)}</small>` : ""}</span></div>`,
+      )
+      .join("") +
+    (emo ? emotionHtml(emo) : "");
 }
 
 /** Ao trocar de recorte, a seleção múltipla fica só com o que continua visível (Del e arraste agem no que se vê). */
@@ -396,7 +400,10 @@ export function renderGraph(): void {
   const visibleFrames = [...visibleKeys].filter((k) => keyKind(k) === "frame").sort((a, b) => areaOf(b) - areaOf(a));
   $("#frames").innerHTML = visibleFrames.map(frameBgHtml).join("");
   $("#frameUi").innerHTML = visibleFrames.map(frameHtml).join("");
-  $("#nodes").innerHTML = [...visibleKeys].filter((k) => keyKind(k) !== "frame").map(nodeHtml).join("");
+  $("#nodes").innerHTML = [...visibleKeys]
+    .filter((k) => keyKind(k) !== "frame")
+    .map(nodeHtml)
+    .join("");
   measureCardHeights();
   renderBands();
   const bounds = calcBounds();

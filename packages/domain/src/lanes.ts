@@ -14,11 +14,7 @@ export const LANES_BASE: RegistryOption[] = [
   { id: "outros", label: "Outros / a definir" },
 ];
 
-const fold = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /**
  * Sugere a raia a partir do texto livre "Pessoa / Papel" (usado só na migração;

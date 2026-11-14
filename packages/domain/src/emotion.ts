@@ -24,8 +24,7 @@ export const clampEmotion = (v: number): number => Math.max(EMOTION_MIN, Math.mi
 export const hasEmotion = (s: Scene | undefined): s is Scene & { emotion: number } =>
   typeof s?.emotion === "number" && Number.isFinite(s.emotion);
 
-export const emotionLevel = (v: number): EmotionLevel =>
-  EMOTION_LEVELS.find((l) => l.value === clampEmotion(v)) ?? EMOTION_LEVELS[2];
+export const emotionLevel = (v: number): EmotionLevel => EMOTION_LEVELS.find((l) => l.value === clampEmotion(v)) ?? EMOTION_LEVELS[2];
 
 /** "+2", "0", "−1" (sinal tipográfico, para o rótulo). */
 export const emotionSigned = (v: number): string => (v > 0 ? `+${v}` : v < 0 ? `−${-v}` : "0");

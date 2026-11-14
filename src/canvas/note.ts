@@ -1,15 +1,6 @@
 // #10 Nota livre no canvas: nasce onde o cursor está, edita dentro do próprio card
 // (texto, Markdown ou código) e aparece no recorte em que foi criada.
-import {
-  FREE_PLACED_KINDS,
-  buildEntity,
-  newEntityId,
-  keyKind,
-  nodeKey,
-  type NodeKey,
-  type NoteItem,
-  type Point,
-} from "@pep-atlas/domain";
+import { FREE_PLACED_KINDS, buildEntity, newEntityId, keyKind, nodeKey, type NodeKey, type NoteItem, type Point } from "@pep-atlas/domain";
 import { change, pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
 import { get, getByKey, setFocus, state } from "../core/state";

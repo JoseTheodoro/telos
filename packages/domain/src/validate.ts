@@ -15,8 +15,7 @@ const NODE_KEY = new RegExp(`^(${TYPES.join("|")}):`);
 const SIZED_COLLECTIONS = ["canvasNotes", "frames"] as const;
 const DIMENSIONS = ["w", "h"] as const;
 
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+const isRecord = (value: unknown): value is JsonRecord => typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isAbsent = (value: unknown): boolean => value === undefined || value === null;
 
@@ -178,7 +177,10 @@ const ISSUE_LABELS: Record<ValidationIssue["code"], string> = {
 const DESCRIBED_ISSUES = 3;
 
 export function describeIssues(issues: ValidationIssue[]): string {
-  const described = issues.slice(0, DESCRIBED_ISSUES).map(({ path, code }) => `${path} (${ISSUE_LABELS[code]})`).join(", ");
+  const described = issues
+    .slice(0, DESCRIBED_ISSUES)
+    .map(({ path, code }) => `${path} (${ISSUE_LABELS[code]})`)
+    .join(", ");
   const remaining = issues.length - DESCRIBED_ISSUES;
   return remaining > 0 ? `${described} e mais ${remaining}` : described;
 }

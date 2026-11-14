@@ -76,8 +76,7 @@ export function bringIntoView(k: NodeKey, minZoom = 0): void {
   const cam = state.cam;
   const sx = pp.x * cam.z + cam.x;
   const sy = pp.y * cam.z + cam.y;
-  const offscreen =
-    sx < 25 || sx > stage.width - NODE_W * cam.z - 25 || sy < 25 || sy > stage.height - NODE_H * cam.z - 25;
+  const offscreen = sx < 25 || sx > stage.width - NODE_W * cam.z - 25 || sy < 25 || sy > stage.height - NODE_H * cam.z - 25;
   if (offscreen || cam.z < minZoom) {
     cam.z = Math.max(0.65, minZoom, Math.min(0.95, cam.z));
     cam.x = stage.width / 2 - (pp.x + NODE_W / 2) * cam.z;

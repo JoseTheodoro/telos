@@ -2,15 +2,7 @@
 // Fonte única de verdade para card, legenda, inspetor e export SVG.
 import type { NodeKind } from "./types.ts";
 
-export type EsCategory =
-  | "evento"
-  | "comando"
-  | "ator"
-  | "agregado"
-  | "politica"
-  | "leitura"
-  | "externo"
-  | "hotspot";
+export type EsCategory = "evento" | "comando" | "ator" | "agregado" | "politica" | "leitura" | "externo" | "hotspot";
 
 export interface EsStyle {
   id: EsCategory;

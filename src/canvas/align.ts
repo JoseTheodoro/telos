@@ -134,5 +134,7 @@ export function distributeSelection(axis: DistributeAxis): void {
     return;
   }
   const overlap = gap < 0 ? " · não cabem no intervalo e ficaram sobrepostos" : "";
-  notify(`Distribuídos na ${axis === "horizontal" ? "horizontal" : "vertical"}: ${elements(moved)}${carriedNote(carried)}${overlap} · Ctrl+Z desfaz`);
+  notify(
+    `Distribuídos na ${axis === "horizontal" ? "horizontal" : "vertical"}: ${elements(moved)}${carriedNote(carried)}${overlap} · Ctrl+Z desfaz`,
+  );
 }

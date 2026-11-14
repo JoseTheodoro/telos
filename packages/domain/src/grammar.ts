@@ -75,8 +75,7 @@ export function grammarFor(a: End, b: End): Verdict {
   const label = GRAMMAR[from]?.[to];
   if (label) return { applies: true, ok: true, from, to, label };
 
-  const bridge =
-    (Object.keys(GRAMMAR[from] || {}) as EsCategory[]).find((mid) => !!GRAMMAR[mid]?.[to]) ?? null;
+  const bridge = (Object.keys(GRAMMAR[from] || {}) as EsCategory[]).find((mid) => !!GRAMMAR[mid]?.[to]) ?? null;
   return { applies: true, ok: false, from, to, bridge, expected: Object.keys(GRAMMAR[from] || {}) as EsCategory[] };
 }
 
