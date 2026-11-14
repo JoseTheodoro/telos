@@ -122,6 +122,24 @@ describe("static SPA delivery", () => {
     expect(response.headers["content-type"]).toContain("text/html");
   });
 
+  it("answers an unsatisfiable Range on an asset with 416 and the status text", async () => {
+    app = createTestApp();
+
+    const response = await app.inject({ method: "GET", url: "/assets/app-7b2e4d.js", headers: { range: "bytes=999999-" } });
+
+    expect(response.statusCode).toBe(416);
+    expect(response.json<Record<string, unknown>>()).toMatchObject({ statusCode: 416, message: "Range Not Satisfiable" });
+  });
+
+  it("answers a failed If-Match on an asset with 412 and the status text", async () => {
+    app = createTestApp();
+
+    const response = await app.inject({ method: "GET", url: "/assets/app-7b2e4d.js", headers: { "if-match": '"synthetic-etag"' } });
+
+    expect(response.statusCode).toBe(412);
+    expect(response.json<Record<string, unknown>>()).toMatchObject({ statusCode: 412, message: "Precondition Failed" });
+  });
+
   it("returns JSON 404 for a missing asset", async () => {
     app = createTestApp();
 

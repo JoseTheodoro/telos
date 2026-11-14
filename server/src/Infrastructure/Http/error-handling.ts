@@ -11,8 +11,8 @@ const NOT_FOUND = 404;
 type RequestError = FastifyError & { expose?: boolean; status?: number };
 type ClientError = RequestError & { statusCode: number };
 
-function isClientStatus(statusCode: number): boolean {
-  return statusCode < INTERNAL_SERVER_ERROR;
+function clientStatusOf(statusCode: number | undefined): number | null {
+  return typeof statusCode === "number" && statusCode < INTERNAL_SERVER_ERROR ? statusCode : null;
 }
 
 export function registerErrorHandling(app: FastifyInstance): void {
@@ -22,10 +22,10 @@ export function registerErrorHandling(app: FastifyInstance): void {
 
 // Erros antes do roteamento (URL malformada) não passam pelos hooks nem pelo error handler; a mensagem do Fastify ecoa a URL crua.
 export function handleFrameworkError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): void {
-  const { statusCode } = error;
+  const clientStatus = clientStatusOf(error.statusCode);
   setCorrelationIdHeader(request, reply);
-  if (typeof statusCode === "number" && isClientStatus(statusCode)) sendError(request, reply, statusCode, BAD_REQUEST_MESSAGE);
-  else sendError(request, reply, INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MESSAGE);
+  if (clientStatus === null) sendError(request, reply, INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MESSAGE);
+  else sendError(request, reply, clientStatus, BAD_REQUEST_MESSAGE);
 }
 
 function handleError(error: RequestError, request: FastifyRequest, reply: FastifyReply): void {
@@ -51,7 +51,7 @@ function handleNotFound(request: FastifyRequest, reply: FastifyReply): void {
 function isClientError(error: RequestError): error is ClientError {
   const fromFastify = error.code?.startsWith("FST_") === true;
   const fromHttpErrors = typeof error.expose === "boolean" && error.status === error.statusCode;
-  return (fromFastify || fromHttpErrors) && typeof error.statusCode === "number" && isClientStatus(error.statusCode);
+  return (fromFastify || fromHttpErrors) && clientStatusOf(error.statusCode) !== null;
 }
 
 function sendError(request: FastifyRequest, reply: FastifyReply, statusCode: number, message: string): void {
