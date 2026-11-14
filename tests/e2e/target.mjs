@@ -7,6 +7,8 @@ const STORE = "pep-atlas-studio-v4";
 
 export const appUrl = () => process.env.E2E_BASE_URL || `file://${root}/dist/portable/index.html`;
 
+export const telosUrl = (hash = "") => `${appUrl()}/telos.html${hash}`;
+
 const readFixture = (name) => fs.readFileSync(path.join(root, "tests/e2e/fixtures", name), "utf8");
 
 const INLINE_HANDLER_DIRECTIVE = "script-src-attr";
@@ -61,4 +63,9 @@ export async function openApp(page, { fixture = "oficina-sintetica.json", url = 
     if (!localStorage.getItem(key)) localStorage.setItem(key, raw);
   }, [STORE, readFixture(fixture)]);
   await page.goto(url);
+}
+
+export async function openTelos(page, hash = "") {
+  await watchCspViolations(page);
+  await page.goto(telosUrl(hash));
 }

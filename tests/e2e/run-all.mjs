@@ -10,10 +10,17 @@ const ROOT = path.resolve(here, "../..");
 const SHOTS = path.join(here, "shots");
 fs.mkdirSync(SHOTS, { recursive: true });
 
+// O app novo (telos.html) só existe no build do servidor; em file:// os roteiros dele ficam de fora até a substituição do Atlas.
+const servesTelos = /^https?:/.test(process.env.E2E_BASE_URL || "");
+const telosScripts = servesTelos
+  ? fs.readdirSync(path.join(here, "telos")).filter((f) => f.endsWith(".mjs")).map((f) => `telos/${f}`)
+  : [];
+
 const only = process.argv.slice(2);
 const scripts = fs
   .readdirSync(here)
   .filter((f) => f.endsWith(".mjs") && f !== "run-all.mjs" && f !== "target.mjs")
+  .concat(telosScripts)
   .filter((f) => !only.length || only.includes(f.replace(".mjs", "")));
 
 let bad = 0;
