@@ -37,6 +37,8 @@ function placeCaretAtEnd(element: HTMLElement): void {
 
 const hasModifier = (event: KeyboardEvent): boolean => event.ctrlKey || event.metaKey || event.altKey;
 
+const isInsideText = (target: EventTarget | null): boolean => target instanceof Element && target.closest(".sticky-text") !== null;
+
 export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): void {
   const world = el("div", { class: "world" });
   const nodes = new Map<string, HTMLElement>();
@@ -45,6 +47,7 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
   let editingId: string | null = null;
 
   const save = (): void => store.save(board);
+  const isEditing = (id: string | null): boolean => id !== null && id === editingId;
 
   const partsOf = (id: string): StickyParts | null => {
     const sticky = board.stickies.find((candidate) => candidate.id === id);
@@ -127,8 +130,8 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
 
   wall.addEventListener("pointerdown", (event) => {
     const id = stickyIdAt(event.target);
-    if (id && id === editingId) {
-      if (!(event.target instanceof Element && event.target.closest(".sticky-text"))) event.preventDefault();
+    if (isEditing(id)) {
+      if (!isInsideText(event.target)) event.preventDefault();
       return;
     }
     select(id);
@@ -140,7 +143,7 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);
-    if (id && id === editingId) return;
+    if (isEditing(id)) return;
     if (id) startEditing(id);
     else createAt(toWorld(event.clientX, event.clientY));
   });

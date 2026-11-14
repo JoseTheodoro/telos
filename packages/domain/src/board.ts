@@ -46,35 +46,36 @@ export function createSticky(kind: StickyKind, at: Point): Sticky {
 
 const pathOf = (parent: string, key: string | number): string => (parent ? `${parent}.${key}` : String(key));
 
-type Report = (path: string, code: BoardIssue["code"]) => void;
+type ReportIssue = (path: string, code: BoardIssue["code"]) => void;
 
-function readString(record: JsonRecord, key: string, parent: string, report: Report): string {
+function readString(record: JsonRecord, key: string, parent: string, report: ReportIssue): string {
   const value = record[key];
   if (typeof value === "string") return value;
   report(pathOf(parent, key), "not_string");
   return "";
 }
 
-function readId(record: JsonRecord, parent: string, report: Report): string {
-  const id = readString(record, "id", parent, report);
-  if (typeof record.id === "string" && !id) report(pathOf(parent, "id"), "empty");
-  return id;
+function readId(record: JsonRecord, parent: string, report: ReportIssue): string {
+  const id = record.id;
+  if (typeof id !== "string") report(pathOf(parent, "id"), "not_string");
+  else if (!id) report(pathOf(parent, "id"), "empty");
+  return typeof id === "string" ? id : "";
 }
 
-function readFinite(record: JsonRecord, key: string, parent: string, report: Report): number {
+function readFinite(record: JsonRecord, key: string, parent: string, report: ReportIssue): number {
   const value = record[key];
   if (typeof value === "number" && Number.isFinite(value)) return value;
   report(pathOf(parent, key), typeof value === "number" ? "not_finite" : "not_number");
   return 0;
 }
 
-function readKind(record: JsonRecord, parent: string, report: Report): StickyKind {
+function readKind(record: JsonRecord, parent: string, report: ReportIssue): StickyKind {
   if (isStickyKind(record.kind)) return record.kind;
   report(pathOf(parent, "kind"), "unknown_kind");
   return STICKY_KINDS[0];
 }
 
-function readSticky(value: unknown, path: string, report: Report): Sticky | null {
+function readSticky(value: unknown, path: string, report: ReportIssue): Sticky | null {
   if (!isRecord(value)) {
     report(path, "invalid_structure");
     return null;
@@ -90,7 +91,7 @@ function readSticky(value: unknown, path: string, report: Report): Sticky | null
   };
 }
 
-function readStickies(record: JsonRecord, report: Report): Sticky[] {
+function readStickies(record: JsonRecord, report: ReportIssue): Sticky[] {
   const value = record.stickies;
   if (!Array.isArray(value)) {
     report("stickies", "not_array");
@@ -102,7 +103,7 @@ function readStickies(record: JsonRecord, report: Report): Sticky[] {
 export function parseBoard(input: unknown): BoardParseResult {
   if (!isRecord(input)) return { ok: false, issues: [{ path: "", code: "invalid_structure" }] };
   const issues: BoardIssue[] = [];
-  const report: Report = (path, code) => issues.push({ path, code });
+  const report: ReportIssue = (path, code) => issues.push({ path, code });
   if (input.schema !== BOARD_SCHEMA) report("schema", "unknown_schema");
   const id = readId(input, "", report);
   const title = readString(input, "title", "", report);
