@@ -151,7 +151,8 @@ export function bindSidebar(): void {
     if (collapse) {
       e.stopPropagation();
       const key = collapse.dataset.collapse as string;
-      state.collapsed.has(key) ? state.collapsed.delete(key) : state.collapsed.add(key);
+      if (state.collapsed.has(key)) state.collapsed.delete(key);
+      else state.collapsed.add(key);
       renderSidebar();
       return;
     }

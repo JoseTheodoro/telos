@@ -11,13 +11,20 @@
     "dev": "vite",
     "build": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit && npm run typecheck -w @pep-atlas/domain",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test",
-    "test:e2e": "node tests/e2e/run-all.mjs"
+    "check": "npm run typecheck && npm run lint && npm test && npm test --workspaces --if-present",
+    "test:e2e": "node tests/e2e/run-all.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "prettier": "^3.10.1",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2",
     "vite": "^8.3.8",
     "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^5.1.0"

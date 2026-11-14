@@ -127,7 +127,8 @@ function bindKeyboard(): void {
     const key = e.key.toLowerCase();
     if (mod && key === "z") {
       e.preventDefault();
-      e.shiftKey ? redo() : undo();
+      if (e.shiftKey) redo();
+      else undo();
       return;
     }
     if (mod && key === "y") {
