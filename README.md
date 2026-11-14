@@ -10,7 +10,7 @@ Parede digital de **Event Storming** num canvas limpo, para qualquer domínio. O
 
 ## Abrir (uso)
 
-O build portátil gera **um único HTML estático**: `dist/portable/index.html`. Abra com duplo clique (`file://`) ou publique em qualquer host estático. Não é preciso servidor. O build do servidor (`dist/web`, com arquivos em hash) é entregue pelo servidor NestJS.
+O build portátil gera **um único HTML estático**: `dist/portable/index.html`. Abra com duplo clique (`file://`) ou publique em qualquer host estático. Não é preciso servidor. O build do servidor (`dist/web`, com arquivos em hash) é entregue pelo servidor Fastify.
 
 ## Desenvolver
 
