@@ -164,6 +164,42 @@ a {
   outline-offset: -2px;
 }
 
+.world {
+  position: absolute;
+  inset: 0;
+}
+
+.sticky {
+  position: absolute;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--sticky-outline);
+  border-radius: var(--radius-s);
+  background: var(--sticky-bg);
+  box-shadow: var(--shadow-s);
+  color: var(--color-ink);
+  font-size: var(--text-16);
+  line-height: var(--leading-tight);
+  cursor: default;
+  transition: box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.sticky.is-selected {
+  box-shadow:
+    0 0 0 2px var(--color-focus),
+    var(--shadow-m);
+}
+
+.sticky.is-editing {
+  cursor: text;
+}
+
+.sticky-text {
+  min-height: 1lh;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
 .topbar {
   position: absolute;
   top: var(--space-3);

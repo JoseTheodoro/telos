@@ -35,6 +35,8 @@ and FigJam-like visual editors.
   (label `adr`). The only Markdown documents in the repo are `README.md` and `docs/glossario.md`.
 - Pick work from the `Ready` column of the "Telos" project board. Move the issue to `In progress` when you start and to
   `In review` when the PR opens; the PR body says `Closes #<issue>`.
+- After the merge, move the issue to `Done` and move every issue it was blocking, now unblocked, to `Ready`; the board
+  does not do either automatically.
 
 ## Code Comments Policy
 
