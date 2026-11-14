@@ -17,7 +17,6 @@ export const SHUTDOWN_GRACE_MS = 10_000;
 export interface CreateAppOptions {
   logStream?: { write(message: string): void };
   shutdownGraceMs?: number;
-  shutdownTelemetry?: () => Promise<void>;
 }
 
 export async function createApp(env: Env, options: CreateAppOptions = {}): Promise<NestFastifyApplication> {
@@ -36,7 +35,6 @@ export async function createApp(env: Env, options: CreateAppOptions = {}): Promi
   const fastify = app.getHttpAdapter().getInstance();
   fastify.addHook("onRequest", echoCorrelationId);
   closeLingeringConnectionsAfter(fastify, options.shutdownGraceMs ?? SHUTDOWN_GRACE_MS);
-  flushTelemetryAfterDrain(fastify, options.shutdownTelemetry);
   await registerStatic(fastify, env.WEB_DIST_DIR ?? defaultWebDistDir());
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
@@ -53,16 +51,4 @@ function closeLingeringConnectionsAfter(fastify: FastifyInstance, graceMs: numbe
     timer.unref();
   });
   fastify.addHook("onClose", () => clearTimeout(timer));
-}
-
-// onClose roda depois que o servidor drenou as requisições em andamento; o flush antes disso perderia os spans delas.
-function flushTelemetryAfterDrain(fastify: FastifyInstance, shutdownTelemetry: (() => Promise<void>) | undefined): void {
-  if (!shutdownTelemetry) return;
-  fastify.addHook("onClose", async () => {
-    try {
-      await shutdownTelemetry();
-    } catch (error) {
-      fastify.log.error({ err: error }, "Falha ao encerrar a telemetria");
-    }
-  });
 }

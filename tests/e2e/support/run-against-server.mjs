@@ -54,11 +54,11 @@ const stop = (server) =>
 
 const port = await freePort();
 const baseUrl = `http://127.0.0.1:${port}`;
-const server = spawn(
-  process.execPath,
-  ["--import", "./dist/Infrastructure/Observability/instrumentation.js", "./dist/main.js"],
-  { cwd: serverDir, env: { ...process.env, NODE_ENV: "production", PORT: String(port), HOST: "127.0.0.1" }, stdio: ["ignore", "ignore", "inherit"] },
-);
+const server = spawn(process.execPath, ["./dist/main.js"], {
+  cwd: serverDir,
+  env: { ...process.env, NODE_ENV: "production", PORT: String(port), HOST: "127.0.0.1" },
+  stdio: ["ignore", "ignore", "inherit"],
+});
 
 let exitCode = 1;
 try {

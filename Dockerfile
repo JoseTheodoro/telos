@@ -25,4 +25,4 @@ COPY --from=build /app/dist/web ./dist/web
 WORKDIR /app/server
 USER node
 EXPOSE 8080
-CMD ["node", "--import", "./dist/Infrastructure/Observability/instrumentation.js", "./dist/main.js"]
+CMD ["node", "./dist/main.js"]
