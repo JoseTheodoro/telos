@@ -7,19 +7,18 @@ import {
   HOTSPOT_PRIORITY_OPTIONS,
   HOTSPOT_STATUS_OPTIONS,
   PL,
-} from "../domain/constants";
-import { ES_STYLES, esStyle, type EsCategory } from "../domain/es";
-import { categoryLabel } from "../domain/grammar";
-import { DEFAULT_LANE, laneOf } from "../domain/lanes";
-import { EMOTION_LEVELS, emotionSigned, hasEmotion } from "../domain/emotion";
-import { addHotspot } from "../canvas/hotspot";
-import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
-import { containedKeys } from "../canvas/frame";
-import { MIN_TO_DISTRIBUTE, alignSelection, distributeSelection, type AlignEdge, type DistributeAxis } from "../canvas/align";
-import { docsLinkedTo, newDoc, openDoc } from "./docs";
-import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
-import { keyKind, newId, nodeKey } from "../domain/keys";
-import {
+  ES_STYLES,
+  esStyle,
+  type EsCategory,
+  categoryLabel,
+  DEFAULT_LANE,
+  laneOf,
+  EMOTION_LEVELS,
+  emotionSigned,
+  hasEmotion,
+  keyKind,
+  newId,
+  nodeKey,
   collection,
   colorForEdge,
   defaultEdgeName,
@@ -29,8 +28,21 @@ import {
   isTableLink,
   syncMaps,
   validColor,
-} from "../domain/model";
-import type { AnyEntity, Edge, FrameItem, NodeKey, NodeKind, NoteItem, RegistryOption, Scene } from "../domain/types";
+  type AnyEntity,
+  type Edge,
+  type FrameItem,
+  type NodeKey,
+  type NodeKind,
+  type NoteItem,
+  type RegistryOption,
+  type Scene,
+} from "@pep-atlas/domain";
+import { addHotspot } from "../canvas/hotspot";
+import { copyNote, rememberFormat, scopeName, startNoteEdit } from "../canvas/note";
+import { containedKeys } from "../canvas/frame";
+import { MIN_TO_DISTRIBUTE, alignSelection, distributeSelection, type AlignEdge, type DistributeAxis } from "../canvas/align";
+import { docsLinkedTo, newDoc, openDoc } from "./docs";
+import { NOTE_FORMATS, isCodeFormat, jsonError, prettyJson } from "./rich";
 import { change, pushSnapshot } from "../core/history";
 import { persist } from "../core/persistence";
 import { degree, findEdge, getByKey, label, related, selectedNodeKeys, selectedSingleNode, state } from "../core/state";

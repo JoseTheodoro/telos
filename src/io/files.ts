@@ -1,10 +1,25 @@
 // Importação e exportação (JSON, CSV, SVG).
-import { COLORS, NODE_H, NODE_W, PL } from "../domain/constants";
-import { keyKind, nodeKey } from "../domain/keys";
-import { esStyle } from "../domain/es";
-import { colorForEdge, isTableLink, semanticLabel } from "../domain/model";
-import type { Chapter, NoteItem, Scene } from "../domain/types";
-import { describeIssues, parseWorkspace, type ValidationIssue } from "../domain/validate";
+import {
+  COLORS,
+  NODE_H,
+  NODE_W,
+  PL,
+  keyKind,
+  nodeKey,
+  esStyle,
+  colorForEdge,
+  isTableLink,
+  semanticLabel,
+  type Chapter,
+  type NoteItem,
+  type Scene,
+  describeIssues,
+  parseWorkspace,
+  type ValidationIssue,
+  emotionLevel,
+  emotionSigned,
+  hasEmotion,
+} from "@pep-atlas/domain";
 import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
@@ -14,7 +29,6 @@ import { edgeGeometry } from "../canvas/render";
 import { chapterBands, laneBands } from "../canvas/timeline";
 import { emotionBand, emotionSvg } from "../canvas/emotion";
 import { formatLabel, isCodeFormat } from "../ui/rich";
-import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { $, esc, notify, saveFile } from "../ui/dom";
 
 export function exportJson(): void {

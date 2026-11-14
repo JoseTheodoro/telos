@@ -1,6 +1,6 @@
 // Gramática visual do Event Storming: cada nó ganha a cor do post-it canônico.
 // Fonte única de verdade para card, legenda, inspetor e export SVG.
-import type { NodeKind } from "./types";
+import type { NodeKind } from "./types.ts";
 
 export type EsCategory =
   | "evento"

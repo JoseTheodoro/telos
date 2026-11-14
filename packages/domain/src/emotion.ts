@@ -1,5 +1,5 @@
 // #8 Curva de emoção: como a pessoa se sente em cada cena (−2…+2) e a dor (pain point).
-import type { Scene, Workspace } from "./types";
+import type { Scene, Workspace } from "./types.ts";
 
 export interface EmotionLevel {
   value: number;

@@ -1,7 +1,5 @@
 // #2 Edição inline do nome no card (duplo clique ou F2).
-import { keyKind } from "../domain/keys";
-import { nameField } from "../domain/model";
-import type { NodeKey } from "../domain/types";
+import { keyKind, nameField, type NodeKey } from "@pep-atlas/domain";
 import { change, undo } from "../core/history";
 import { persist } from "../core/persistence";
 import { getByKey, label, state } from "../core/state";

@@ -1,19 +1,21 @@
 // Estado de runtime da aplicação (único objeto mutável compartilhado entre módulos).
-import { entityLabel, getEntity, getEntityByKey } from "../domain/model";
-import type {
-  AnyEntity,
-  Camera,
-  LayoutMode,
-  Edge,
-  NodeKey,
-  NodeKind,
-  Point,
-  PortSide,
-  Selection,
-  SidebarTab,
-  ToolMode,
-  Workspace,
-} from "../domain/types";
+import {
+  entityLabel,
+  getEntity,
+  getEntityByKey,
+  type AnyEntity,
+  type Camera,
+  type LayoutMode,
+  type Edge,
+  type NodeKey,
+  type NodeKind,
+  type Point,
+  type PortSide,
+  type Selection,
+  type SidebarTab,
+  type ToolMode,
+  type Workspace,
+} from "@pep-atlas/domain";
 import type { GuideLines } from "../canvas/guides";
 
 export type Dragging =

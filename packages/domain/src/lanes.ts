@@ -1,5 +1,5 @@
 // #7 Raias por ator: quem age em cada cena (campo explícito `scene.lane`).
-import type { RegistryOption, Scene, Workspace } from "./types";
+import type { RegistryOption, Scene, Workspace } from "./types.ts";
 
 export const DEFAULT_LANE = "outros";
 

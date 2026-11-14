@@ -1,7 +1,15 @@
 // Posições por recorte e layout automático em camadas.
-import { COL, FREE_PLACED_KINDS, TYPES } from "../domain/constants";
-import { keyId, keyKind } from "../domain/keys";
-import type { NodeKey, NodeKind, Point, Positions } from "../domain/types";
+import {
+  COL,
+  FREE_PLACED_KINDS,
+  TYPES,
+  keyId,
+  keyKind,
+  type NodeKey,
+  type NodeKind,
+  type Point,
+  type Positions,
+} from "@pep-atlas/domain";
 import { persist } from "../core/persistence";
 import { undoPush } from "../core/history";
 import { state } from "../core/state";

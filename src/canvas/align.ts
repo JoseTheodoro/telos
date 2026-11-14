@@ -1,5 +1,5 @@
 // #14 Alinhar e distribuir a seleção múltipla (botões do inspetor em lote). Cada ação é um só undo.
-import type { NodeKey, Point } from "../domain/types";
+import { type NodeKey, type Point } from "@pep-atlas/domain";
 import { change } from "../core/history";
 import { selectedNodeKeys, state } from "../core/state";
 import { notify } from "../ui/dom";

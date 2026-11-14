@@ -1,4 +1,4 @@
-import type { CollectionName, EdgeSide, NodeKind, PortSide } from "./types";
+import type { CollectionName, EdgeSide, NodeKind, PortSide } from "./types.ts";
 
 export const TYPES: NodeKind[] = [
   "journey",

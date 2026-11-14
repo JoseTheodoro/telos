@@ -1,6 +1,5 @@
 // Câmera do canvas: pan, zoom, enquadrar.
-import { GRID_STEP, NODE_H, NODE_W } from "../domain/constants";
-import type { NodeKey, Point } from "../domain/types";
+import { GRID_STEP, NODE_H, NODE_W, type NodeKey, type Point } from "@pep-atlas/domain";
 import { queueViewPersist } from "../core/persistence";
 import { state } from "../core/state";
 import { $ } from "../ui/dom";

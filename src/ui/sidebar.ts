@@ -1,8 +1,16 @@
 // Barra lateral (árvore da jornada, catálogo, hotspots) e filtros de recorte.
-import { COLORS, PL, TYPES } from "../domain/constants";
-import { nodeKey } from "../domain/keys";
-import { childCount, collection } from "../domain/model";
-import type { Chapter, Journey, NodeKind, SidebarTab } from "../domain/types";
+import {
+  COLORS,
+  PL,
+  TYPES,
+  nodeKey,
+  childCount,
+  collection,
+  type Chapter,
+  type Journey,
+  type NodeKind,
+  type SidebarTab,
+} from "@pep-atlas/domain";
 import { queueViewPersist } from "../core/persistence";
 import { get, isNodeSelected, label, related, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";

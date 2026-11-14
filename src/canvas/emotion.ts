@@ -1,10 +1,19 @@
 // #8 Curva de emoção acima da timeline (como num journey map): um ponto por cena,
 // alinhado à coluna da cena; arrastar o ponto para cima/baixo muda a nota.
 // A geometria fica aqui sem depender de layout.ts (calcBounds usa esta faixa).
-import { NODE_W } from "../domain/constants";
-import { EMOTION_MAX, emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
-import { keyId, keyKind, nodeKey } from "../domain/keys";
-import type { NodeKey, Positions, Scene } from "../domain/types";
+import {
+  NODE_W,
+  EMOTION_MAX,
+  emotionLevel,
+  emotionSigned,
+  hasEmotion,
+  keyId,
+  keyKind,
+  nodeKey,
+  type NodeKey,
+  type Positions,
+  type Scene,
+} from "@pep-atlas/domain";
 import { state } from "../core/state";
 import { esc } from "../ui/dom";
 

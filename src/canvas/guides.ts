@@ -1,8 +1,7 @@
 // #14 Encaixe do arraste: guias de alinhamento com os cards parados e, longe delas, a grade de 24 px.
 // A guia vence a grade em cada eixo: o "Organizar" gera posições fora da grade, e um card que volta
 // para a sua linha precisa encaixar nos vizinhos, não alguns pixels ao lado.
-import { GRID_STEP } from "../domain/constants";
-import type { NodeKey, Point } from "../domain/types";
+import { GRID_STEP, type NodeKey, type Point } from "@pep-atlas/domain";
 import { state } from "../core/state";
 import { $ } from "../ui/dom";
 import { pos } from "./layout";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import workshop from "../../tests/e2e/fixtures/oficina-sintetica.json";
-import fixtureWithHotspotBox from "../../tests/e2e/fixtures/with-hotspot-box.json";
-import { describeIssues, parseWorkspace } from "./validate";
+import workshop from "../../../tests/e2e/fixtures/oficina-sintetica.json";
+import fixtureWithHotspotBox from "../../../tests/e2e/fixtures/with-hotspot-box.json";
+import { describeIssues, parseWorkspace } from "./validate.ts";
 
 const validDocument = (overrides: Record<string, unknown> = {}, graph: Record<string, unknown> = {}) => ({
   schema: "pep-atlas-studio-v4",

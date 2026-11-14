@@ -1,9 +1,16 @@
 // #11 Moldura: delimita uma área do canvas ("Bounded context Assistencial", "Fluxo de triagem").
 // É pega pela faixa do título; o fundo deixa passar o mouse (pan, laço e duplo clique continuam funcionando).
-import { FRAME_PALETTE } from "../domain/constants";
-import { buildEntity, DEFAULT_NAME, newEntityId } from "../domain/factory";
-import { keyKind, nodeKey } from "../domain/keys";
-import type { FrameItem, NodeKey, Point } from "../domain/types";
+import {
+  FRAME_PALETTE,
+  buildEntity,
+  DEFAULT_NAME,
+  newEntityId,
+  keyKind,
+  nodeKey,
+  type FrameItem,
+  type NodeKey,
+  type Point,
+} from "@pep-atlas/domain";
 import { change } from "../core/history";
 import { selectedNodeKeys, state } from "../core/state";
 import { $, notify } from "../ui/dom";

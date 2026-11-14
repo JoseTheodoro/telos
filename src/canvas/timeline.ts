@@ -2,10 +2,22 @@
 // Linhas (de cima para baixo): hotspots · jornada · capítulos · cenas · EVENTOS ·
 // fluxo ES (caixas livres) · domínios · sistemas · telas · tabelas.
 // #7 Com raias, a linha de EVENTOS vira uma faixa por ator (quem age na cena).
-import { FREE_PLACED_KINDS, NARRATIVE_KINDS, NODE_H, NODE_W } from "../domain/constants";
-import { keyKind, nodeKey } from "../domain/keys";
-import { laneOf } from "../domain/lanes";
-import type { Chapter, EventItem, NodeKey, NodeKind, Point, Positions, Scene } from "../domain/types";
+import {
+  FREE_PLACED_KINDS,
+  NARRATIVE_KINDS,
+  NODE_H,
+  NODE_W,
+  keyKind,
+  nodeKey,
+  laneOf,
+  type Chapter,
+  type EventItem,
+  type NodeKey,
+  type NodeKind,
+  type Point,
+  type Positions,
+  type Scene,
+} from "@pep-atlas/domain";
 import { related, state } from "../core/state";
 import { sizeOf } from "./size";
 

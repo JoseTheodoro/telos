@@ -1,4 +1,4 @@
-import type { NodeKey, NodeKind } from "./types";
+import type { NodeKey, NodeKind } from "./types.ts";
 
 export const nodeKey = (kind: NodeKind | string, id: string): NodeKey => kind + ":" + id;
 

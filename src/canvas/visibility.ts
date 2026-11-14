@@ -1,7 +1,5 @@
 // Quais nós aparecem no recorte atual (jornada / capítulo / cena / mapa completo).
-import { ARR, NARRATIVE_KINDS, TYPES } from "../domain/constants";
-import { keyKind, nodeKey } from "../domain/keys";
-import type { AnyEntity, NodeKey } from "../domain/types";
+import { ARR, NARRATIVE_KINDS, TYPES, keyKind, nodeKey, type AnyEntity, type NodeKey } from "@pep-atlas/domain";
 import { get, getByKey, state } from "../core/state";
 
 const isNarrative = (k: NodeKey) => NARRATIVE_KINDS.includes(keyKind(k));

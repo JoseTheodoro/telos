@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { edgeVerdict, upgradeWorkspace } from "./model";
+import { edgeVerdict, upgradeWorkspace } from "./model.ts";
 
 const workspace = () =>
   upgradeWorkspace({

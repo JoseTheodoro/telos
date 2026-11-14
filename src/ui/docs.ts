@@ -1,7 +1,6 @@
 // #21 Caderno: notas em Markdown, cada uma opcionalmente vinculada a uma jornada ou capítulo.
 // Área própria (aba "Caderno" no topo), ao lado do canvas; o recorte da barra lateral filtra as notas.
-import { newId } from "../domain/keys";
-import type { DocNote } from "../domain/types";
+import { newId, type DocNote } from "@pep-atlas/domain";
 import { change, pushSnapshot } from "../core/history";
 import { persistViewNow, queuePersist } from "../core/persistence";
 import { get, state } from "../core/state";

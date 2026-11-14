@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import workshop from "../../tests/e2e/fixtures/oficina-sintetica.json";
-import { graphInit, syncMaps, upgradeWorkspace } from "./model";
+import workshop from "../../../tests/e2e/fixtures/oficina-sintetica.json";
+import { graphInit, syncMaps, upgradeWorkspace } from "./model.ts";
 
 const containmentEdges = (edges: { from: string; to: string; label: string }[], fromKind: string, toKind: string) =>
   edges.filter((edge) => edge.label === "contém" && edge.from.startsWith(fromKind + ":") && edge.to.startsWith(toKind + ":"));

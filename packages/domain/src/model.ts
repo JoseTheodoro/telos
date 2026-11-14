@@ -11,13 +11,13 @@ import {
   TABLE_COLORS,
   TYPES,
   UNDEFINED_SEMANTIC,
-} from "./constants";
-import { newEntityId } from "./factory";
-import { upgradeLanes } from "./lanes";
-import { upgradeEmotion } from "./emotion";
-import { grammarFor, type End, type Verdict } from "./grammar";
-import { keyId, keyKind, newId, nodeKey } from "./keys";
-import type { AnyEntity, DomainRole, Edge, Journey, NodeKey, NodeKind, Table, Workspace } from "./types";
+} from "./constants.ts";
+import { newEntityId } from "./factory.ts";
+import { upgradeLanes } from "./lanes.ts";
+import { upgradeEmotion } from "./emotion.ts";
+import { grammarFor, type End, type Verdict } from "./grammar.ts";
+import { keyId, keyKind, newId, nodeKey } from "./keys.ts";
+import type { AnyEntity, DomainRole, Edge, Journey, NodeKey, NodeKind, Table, Workspace } from "./types.ts";
 
 export const deep = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 

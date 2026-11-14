@@ -1,29 +1,40 @@
 // Renderização do canvas: cards (HTML) e setas (SVG).
-import { ARR, NATURE_BASE, PL, PORT_SIDES, PORT_Y, TYPES } from "../domain/constants";
+import {
+  ARR,
+  NATURE_BASE,
+  PL,
+  PORT_SIDES,
+  PORT_Y,
+  TYPES,
+  keyKind,
+  esCssVars,
+  esStyle,
+  colorForEdge,
+  edgeVerdict,
+  isTableLink,
+  semanticLabel,
+  type AnyEntity,
+  type Chapter,
+  type Edge,
+  type EventItem,
+  type NodeKey,
+  type Point,
+  type PortSide,
+  type Scene,
+  type Screen,
+  type SystemItem,
+  type Table,
+  emotionLevel,
+  emotionSigned,
+  hasEmotion,
+} from "@pep-atlas/domain";
 import { formatLabel, isCodeFormat, jsonError, renderNoteBody } from "../ui/rich";
-import { keyKind } from "../domain/keys";
-import { esCssVars, esStyle } from "../domain/es";
-import { colorForEdge, edgeVerdict, isTableLink, semanticLabel } from "../domain/model";
-import type {
-  AnyEntity,
-  Chapter,
-  Edge,
-  EventItem,
-  NodeKey,
-  Point,
-  PortSide,
-  Scene,
-  Screen,
-  SystemItem,
-  Table,
-} from "../domain/types";
 import { degree, getByKey, isNodeSelected, label, state } from "../core/state";
 import { $, esc, px, svgNumber } from "../ui/dom";
 import { activePositions, calcBounds, isTimeline, pos, sizeOf } from "./layout";
 import { chapterBands, laneBands } from "./timeline";
 import { renderLaneGutter } from "./lane-gutter";
 import { emotionBand, emotionHtml } from "./emotion";
-import { emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
 import { renderLegend } from "./legend";
 import { containedKeys } from "./frame";
 import { visible } from "./visibility";

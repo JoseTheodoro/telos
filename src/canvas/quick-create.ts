@@ -1,12 +1,28 @@
 // #3 Criação encadeada ("tempestade rápida"), na convenção de mapas mentais:
 //   Tab   → próximo passo / filho, conectado, à direita
 //   Enter → irmão (mesmo tipo e mesmo pai), abaixo
-import { NODE_H, NODE_W, PL } from "../domain/constants";
-import { DEFAULT_NAME, PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
-import { keyId, keyKind, nodeKey } from "../domain/keys";
-import { collection, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
-import { nextSemanticType } from "../domain/grammar";
-import type { AnyEntity, NodeKey, NodeKind, Point } from "../domain/types";
+import {
+  NODE_H,
+  NODE_W,
+  PL,
+  DEFAULT_NAME,
+  PARENT_FIELD,
+  buildEntity,
+  initMappings,
+  newEntityId,
+  keyId,
+  keyKind,
+  nodeKey,
+  collection,
+  defaultEdgeName,
+  edgeFor,
+  syncMaps,
+  nextSemanticType,
+  type AnyEntity,
+  type NodeKey,
+  type NodeKind,
+  type Point,
+} from "@pep-atlas/domain";
 import { change } from "../core/history";
 import { getByKey, setFocus, state } from "../core/state";
 import { notify } from "../ui/dom";

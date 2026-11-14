@@ -1,9 +1,27 @@
 // Modal: criação de elementos, lista de conexões e limpeza do canvas.
-import { ARR, CONTAINMENT_LABEL, COL, MODAL_TYPES, PL, TYPES } from "../domain/constants";
-import { keyKind, nodeKey } from "../domain/keys";
-import { CONTAINMENT, colorForEdge, defaultEdgeName, edgeFor, syncMaps } from "../domain/model";
-import { PARENT_FIELD, buildEntity, initMappings, newEntityId } from "../domain/factory";
-import type { AnyEntity, Chapter, NodeKind, Scene } from "../domain/types";
+import {
+  ARR,
+  CONTAINMENT_LABEL,
+  COL,
+  MODAL_TYPES,
+  PL,
+  TYPES,
+  keyKind,
+  nodeKey,
+  CONTAINMENT,
+  colorForEdge,
+  defaultEdgeName,
+  edgeFor,
+  syncMaps,
+  PARENT_FIELD,
+  buildEntity,
+  initMappings,
+  newEntityId,
+  type AnyEntity,
+  type Chapter,
+  type NodeKind,
+  type Scene,
+} from "@pep-atlas/domain";
 import { change } from "../core/history";
 import { cancelViewPersist, persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";

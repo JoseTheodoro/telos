@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defaultClientConditions, defineConfig } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
 // O build gera dist/index.html autocontido (JS e CSS inline):
@@ -6,6 +6,9 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig({
   base: "./",
   plugins: [viteSingleFile()],
+  resolve: {
+    conditions: ["atlas-source", ...defaultClientConditions],
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

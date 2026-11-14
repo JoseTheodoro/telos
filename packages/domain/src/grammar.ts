@@ -1,7 +1,7 @@
 // #5 Gramática do Event Storming nas setas: sugere o rótulo e avisa (sem bloquear)
 // quando uma ligação foge do fluxo Ator → Comando → Agregado → Evento → Política → Comando.
-import { ES_STYLES, esCategory, type EsCategory } from "./es";
-import type { NodeKind } from "./types";
+import { ES_STYLES, esCategory, type EsCategory } from "./es.ts";
+import type { NodeKind } from "./types.ts";
 
 /** Fluxo canônico entre categorias: origem → destino → rótulo sugerido. */
 export const GRAMMAR: Partial<Record<EsCategory, Partial<Record<EsCategory, string>>>> = {

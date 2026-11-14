@@ -1,6 +1,9 @@
 // Ações do usuário sobre o grafo (seleção, conexão, exclusão, duplicação, foco).
-import { keyId, keyKind, newId, nodeKey } from "./domain/keys";
 import {
+  keyId,
+  keyKind,
+  newId,
+  nodeKey,
   childKeys,
   collection,
   deep,
@@ -10,10 +13,15 @@ import {
   isContainment,
   nameField,
   syncMaps,
-} from "./domain/model";
-import { categoryLabel } from "./domain/grammar";
-import { newEntityId } from "./domain/factory";
-import type { AnyEntity, Chapter, EventItem, NodeKey, PortSide, Scene } from "./domain/types";
+  categoryLabel,
+  newEntityId,
+  type AnyEntity,
+  type Chapter,
+  type EventItem,
+  type NodeKey,
+  type PortSide,
+  type Scene,
+} from "@pep-atlas/domain";
 import { change, refreshUndo } from "./core/history";
 import { get, getByKey, label, related, selectedNodeKeys, setFocus, state } from "./core/state";
 import { refreshAll, refreshTools } from "./app";

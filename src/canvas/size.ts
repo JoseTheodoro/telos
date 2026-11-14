@@ -1,7 +1,5 @@
 // Tamanho dos cards no mundo: notas e molduras são redimensionáveis; os demais têm tamanho fixo.
-import { FRAME_MIN, NODE_H, NODE_W } from "../domain/constants";
-import { keyKind } from "../domain/keys";
-import type { NodeKey } from "../domain/types";
+import { FRAME_MIN, NODE_H, NODE_W, keyKind, type NodeKey } from "@pep-atlas/domain";
 import { getByKey } from "../core/state";
 
 const NOTE_DEFAULT = { w: 320, h: 180 };

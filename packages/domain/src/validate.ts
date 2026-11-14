@@ -1,6 +1,6 @@
-import { ACCEPTED_SCHEMAS, ARR, TYPES } from "./constants";
-import { deep, graphInit, upgradeWorkspace, validColor } from "./model";
-import type { ViewState, Workspace } from "./types";
+import { ACCEPTED_SCHEMAS, ARR, TYPES } from "./constants.ts";
+import { deep, graphInit, upgradeWorkspace, validColor } from "./model.ts";
+import type { ViewState, Workspace } from "./types.ts";
 
 export interface ValidationIssue {
   path: string;

@@ -1,9 +1,20 @@
 // #9 Modo apresentação: percorre a jornada cena a cena (história, eventos, emoção,
 // dores e hotspots), para conduzir a oficina ou mostrar a descoberta a quem não esteve lá.
-import { EMOTION_LEVELS, emotionLevel, emotionSigned, hasEmotion } from "../domain/emotion";
-import { keyKind, nodeKey } from "../domain/keys";
-import { laneOf } from "../domain/lanes";
-import type { Chapter, Decision, EventItem, NodeKey, RegistryOption, Scene } from "../domain/types";
+import {
+  EMOTION_LEVELS,
+  emotionLevel,
+  emotionSigned,
+  hasEmotion,
+  keyKind,
+  nodeKey,
+  laneOf,
+  type Chapter,
+  type Decision,
+  type EventItem,
+  type NodeKey,
+  type RegistryOption,
+  type Scene,
+} from "@pep-atlas/domain";
 import { change, redo, undo } from "../core/history";
 import { getByKey, label, state } from "../core/state";
 import { ensureVisible, selectNode } from "../actions";

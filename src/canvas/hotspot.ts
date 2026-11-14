@@ -1,9 +1,16 @@
 // #4 Hotspot no canvas: post-it de dúvida preso ao card que ele questiona.
-import { NODE_H, NODE_W } from "../domain/constants";
-import { DEFAULT_NAME, buildEntity, newEntityId } from "../domain/factory";
-import { keyKind, nodeKey } from "../domain/keys";
-import { edgeFor, syncMaps } from "../domain/model";
-import type { NodeKey } from "../domain/types";
+import {
+  NODE_H,
+  NODE_W,
+  DEFAULT_NAME,
+  buildEntity,
+  newEntityId,
+  keyKind,
+  nodeKey,
+  edgeFor,
+  syncMaps,
+  type NodeKey,
+} from "@pep-atlas/domain";
 import { change } from "../core/history";
 import { getByKey, state } from "../core/state";
 import { $, notify } from "../ui/dom";

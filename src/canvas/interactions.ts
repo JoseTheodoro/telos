@@ -1,6 +1,13 @@
 // Eventos do canvas: seleção, arrastar nó, puxar seta, pan, zoom, duplo clique.
-import { keyKind } from "../domain/keys";
-import type { NodeKind, PortSide } from "../domain/types";
+import {
+  keyKind,
+  type NodeKind,
+  type PortSide,
+  clampEmotion,
+  emotionLevel,
+  emotionSigned,
+  nodeKey,
+} from "@pep-atlas/domain";
 import { pushSnapshot, refreshUndo } from "../core/history";
 import { persist } from "../core/persistence";
 import { getByKey, state, type Dragging } from "../core/state";
@@ -16,8 +23,6 @@ import { minSizeOf } from "./size";
 import { copyNote, isNoteEditing, rememberPointer, startNoteEdit } from "./note";
 import { linkGhostPath, renderBands, renderEdges, renderGraph } from "./render";
 import { EMO } from "./emotion";
-import { clampEmotion, emotionLevel, emotionSigned } from "../domain/emotion";
-import { nodeKey } from "../domain/keys";
 import { refreshAll } from "../app";
 
 /** Tipo sugerido ao soltar uma seta no vazio (cria o próximo nó já conectado). */

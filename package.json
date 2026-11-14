@@ -4,13 +4,17 @@
   "private": true,
   "description": "Atlas Studio — Event Storming guiado por jornadas de usuário. Build gera um único HTML estático.",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run build -w @pep-atlas/domain && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck -w @pep-atlas/domain",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "test:e2e": "node tests/e2e/run-all.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

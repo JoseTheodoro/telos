@@ -1,6 +1,6 @@
 // Fábrica de entidades: campos padrão de cada tipo ao criar um elemento.
-import { newId } from "./keys";
-import type { AnyEntity, NodeKind, Workspace } from "./types";
+import { newId } from "./keys.ts";
+import type { AnyEntity, NodeKind, Workspace } from "./types.ts";
 
 /** Campo que aponta para o pai na hierarquia narrativa. */
 export const PARENT_FIELD: Partial<Record<NodeKind, "journeyId" | "chapter" | "sceneId">> = {

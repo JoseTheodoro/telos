@@ -1,7 +1,5 @@
 // Orquestração: render completo, carga inicial, barra de ferramentas e teclado.
-import { NODE_H } from "./domain/constants";
-import { deep } from "./domain/model";
-import type { LayoutMode, ToolMode } from "./domain/types";
+import { NODE_H, deep, type LayoutMode, type ToolMode, keyKind, nodeKey } from "@pep-atlas/domain";
 import { redo, refreshUndo, undo } from "./core/history";
 import { loadInitialWorkspace, persist, persistViewNow } from "./core/persistence";
 import { getByKey, selectedSingleNode, setFocus, state } from "./core/state";
@@ -11,7 +9,6 @@ import { bindCanvas } from "./canvas/interactions";
 import { startInlineEdit } from "./canvas/inline-edit";
 import { quickCreate } from "./canvas/quick-create";
 import { addHotspot } from "./canvas/hotspot";
-import { keyKind, nodeKey } from "./domain/keys";
 import { addNote, rememberPointer, startNoteEdit } from "./canvas/note";
 import { addFrame } from "./canvas/frame";
 import { bindPresentation, startPresentation } from "./ui/presentation";
