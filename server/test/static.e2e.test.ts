@@ -1,14 +1,13 @@
-import { readFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import path from "node:path";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/create-app.js";
 import { loadEnv } from "../src/Infrastructure/Config/env.js";
 import { collectLogLines, createReadyApp } from "./support/test-app.js";
-import { createWebRootFixture, FIXTURE_ASSET_JS, FIXTURE_INDEX_HTML } from "./support/web-root.js";
+import { createWebRootFixture, FIXTURE_ASSET_JS, FIXTURE_INDEX_HTML, OUTSIDE_FILE_MARKER } from "./support/web-root.js";
 
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
-const SERVER_PACKAGE_NAME = JSON.parse(readFileSync(path.resolve(import.meta.dirname, "../package.json"), "utf8")).name as string;
 
 describe("static SPA delivery", () => {
   let app: NestFastifyApplication;
@@ -140,18 +139,19 @@ describe("static SPA delivery", () => {
   });
 
   it.each([
-    "/..%2fpackage.json",
-    "/%2e%2e/package.json",
-    "/assets/..%2f..%2fpackage.json",
-    "/..%5cpackage.json",
-    "/assets/%2e%2e%2f%2e%2e%2fpackage.json",
+    "/..%2foutside.txt",
+    "/%2e%2e/outside.txt",
+    "/%2e%2e%2foutside.txt",
+    "/assets/..%2f..%2foutside.txt",
+    "/..%5coutside.txt",
+    "/assets/%2e%2e%2f%2e%2e%2foutside.txt",
+    "/../outside.txt",
   ])("does not serve files outside the web root (%s)", async (url) => {
     app = await createReadyApp();
 
     const response = await app.inject({ method: "GET", url });
 
-    expect(response.body).not.toContain(SERVER_PACKAGE_NAME);
-    expect(response.body).not.toContain('"dependencies"');
+    expect(response.body).not.toContain(OUTSIDE_FILE_MARKER);
   });
 
   it("index.html carries the CSP and X-Correlation-ID", async () => {

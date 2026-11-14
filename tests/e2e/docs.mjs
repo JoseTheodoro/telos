@@ -1,13 +1,14 @@
 import { chromium } from "playwright-core";
-import { appUrl, isBlockedInlineHandlerMessage, openApp } from "./target.mjs";
+import { appUrl, expectInlineHandlerBlocks, openApp, watchCspViolations } from "./target.mjs";
 import fs from "node:fs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true });
 const page = await ctx.newPage();
-const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && !isBlockedInlineHandlerMessage(m.text()) && errors.push(m.text()));
+const inlineBlocks = expectInlineHandlerBlocks(page);
+const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && !inlineBlocks.isExpectedConsoleError(m.text()) && errors.push(m.text()));
 page.on("dialog", (d) => d.accept());
-await openApp(page, { allowedCspDirectives: ["script-src-attr"] }); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const r = {};
 try {
@@ -75,13 +76,20 @@ try {
   w = await ws(); r.undoDelete = w.docs.length;
   // XSS no markdown
   await page.click(".doc-row >> text=Comandos úteis");
-  await page.fill("#docBody", '<img src="data:," onerror="window.__x=1"><a href="javascript:window.__x=2">x</a><iframe src="about:blank"></iframe>');
-  await page.waitForTimeout(250);
+  await inlineBlocks.during(async () => {
+    await page.fill("#docBody", '<img src="data:," onerror="window.__x=1"><a href="javascript:window.__x=2">x</a><iframe src="about:blank"></iframe>');
+    await page.waitForTimeout(250);
+  });
   r.xss = await page.evaluate(() => ({ x: window.__x ?? null, onerror: document.querySelectorAll("#docPreview [onerror]").length, jsHref: [...document.querySelectorAll("#docPreview a")].filter((a) => a.getAttribute("href")?.startsWith("javascript")).length, iframe: document.querySelectorAll("#docPreview iframe").length }));
+  if (inlineBlocks.verdict()) r.FAILED ??= inlineBlocks.verdict();
   // persistência da área e da nota aberta
   await page.close();
   const p2 = await ctx.newPage(); p2.on("pageerror", (e) => errors.push(e.message));
-  await p2.goto(appUrl()); await p2.waitForSelector("#docsView:not([hidden])");
+  await watchCspViolations(p2);
+  const reopenBlocks = expectInlineHandlerBlocks(p2);
+  await reopenBlocks.during(async () => {
+    await p2.goto(appUrl()); await p2.waitForSelector("#docsView:not([hidden])");
+  });
   r.reopen = { title: await p2.inputValue("#docTitle"), docs: await p2.textContent("#docsCount") };
 } catch (err) { r.FAILED = err.message.split("\n")[0]; }
 console.log(JSON.stringify(r, null, 1), "\nerrors:", errors);

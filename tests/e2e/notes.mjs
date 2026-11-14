@@ -1,13 +1,14 @@
 import { chromium } from "playwright-core";
-import { isBlockedInlineHandlerMessage, openApp } from "./target.mjs";
+import { expectInlineHandlerBlocks, openApp } from "./target.mjs";
 import fs from "node:fs";
 const [, SHOTS] = process.argv.slice(2);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1540, height: 920 }, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
 const page = await ctx.newPage();
-const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && !isBlockedInlineHandlerMessage(m.text()) && errors.push(m.text()));
+const inlineBlocks = expectInlineHandlerBlocks(page);
+const errors = []; page.on("pageerror", (e) => errors.push(e.message)); page.on("console", (m) => m.type() === "error" && !inlineBlocks.isExpectedConsoleError(m.text()) && errors.push(m.text()));
 const dialogs = []; page.on("dialog", (d) => { dialogs.push(d.message()); d.accept(); });
-await openApp(page, { allowedCspDirectives: ["script-src-attr"] }); await page.waitForSelector(".node");
+await openApp(page); await page.waitForSelector(".node");
 const ws = () => page.evaluate(() => JSON.parse(localStorage.getItem("pep-atlas-studio-v4")));
 const last = async () => { const w = await ws(); return w.canvasNotes[w.canvasNotes.length - 1]; };
 const r = {};
@@ -69,11 +70,14 @@ try {
   r.pretty = (await last()).text.split("\n").length;
   // Markdown sanitizado
   await page.selectOption('[data-field="format"]', "markdown");
-  await page.fill('[data-field="text"]', "# Título\n\n- item **forte**\n\n<img src=x onerror=\"window.__xss=1\">\n<script>window.__xss=2</script>\n\n```sql\nselect 1\n```");
-  await page.locator('[data-field="text"]').blur();
-  await page.waitForTimeout(100);
+  await inlineBlocks.during(async () => {
+    await page.fill('[data-field="text"]', "# Título\n\n- item **forte**\n\n<img src=x onerror=\"window.__xss=1\">\n<script>window.__xss=2</script>\n\n```sql\nselect 1\n```");
+    await page.locator('[data-field="text"]').blur();
+    await page.waitForTimeout(100);
+  });
   r.markdown = { h1: await page.$$eval(jk + " .md h1", (x) => x.length), strong: await page.$$eval(jk + " .md strong", (x) => x.length), sqlBlock: await page.$$eval(jk + " .md pre.md-code .hljs-keyword", (x) => x.length) };
   r.xss = await page.evaluate(() => ({ flag: window.__xss ?? null, onerror: document.querySelectorAll("[onerror]").length, scripts: document.querySelectorAll(".md script").length }));
+  if (inlineBlocks.verdict()) r.FAILED ??= inlineBlocks.verdict();
   // roda dentro de nota com rolagem não dá zoom
   await page.selectOption('[data-field="format"]', "bash");
   await page.fill('[data-field="text"]', Array.from({ length: 40 }, (_, i) => `echo "linha ${i}" | grep linha`).join("\n"));
