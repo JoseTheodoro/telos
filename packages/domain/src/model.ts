@@ -17,7 +17,7 @@ import { upgradeLanes } from "./lanes.ts";
 import { upgradeEmotion } from "./emotion.ts";
 import { grammarFor, type End, type Verdict } from "./grammar.ts";
 import { keyId, keyKind, newId, nodeKey } from "./keys.ts";
-import type { AnyEntity, DomainRole, Edge, Journey, NodeKey, NodeKind, Table, Workspace } from "./types.ts";
+import type { AnyEntity, DomainRole, Edge, Graph, Journey, NodeKey, NodeKind, Positions, Table, Workspace } from "./types.ts";
 
 export const deep = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 
@@ -207,8 +207,9 @@ export function syncMaps(ws: Workspace): void {
 
 const keyIdOr = (k: NodeKey | undefined): string => (k ? keyId(k) : "");
 
-function oFill(o: Record<string, unknown>, k: string, v: unknown): void {
-  if (o[k] === undefined) o[k] = v;
+function oFill(o: object, k: string, v: unknown): void {
+  const fields = o as Record<string, unknown>;
+  if (fields[k] === undefined) fields[k] = v;
 }
 
 const defaultJourney = (): Journey => ({
@@ -220,12 +221,12 @@ const defaultJourney = (): Journey => ({
 });
 
 /** Converte o formato de oficina (pep-discovery-atlas-v1) em grafo com setas sugeridas. */
-export function graphInit(data: any): Workspace {
-  const result = deep(data);
+export function graphInit(input: unknown): Workspace {
+  const result = deep(input) as Workspace;
   result.schema = "pep-atlas-studio-v3";
   if (!Array.isArray(result.journeys) || !result.journeys.length) result.journeys = [defaultJourney()];
-  result.graph = { positions: {}, edges: [] };
-  const g = result.graph;
+  const g: { positions: Positions; edges: Partial<Edge>[] } = { positions: {}, edges: [] };
+  result.graph = g as Graph;
   const present = (k: NodeKey) => (result[ARR[keyKind(k)]] as AnyEntity[] | undefined)?.some((x) => x.id === keyId(k));
   const sig = new Set<string>();
   const add = (a: NodeKey, b: NodeKey, l: string, sta = "Hipótese", source = "Oficina / sugestão") => {
@@ -300,7 +301,8 @@ function upgradeEdgeSides(ws: Workspace): void {
   }
 }
 
-export function upgradeWorkspace(data: any): Workspace {
+export function upgradeWorkspace(input: unknown): Workspace {
+  const data = input as Workspace;
   data.schema = SCHEMA;
   // Sem o campo, o mapa é anterior às jornadas; uma lista vazia é escolha do usuário e fica vazia.
   data.journeys = Array.isArray(data.journeys) ? data.journeys : [defaultJourney()];
