@@ -94,7 +94,7 @@ tests/e2e/               roteiros Playwright + run-all.mjs
 
 1. **Tipos estruturais e semânticos**: os oito tipos existentes foram mantidos (Jornada, Capítulo, Cena, Evento, Domínio, Sistema, Tela e Tabela). Há também **Caixa livre**, que não exige cena ou capítulo. O editor oferece dezenas de classificações semânticas (Estado, Ação, Evento de domínio, Política, Agregado, Decisão, Projeção etc.) e permite criar outras classificações. Os botões `＋ Estado` e `＋ Ação` criam caixas livres rapidamente.
 2. **Limpar canvas sem perder hotspots**: o botão `✕ Limpar canvas` exige digitar **APAGAR**, oferece backup e limpa os nós, conexões e posições. **Os hotspots, suas resoluções e os cadastros de classificações permanecem**. O canvas vazio também é salvo.
-3. **JetBrains Mono**: o HTML usa a fonte JetBrains Mono via Google Fonts quando há acesso à internet. Sem conexão, usa a fonte monoespaçada local de fallback. Não inclui arquivos de fonte.
+3. **JetBrains Mono**: a fonte é auto-hospedada e funciona sem internet. Os arquivos woff2 (pesos 400 a 800) ficam em `src/assets/fonts/`, junto da licença SIL Open Font License 1.1 (`OFL.txt`), e o build os embute no HTML.
 4. **Cores por seta**: selecione uma conexão no mapa para abrir o inspetor. Escolha uma entre dez cores, use o controle nativo `<input type="color">` com seleção pelo mouse ou informe hexadecimal `#RRGGBB`. O botão **Auto** restaura a cor automática. READ nasce laranja e WRITE vermelho, mas a cor da conexão pode ser sobrescrita conscientemente.
 
 ## Dados e persistência
