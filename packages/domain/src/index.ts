@@ -9,3 +9,4 @@ export * from "./lanes.ts";
 export * from "./validate.ts";
 export * from "./grammar.ts";
 export * from "./board.ts";
+export * from "./sticky-style.ts";
