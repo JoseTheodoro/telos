@@ -1,8 +1,12 @@
 # Telos
 
-Parede digital de **Event Storming** num canvas limpo, para qualquer domínio. A direção do produto está no [PRD](docs/prd.md) e os conceitos, no [glossário](docs/glossario.md).
+Parede digital de **Event Storming** num canvas limpo, para qualquer domínio. Os conceitos estão no [glossário](docs/glossario.md). Produto e trabalho vivem no GitHub:
 
-> O código ainda carrega o modelo narrativo herdado do Atlas (Jornada → Capítulo → Cena → Evento). A troca pelo modelo canônico está na FD-05 do PRD.
+- [PRD: Telos MVP](https://github.com/JoseTheodoro/telos/issues/3), com as funcionalidades como sub-issues;
+- [board do projeto](https://github.com/users/JoseTheodoro/projects/3);
+- ADRs nas issues com o label [`adr`](https://github.com/JoseTheodoro/telos/issues?q=label%3Aadr).
+
+> O código ainda carrega o modelo narrativo herdado do Atlas (Jornada → Capítulo → Cena → Evento). A troca pelo modelo canônico é o esqueleto ([#1](https://github.com/JoseTheodoro/telos/issues/1)).
 
 ## Abrir (uso)
 
