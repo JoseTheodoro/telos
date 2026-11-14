@@ -8,3 +8,4 @@ export * from "./es.ts";
 export * from "./lanes.ts";
 export * from "./validate.ts";
 export * from "./grammar.ts";
+export * from "./board.ts";

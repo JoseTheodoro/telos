@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: isPortable ? "dist/portable" : "dist/web",
       emptyOutDir: true,
+      rolldownOptions: isPortable ? {} : { input: { index: "index.html", telos: "telos.html" } },
     },
   };
 });
