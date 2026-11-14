@@ -171,6 +171,8 @@ a {
 
 .sticky {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--sticky-outline);
   border-radius: var(--radius-s);
@@ -194,6 +196,7 @@ a {
 }
 
 .sticky-text {
+  flex: 1;
   min-height: 1lh;
   white-space: pre-wrap;
   overflow-wrap: anywhere;

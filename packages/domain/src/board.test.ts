@@ -125,14 +125,11 @@ describe("parseBoard with stickies", () => {
     });
   });
 
-  it("rejects non-finite coordinates", () => {
-    const result = parseBoard(boardWith({ ...validSticky(), x: Infinity, h: NaN }));
+  it("rejects non-finite coordinates and sizes", () => {
+    const result = parseBoard(boardWith({ ...validSticky(), x: Infinity, y: -Infinity, w: NaN, h: NaN }));
     expect(result).toEqual({
       ok: false,
-      issues: [
-        { path: "stickies.0.x", code: "not_finite" },
-        { path: "stickies.0.h", code: "not_finite" },
-      ],
+      issues: ["x", "y", "w", "h"].map((field) => ({ path: `stickies.0.${field}`, code: "not_finite" })),
     });
   });
 
@@ -160,6 +157,6 @@ describe("parseBoard with stickies", () => {
 
 describe("stickyStyle", () => {
   it("gives the Domain Event its canonical orange", () => {
-    expect(stickyStyle("domainEvent")).toEqual({ label: "Domain Event", bg: "#ffe3c4", accent: "#9a4d00", outline: "#f5b97a" });
+    expect(stickyStyle("domainEvent")).toEqual({ label: "Domain Event", bg: "#ffe3c4", outline: "#f5b97a" });
   });
 });

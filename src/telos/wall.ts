@@ -1,10 +1,11 @@
-import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Sticky } from "@telos/domain";
+import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Point, type Sticky } from "@telos/domain";
 import { el } from "./dom";
 import type { BoardStore } from "./store";
 
-interface Point {
-  x: number;
-  y: number;
+interface StickyParts {
+  sticky: Sticky;
+  node: HTMLElement;
+  text: HTMLElement;
 }
 
 const CREATE_KEY = "1";
@@ -44,8 +45,13 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
   let editingId: string | null = null;
 
   const save = (): void => store.save(board);
-  const stickyOf = (id: string): Sticky | undefined => board.stickies.find((sticky) => sticky.id === id);
-  const textOf = (id: string): HTMLElement | null | undefined => nodes.get(id)?.querySelector<HTMLElement>(".sticky-text");
+
+  const partsOf = (id: string): StickyParts | null => {
+    const sticky = board.stickies.find((candidate) => candidate.id === id);
+    const node = nodes.get(id);
+    const text = node?.querySelector<HTMLElement>(".sticky-text");
+    return sticky && node && text ? { sticky, node, text } : null;
+  };
 
   const toWorld = (clientX: number, clientY: number): Point => {
     const origin = world.getBoundingClientRect();
@@ -64,33 +70,28 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
   };
 
   const startEditing = (id: string): void => {
-    const node = nodes.get(id);
-    const text = textOf(id);
-    if (!node || !text) return;
+    const parts = partsOf(id);
+    if (!parts) return;
     select(id);
     editingId = id;
-    node.classList.add("is-editing");
-    text.contentEditable = "plaintext-only";
-    text.focus();
-    placeCaretAtEnd(text);
+    parts.node.classList.add("is-editing");
+    parts.text.contentEditable = "plaintext-only";
+    parts.text.focus();
+    placeCaretAtEnd(parts.text);
   };
 
   const stopEditing = (): void => {
-    if (!editingId) return;
-    const node = nodes.get(editingId);
-    const text = textOf(editingId);
+    const parts = editingId ? partsOf(editingId) : null;
     editingId = null;
-    node?.classList.remove("is-editing");
-    text?.removeAttribute("contenteditable");
+    parts?.node.classList.remove("is-editing");
+    parts?.text.removeAttribute("contenteditable");
   };
 
   const syncText = (id: string): void => {
-    const sticky = stickyOf(id);
-    const node = nodes.get(id);
-    const text = textOf(id);
-    if (!sticky || !node || !text) return;
-    sticky.text = text.innerText;
-    sticky.h = Math.max(STICKY_SIZE.h, Math.round(node.getBoundingClientRect().height));
+    const parts = partsOf(id);
+    if (!parts) return;
+    parts.sticky.text = parts.text.innerText;
+    parts.sticky.h = Math.max(STICKY_SIZE.h, Math.round(parts.node.getBoundingClientRect().height));
     save();
   };
 
@@ -126,12 +127,20 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
 
   wall.addEventListener("pointerdown", (event) => {
     const id = stickyIdAt(event.target);
-    if (id && id === editingId) return;
+    if (id && id === editingId) {
+      if (!(event.target instanceof Element && event.target.closest(".sticky-text"))) event.preventDefault();
+      return;
+    }
     select(id);
+  });
+
+  wall.addEventListener("focusin", (event) => {
+    if (event.target instanceof HTMLElement && event.target.classList.contains("sticky")) select(event.target.dataset.id ?? null);
   });
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);
+    if (id && id === editingId) return;
     if (id) startEditing(id);
     else createAt(toWorld(event.clientX, event.clientY));
   });

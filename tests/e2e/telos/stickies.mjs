@@ -37,6 +37,13 @@ try {
   r.typed = { count: await stickies().count(), text: await page.locator(".sticky-text").first().textContent() };
   if (r.typed.count !== 1 || r.typed.text !== "Pedido faturado 1") fail(`digitar "1" no texto não deveria criar outro post-it: ${JSON.stringify(r.typed)}`);
 
+  await page.mouse.click(first.x + first.w / 2, first.y + first.h - 12);
+  r.clickInside = await editing();
+  if (!r.clickInside) fail("clicar dentro do post-it em edição não deveria encerrar a edição");
+  await page.locator(".sticky-text").first().dblclick({ position: { x: 12, y: 8 } });
+  r.wordSelection = await page.evaluate(() => window.getSelection()?.toString());
+  if (!(await editing()) || !r.wordSelection) fail(`o duplo clique na edição deveria selecionar uma palavra: ${JSON.stringify(r.wordSelection)}`);
+
   await page.keyboard.press("Escape");
   r.afterEscape = { editing: await editing(), selected: await selectedCount() };
   if (r.afterEscape.editing || r.afterEscape.selected !== 1) fail(`Esc deveria sair da edição e manter a seleção: ${JSON.stringify(r.afterEscape)}`);
@@ -65,6 +72,15 @@ try {
   await page.keyboard.press("Escape");
   r.escapeClears = await selectedCount();
   if (r.escapeClears !== 0) fail(`Esc sem edição deveria limpar a seleção: ${r.escapeClears}`);
+
+  await page.locator(".wall").focus();
+  await page.keyboard.press("Tab");
+  r.tabFocus = { selected: await selectedCount() };
+  await page.keyboard.press("Enter");
+  r.tabFocus.editing = await editing();
+  if (r.tabFocus.selected !== 1 || !r.tabFocus.editing) fail(`o post-it focado por Tab deveria ficar selecionado e abrir com Enter: ${JSON.stringify(r.tabFocus)}`);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
 
   const before = await boxes();
   await page.reload();
