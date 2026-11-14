@@ -19,7 +19,7 @@ function render(route: Route): void {
   const board = route.name === "canvas" ? store.get(route.id) : null;
   const resolved: Route = board ? route : { name: "home" };
   if (location.hash && location.hash !== routeHash(resolved)) replaceRoute(resolved);
-  if (board) renderCanvas(root, board);
+  if (board) renderCanvas(root, board, store);
   else renderHome(root, store);
 }
 
