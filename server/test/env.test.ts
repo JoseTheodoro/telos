@@ -6,18 +6,17 @@ describe("loadEnv", () => {
     const env = loadEnv({ NODE_ENV: "production" });
 
     expect(env).toMatchObject({ NODE_ENV: "production", PORT: 8080, HOST: "0.0.0.0" });
-    expect(env.OTEL_EXPORTER_OTLP_ENDPOINT).toBeUndefined();
+    expect(env.WEB_DIST_DIR).toBeUndefined();
   });
 
-  it("converts PORT to a number and accepts an OTLP endpoint", () => {
-    const env = loadEnv({ NODE_ENV: "development", PORT: "3000", OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318" });
+  it("converts PORT to a number and keeps HOST and WEB_DIST_DIR", () => {
+    const env = loadEnv({ NODE_ENV: "development", PORT: "3000", HOST: "127.0.0.1", WEB_DIST_DIR: "/srv/web" });
 
-    expect(env.PORT).toBe(3000);
-    expect(env.OTEL_EXPORTER_OTLP_ENDPOINT).toBe("http://localhost:4318");
+    expect(env).toEqual({ NODE_ENV: "development", PORT: 3000, HOST: "127.0.0.1", WEB_DIST_DIR: "/srv/web" });
   });
 
   it("fails fast on invalid configuration, naming variables but never their values", () => {
-    const rawEnv = { NODE_ENV: "synthetic-bad-env", PORT: "70000", OTEL_EXPORTER_OTLP_ENDPOINT: "synthetic-not-a-url" };
+    const rawEnv = { NODE_ENV: "synthetic-bad-env", PORT: "70000" };
 
     const failure = (): Error => {
       try {
@@ -29,12 +28,15 @@ describe("loadEnv", () => {
     };
 
     const message = failure().message;
+    expect(message).toMatch(/^Configuração inválida: /);
     expect(message).toContain("NODE_ENV");
     expect(message).toContain("PORT");
-    expect(message).toContain("OTEL_EXPORTER_OTLP_ENDPOINT");
     expect(message).not.toContain("synthetic-bad-env");
     expect(message).not.toContain("70000");
-    expect(message).not.toContain("synthetic-not-a-url");
+  });
+
+  it.each(["0", "3000.5", "synthetic-port", ""])("rejects PORT %j", (port) => {
+    expect(() => loadEnv({ NODE_ENV: "test", PORT: port })).toThrowError(/PORT/);
   });
 
   it("fails when NODE_ENV is missing", () => {

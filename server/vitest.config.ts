@@ -1,4 +1,3 @@
-import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -8,5 +7,4 @@ export default defineConfig({
     pool: "forks",
     setupFiles: ["test/support/cleanup-web-roots.ts"],
   },
-  plugins: [swc.vite({ module: { type: "es6" } })],
 });

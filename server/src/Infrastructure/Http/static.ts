@@ -2,9 +2,11 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import fastifyStatic from "@fastify/static";
 import type { FastifyInstance, FastifyReply } from "fastify";
+import { HEALTH_PATH } from "./health.js";
+import { pathnameOf } from "./url.js";
 
 const INDEX_FILE = "index.html";
-const API_PREFIXES = ["/v1", "/health"];
+const API_PREFIXES = ["/v1", HEALTH_PATH];
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const REVALIDATE_CACHE_CONTROL = "no-cache";
 
@@ -13,13 +15,13 @@ export function defaultWebDistDir(): string {
   return path.resolve(import.meta.dirname, "../../../../dist/web");
 }
 
-export async function registerStatic(fastify: FastifyInstance, webDistDir: string): Promise<void> {
+export function registerStatic(app: FastifyInstance, webDistDir: string): void {
   if (!existsSync(path.join(webDistDir, INDEX_FILE))) {
     throw new Error(`Build da SPA não encontrado: ${INDEX_FILE} ausente em ${webDistDir}. Rode "npm run build" na raiz.`);
   }
 
-  // wildcard:false registra uma rota por arquivo existente; o que não existe cai no 404 do Nest, sem alcançar o disco com input do usuário.
-  await fastify.register(fastifyStatic, {
+  // wildcard:false registra uma rota por arquivo existente; o que não existe cai no 404 JSON, sem alcançar o disco com input do usuário.
+  void app.register(fastifyStatic, {
     root: webDistDir,
     wildcard: false,
     index: false,
@@ -30,7 +32,7 @@ export async function registerStatic(fastify: FastifyInstance, webDistDir: strin
     },
   });
 
-  fastify.route({
+  app.route({
     method: ["GET", "HEAD"],
     url: "/*",
     handler: (request, reply) => (isApiPath(request.url) || isAssetPath(request.url) ? reply.callNotFound() : sendIndex(reply)),
@@ -52,8 +54,4 @@ function isAssetPath(url: string): boolean {
 function isApiPath(url: string): boolean {
   const pathname = pathnameOf(url);
   return API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-function pathnameOf(url: string): string {
-  return url.split("?")[0] ?? "";
 }
