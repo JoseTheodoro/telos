@@ -6,7 +6,8 @@
 
 O Atlas passa a ter servidor: ele entrega a SPA, guarda os mapas em banco, autentica pela identidade corporativa e
 audita os acessos. O padrão da empresa para serviço novo é NestJS com Fastify no Cloud Run, PostgreSQL, OpenTelemetry
-com exportação configurável (ADR-0011) e o scaffold `/drc-cmd-arch-criar-microservico-nestjs`. O mapa de arquitetura
+com exportação configurável (ADR-0011 da governança de plataforma da organização, repositório
+`DrConsulta/platform-governance`, não um ADR deste repositório) e o scaffold `/drc-cmd-arch-criar-microservico-nestjs`. O mapa de arquitetura
 (`drc-mapa-arquitetura`) lista NestJS e Python no Cloud Run e não menciona Bun.
 
 A carga do servidor é pequena: CRUD de documentos JSON e arquivos estáticos, num app interno. Os gargalos medidos no
@@ -20,7 +21,7 @@ assessment estão todos no navegador: render total via `innerHTML`, `layersLayou
 | Ciclo de suporte                 | LTS ativa desde 2026-10-28 (26.13.0), manutenção até 2029-04-30. A partir do 27, uma major por ano e toda versão vira LTS.       | Release mais recente: 2026-10-22. Não encontrei política de LTS publicada.                                                                               |
 | Padrão da empresa                | NestJS + Fastify no Cloud Run, com scaffold e Golden Path.                                                                     | Fora do padrão documentado. Adotar exigiria ADR de exceção.                                                                                              |
 | NestJS 12                        | Requisitos publicados em versão do Node: rodar exige ≥ 20.19 ou ≥ 22.12; o CLI, ≥ 22.22.3, ≥ 24.15 ou ≥ 26. Pacotes ESM-only.       | Os requisitos publicados do Nest 12 não falam em Bun. Rodaria pela camada de compatibilidade com Node, sem garantia do framework.                          |
-| OpenTelemetry (ADR-0011)         | SDK Node com auto-instrumentação de primeira classe.                                                                           | Usa o mesmo SDK pela camada de compatibilidade. `Bun.serve` e o `fetch` nativo não são auto-instrumentados, e os guias desligam a instrumentação de `fs`.    |
+| OpenTelemetry (ADR-0011 da governança) | SDK Node com auto-instrumentação de primeira classe.                                                                           | Usa o mesmo SDK pela camada de compatibilidade. `Bun.serve` e o `fetch` nativo não são auto-instrumentados, e os guias desligam a instrumentação de `fs`.    |
 | Governança                       | Projeto da OpenJS Foundation.                                                                                                  | MIT, código aberto no GitHub (`oven-sh/bun`), mas propriedade da Anthropic desde dez/2025, sem fundação nem órgão de governança separado.                  |
 | Desempenho                       | Suficiente para a carga prevista.                                                                                              | Partida e throughput melhores nos benchmarks do fornecedor, que não medi aqui. A vantagem real seria o cold start no Cloud Run com `min-instances=0`.     |
 | Ferramentas                      | npm, lockfile e `npm ci`, como o resto da empresa.                                                                             | Gerenciador de pacotes, bundler e test runner embutidos. Misturar com npm duplicaria o lockfile, contra `drc-guardrails-decisao`.                          |
