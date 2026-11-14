@@ -15,6 +15,7 @@ const servesTelos = /^https?:/.test(process.env.E2E_BASE_URL || "");
 const telosScripts = servesTelos
   ? fs.readdirSync(path.join(here, "telos")).filter((f) => f.endsWith(".mjs")).map((f) => `telos/${f}`)
   : [];
+if (!servesTelos) console.log("telos/*: pulados, porque o app novo só existe no build do servidor (npm run test:e2e:server)\n");
 
 const only = process.argv.slice(2);
 const scripts = fs

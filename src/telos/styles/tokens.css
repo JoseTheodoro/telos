@@ -35,7 +35,6 @@
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
 
   --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --text-12: 12px;
   --text-14: 14px;
   --text-16: 16px;
@@ -48,6 +47,10 @@
   --weight-semibold: 600;
 
   --grid-step: 24px;
+
+  --size-control: 36px;
+  --size-icon-button: 32px;
+  --width-content: 720px;
 }
 
 @media (prefers-reduced-motion: reduce) {

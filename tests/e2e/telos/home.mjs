@@ -50,10 +50,28 @@ try {
   r.afterReload = await listItems().count();
   if (r.afterReload !== 1) fail(`o canvas deveria continuar na lista depois do reload: ${r.afterReload}`);
 
+  await page.getByRole("button", { name: "Novo canvas" }).click();
+  await page.waitForSelector(".wall");
+  const newestHash = new URL(page.url()).hash;
+  await page.getByRole("link", { name: "Voltar à home" }).click();
+  await page.waitForSelector(".board-list");
+  r.order = await listItems().evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  if (r.order.length !== 2 || r.order[0] !== newestHash || r.order[1] !== r.created.hash) {
+    fail(`a home deveria listar o canvas mais recente primeiro: ${JSON.stringify(r.order)}`);
+  }
+
   await page.goto(telosUrl("#/canvas/nao-existe"));
   await page.waitForSelector(".home");
   r.unknownId = new URL(page.url()).hash;
   if (r.unknownId !== "#/") fail(`um id inexistente deveria voltar para a home: ${r.unknownId}`);
+
+  r.unknownHashes = {};
+  for (const hash of ["#/xyz", "#/canvas/"]) {
+    await page.goto(telosUrl(hash));
+    await page.waitForSelector(".home");
+    r.unknownHashes[hash] = new URL(page.url()).hash;
+  }
+  if (Object.values(r.unknownHashes).some((hash) => hash !== "#/")) fail(`um hash desconhecido deveria virar #/: ${JSON.stringify(r.unknownHashes)}`);
 } catch (err) {
   r.FAILED = err.message.split("\n")[0];
 }

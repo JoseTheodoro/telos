@@ -9,7 +9,7 @@ export interface BoardSummary {
 export interface BoardStore {
   list(): BoardSummary[];
   get(id: string): Board | null;
-  create(title?: string): Board;
+  create(title: string): Board;
   save(board: Board): void;
 }
 
@@ -19,7 +19,12 @@ const boardKey = (id: string): string => `telos:board:${id}`;
 const isSummary = (value: unknown): value is BoardSummary =>
   typeof value === "object" &&
   value !== null &&
-  ["id", "title", "updatedAt"].every((field) => typeof (value as Record<string, unknown>)[field] === "string");
+  "id" in value &&
+  "title" in value &&
+  "updatedAt" in value &&
+  typeof value.id === "string" &&
+  typeof value.title === "string" &&
+  typeof value.updatedAt === "string";
 
 function parseJson(raw: string | null): unknown {
   if (raw === null) return null;

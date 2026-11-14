@@ -1,11 +1,9 @@
-import "@fontsource/inter/latin-400.css";
-import "@fontsource/inter/latin-500.css";
-import "@fontsource/inter/latin-600.css";
+import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/telos.css";
 import { renderCanvas } from "./canvas";
 import { renderHome } from "./home";
-import { currentRoute, onRouteChange, replaceRoute, type Route } from "./router";
+import { currentRoute, onRouteChange, replaceRoute, routeHash, type Route } from "./router";
 import { createLocalBoardStore } from "./store";
 
 function appRoot(): HTMLElement {
@@ -19,9 +17,10 @@ const store = createLocalBoardStore();
 
 function render(route: Route): void {
   const board = route.name === "canvas" ? store.get(route.id) : null;
-  if (board) return renderCanvas(root, board);
-  if (route.name === "canvas") replaceRoute({ name: "home" });
-  renderHome(root, store);
+  const resolved: Route = board ? route : { name: "home" };
+  if (location.hash && location.hash !== routeHash(resolved)) replaceRoute(resolved);
+  if (board) renderCanvas(root, board);
+  else renderHome(root, store);
 }
 
 onRouteChange(render);

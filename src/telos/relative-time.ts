@@ -10,8 +10,8 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["second", 1],
 ];
 
-export function relativeTime(iso: string, now: number = Date.now()): string {
-  const seconds = Math.round((Date.parse(iso) - now) / 1000);
+export function relativeTime(iso: string): string {
+  const seconds = Math.round((Date.parse(iso) - Date.now()) / 1000);
   const [unit, size] = UNITS.find(([, unitSeconds]) => Math.abs(seconds) >= unitSeconds) ?? ["second", 1];
   return formatter.format(Math.round(seconds / size), unit);
 }

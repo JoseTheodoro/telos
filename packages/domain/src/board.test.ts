@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_SCHEMA, DEFAULT_BOARD_TITLE, createBoard, parseBoard } from "./board.ts";
+import { BOARD_SCHEMA, createBoard, parseBoard } from "./board.ts";
 
 const validBoard = () => ({ schema: BOARD_SCHEMA, id: "b-1", title: "Faturamento", stickies: [] });
 
@@ -9,12 +9,8 @@ describe("createBoard", () => {
     expect(board).toEqual({ schema: "telos/v1", id: expect.any(String), title: "Faturamento", stickies: [] });
   });
 
-  it("defaults the title", () => {
-    expect(createBoard().title).toBe(DEFAULT_BOARD_TITLE);
-  });
-
   it("generates unique ids", () => {
-    const ids = new Set(Array.from({ length: 50 }, () => createBoard().id));
+    const ids = new Set(Array.from({ length: 50 }, () => createBoard("Faturamento").id));
     expect(ids.size).toBe(50);
   });
 });

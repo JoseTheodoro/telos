@@ -3,6 +3,8 @@ import { relativeTime } from "./relative-time";
 import { go, routeHash } from "./router";
 import type { BoardStore, BoardSummary } from "./store";
 
+const UNTITLED = "Sem título";
+
 function boardItem({ id, title, updatedAt }: BoardSummary): HTMLLIElement {
   return el(
     "li",
@@ -18,7 +20,7 @@ function boardItem({ id, title, updatedAt }: BoardSummary): HTMLLIElement {
 
 function newBoardButton(store: BoardStore): HTMLButtonElement {
   const button = el("button", { type: "button", class: "button button-primary" }, "Novo canvas");
-  button.addEventListener("click", () => go({ name: "canvas", id: store.create().id }));
+  button.addEventListener("click", () => go({ name: "canvas", id: store.create(UNTITLED).id }));
   return button;
 }
 
