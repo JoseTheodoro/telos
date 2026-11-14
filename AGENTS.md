@@ -31,6 +31,10 @@ and FigJam-like visual editors.
 - This is standing authorization to commit and push; it does not need to be asked for again.
 - Branch from an up-to-date `main`, one branch per task, then push and open the PR against `main`.
 - Keep `npm run check` green before every push.
+- Planning lives in GitHub issues: the PRD (pinned issue, label `prd`), specs, slices (label `fatia`) and ADRs
+  (label `adr`). The only Markdown documents in the repo are `README.md` and `docs/glossario.md`.
+- Pick work from the `Ready` column of the "Telos" project board. Move the issue to `In progress` when you start and to
+  `In review` when the PR opens; the PR body says `Closes #<issue>`.
 
 ## Code Comments Policy
 
