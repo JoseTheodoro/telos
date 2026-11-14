@@ -5,7 +5,8 @@
   "description": "Atlas Studio — Event Storming guiado por jornadas de usuário. Build gera um único HTML estático.",
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "server"
   ],
   "scripts": {
     "dev": "vite",
