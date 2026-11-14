@@ -1,5 +1,5 @@
 {
-  "name": "atlas-e2e",
+  "name": "telos-e2e",
   "private": true,
   "type": "module",
   "description": "Roteiros Playwright (Chrome do sistema) que validam o dist/portable/index.html",

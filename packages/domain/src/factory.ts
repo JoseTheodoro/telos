@@ -37,7 +37,7 @@ export function newEntityId(ws: Workspace, kind: NodeKind): string {
 /** Monta a entidade nova com os campos padrão do tipo. */
 export function buildEntity(t: NodeKind, id: string, name: string, semantic: string, val: (k: string) => string): AnyEntity {
   const base = { id, semanticType: semantic };
-  const inventory = { origin: "Criado no Atlas Studio", status: "A validar", notes: "" };
+  const inventory = { origin: "Criado no Telos", status: "A validar", notes: "" };
   switch (t) {
     case "journey":
       return { ...base, name, description: "", status: "Em descoberta" };
@@ -67,7 +67,7 @@ export function buildEntity(t: NodeKind, id: string, name: string, semantic: str
         reviewStatus: "Em discussão",
         reviewOwner: "",
         pepReason: "",
-        source: "Criado no Atlas Studio",
+        source: "Criado no Telos",
       };
     case "domain":
       return { ...base, name, description: "", ...inventory };
@@ -86,7 +86,7 @@ export function buildEntity(t: NodeKind, id: string, name: string, semantic: str
         ...inventory,
       };
     case "semantic":
-      return { ...base, name, description: "", status: "Em descoberta", notes: "", origin: "Criado no Atlas Studio" };
+      return { ...base, name, description: "", status: "Em descoberta", notes: "", origin: "Criado no Telos" };
     case "note":
       return { ...base, semanticType: "Nota", text: name, format: val("format") || "text", w: 320, h: 180, scope: val("scope") };
     case "frame":

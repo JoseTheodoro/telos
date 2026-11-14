@@ -1,3 +1,5 @@
+> **Superado por [docs/prd.md](../prd.md)** em 2026-11-14. Mantido como registro histórico do Atlas.
+
 # PEP Atlas Studio — Plano de evolução com servidor web
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use drc-superpowers:subagent-driven-development (recommended) or

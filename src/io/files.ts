@@ -19,7 +19,7 @@ import {
   emotionLevel,
   emotionSigned,
   hasEmotion,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { undoPush } from "../core/history";
 import { persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
@@ -33,7 +33,7 @@ import { $, esc, notify, saveFile } from "../ui/dom";
 
 export function exportJson(): void {
   persistViewNow();
-  saveFile("pep-atlas-studio.json", JSON.stringify(state.ws, null, 2), "application/json;charset=utf-8");
+  saveFile("telos-canvas.json", JSON.stringify(state.ws, null, 2), "application/json;charset=utf-8");
   notify("Backup JSON exportado: dados, setas, cores e posições");
 }
 
@@ -95,7 +95,7 @@ export function csvExport(): void {
       .map(q)
       .join(",");
   });
-  saveFile("pep-atlas-rastreabilidade.csv", "﻿" + cols.map(q).join(",") + "\n" + rows.join("\n"), "text/csv;charset=utf-8");
+  saveFile("telos-rastreabilidade.csv", "﻿" + cols.map(q).join(",") + "\n" + rows.join("\n"), "text/csv;charset=utf-8");
   notify("CSV com jornadas, tipos, destinos e acessos exportado");
 }
 
@@ -193,7 +193,7 @@ export function svgExport(): void {
     })
     .join("");
   saveFile(
-    "pep-atlas-mapa.svg",
+    "telos-canvas.svg",
     `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(W)}" height="${Math.ceil(H)}" viewBox="${X} ${Y} ${W} ${H}"><defs>${markers}</defs><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fbfdfb"/>${bands}${frames}${paths}${cards}</svg>`,
     "image/svg+xml;charset=utf-8",
   );
@@ -202,8 +202,8 @@ export function svgExport(): void {
 
 export function offerInvalidSavedExport(raw: string): void {
   const message =
-    "Mapa salvo com dados inválidos: o Atlas abriu um mapa vazio no lugar dele. Exportar o JSON salvo para recuperar o trabalho?";
-  if (confirm(message)) saveFile("pep-atlas-studio-invalido.json", raw, "application/json;charset=utf-8");
+    "Mapa salvo com dados inválidos: o Telos abriu um mapa vazio no lugar dele. Exportar o JSON salvo para recuperar o trabalho?";
+  if (confirm(message)) saveFile("telos-invalido.json", raw, "application/json;charset=utf-8");
 }
 
 function parseImported(text: string): unknown {
@@ -216,7 +216,7 @@ function parseImported(text: string): unknown {
 
 const importFailure = (issues: ValidationIssue[]): string =>
   issues.some((issue) => issue.code === "unknown_schema")
-    ? "Use um JSON exportado por uma versão do Atlas."
+    ? "Use um JSON exportado por uma versão do Telos."
     : `dados inválidos em ${describeIssues(issues)}`;
 
 export function bindImport(): void {
@@ -237,7 +237,7 @@ export function bindImport(): void {
       persist();
       ensurePositions();
       refreshAll(true);
-      notify("Atlas importado e salvo no navegador");
+      notify("Canvas importado e salvo no navegador");
     } catch (err) {
       alert("Falha na importação: " + (err as Error).message);
     } finally {

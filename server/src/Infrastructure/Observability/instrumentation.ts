@@ -21,7 +21,7 @@ if (endpoint && !isDisabled) {
   ]);
 
   const nodeSdk = new NodeSDK({
-    serviceName: process.env.OTEL_SERVICE_NAME ?? "atlas-studio",
+    serviceName: process.env.OTEL_SERVICE_NAME ?? "telos",
     traceExporter: new OTLPTraceExporter(),
     instrumentations: [new HttpInstrumentation(), new FastifyOtelInstrumentation({ registerOnInitialization: true })],
   });

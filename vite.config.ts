@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     base: isPortable ? "./" : "/",
     plugins: isPortable ? [viteSingleFile()] : [],
     resolve: {
-      conditions: ["atlas-source", ...defaultClientConditions],
+      conditions: ["telos-source", ...defaultClientConditions],
     },
     build: {
       outDir: isPortable ? "dist/portable" : "dist/web",

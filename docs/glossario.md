@@ -1,10 +1,10 @@
-# Glossário de Event Storming no Atlas
+# Glossário de Event Storming no Telos
 
 Numa sessão de Event Storming, as pessoas que conhecem o processo escrevem na parede, em post-its laranja, os fatos que
 acontecem, e os ordenam no tempo. Os outros post-its (comando, política, sistema, hotspot) entram quando a história já
 está de pé.
 
-O Atlas acrescenta uma estrutura narrativa a essa parede, para que uma história longa continue legível:
+O Telos acrescenta uma estrutura narrativa a essa parede, para que uma história longa continue legível:
 **Jornada → Capítulo → Cena → Evento**, com o **Ator** de cada cena. Este glossário explica cada conceito, como ele
 aparece numa sessão e onde fica no app. Os exemplos vêm da massa sintética dos testes
 (`tests/e2e/fixtures/oficina-sintetica.json`), que não descreve nenhum atendimento real.
@@ -29,7 +29,7 @@ Storming, é o escopo da parede: onde a linha do tempo começa e onde termina.
 **Na sessão.** Combine o começo e o fim antes da primeira caneta. Uma sessão pode ter mais de uma jornada, quando o
 mesmo time olha fluxos que não se cruzam.
 
-**No Atlas.** Coleção `journeys`. A jornada aparece na raiz da árvore da aba **Jornada** e contém capítulos.
+**No Telos.** Coleção `journeys`. A jornada aparece na raiz da árvore da aba **Jornada** e contém capítulos.
 
 **Exemplo.** "Jornada de exemplo": do cadastro ao retorno, passando por consulta, exame laboratorial e procedimento.
 
@@ -43,7 +43,7 @@ fatos depois dos quais a história muda de assunto (a consulta terminou, a amost
 **Na sessão.** Depois da tempestade de eventos, procure os eventos pivô na parede e trace uma linha vertical em cada
 um. Cada trecho entre duas linhas vira um capítulo.
 
-**No Atlas.** Coleção `chapters`, ligada à jornada por `journeyId`. Campos principais:
+**No Telos.** Coleção `chapters`, ligada à jornada por `journeyId`. Campos principais:
 
 | Campo   | Para que serve                                                      |
 |:--------|:--------------------------------------------------------------------|
@@ -63,7 +63,7 @@ narração. É nela que a sala conta o que acontece e registra o que ainda não 
 **Na sessão.** Agrupe em cena os eventos que acontecem juntos, para a mesma pessoa e no mesmo lugar. Se a sala precisa
 de mais de uma frase para explicar o grupo, ele provavelmente tem duas cenas.
 
-**No Atlas.** Coleção `scenes`, ligada ao capítulo pelo campo `chapter`. Campos principais:
+**No Telos.** Coleção `scenes`, ligada ao capítulo pelo campo `chapter`. Campos principais:
 
 | Campo                   | Para que serve                                                 |
 |:------------------------|:---------------------------------------------------------------|
@@ -86,7 +86,7 @@ pessoa dispara.
 **Na sessão.** Escreva o papel, não o nome: "Enfermagem", "Recepção", "Paciente". O mapa circula entre times, nome de
 pessoa é dado pessoal, e o papel generaliza a história para todos que ocupam a função.
 
-**No Atlas.** O ator aparece de duas formas:
+**No Telos.** O ator aparece de duas formas:
 
 1. **Campo `actor` da cena**, em texto livre no formato "Papel / detalhe". Na migração de mapas antigos, o texto sugere a
    raia da cena; depois disso, a raia é de quem edita o mapa. As raias padrão são: Paciente / família, Recepção /
@@ -112,7 +112,7 @@ se apagam: viram hotspot.
 | Não é evento | "Confirmar pagamento"  | É um comando: a intenção de fazer algo         |
 | Não é evento | "Pagamento"            | Substantivo solto: não diz o que aconteceu     |
 
-**No Atlas.** Coleção `events`, ligada à cena por `sceneId`. Campos principais:
+**No Telos.** Coleção `events`, ligada à cena por `sceneId`. Campos principais:
 
 | Campo          | Para que serve                                                                                                           |
 |:---------------|:-------------------------------------------------------------------------------------------------------------------------|
@@ -125,12 +125,12 @@ se apagam: viram hotspot.
 Uma caixa livre dos tipos Evento de domínio, Evento de integração, Evento externo, Evento temporal, Evento clínico,
 Evento operacional, Fato ou Transição de estado também vira post-it laranja.
 
-## Os post-its canônicos no Atlas
+## Os post-its canônicos no Telos
 
 A cor de cada card segue o post-it canônico do Event Storming. A legenda do canvas conta os post-its de cada cor no
 recorte aberto; jornada, capítulo e cena entram na linha "Estrutura da jornada".
 
-| Post-it            | Cor           | O que representa                       | No Atlas                                                                                 |
+| Post-it            | Cor           | O que representa                       | No Telos                                                                                 |
 |:-------------------|:--------------|:---------------------------------------|:-----------------------------------------------------------------------------------------|
 | Ator               | amarelo       | Quem age ou decide                     | Caixa livre Ator, Papel ou Responsável; na cena, o papel fica no campo `actor`           |
 | Comando / Ação     | azul          | Intenção: o que alguém pede ao sistema | Caixa livre Comando, Ação, Solicitação, Tarefa, Atividade humana ou automática           |
@@ -141,7 +141,7 @@ recorte aberto; jornada, capítulo e cena entram na linha "Estrutura da jornada"
 | Sistema / Integração | rosa        | Sistema envolvido ou externo           | Sistema do catálogo; caixa livre Sistema interno ou externo, Serviço, API, Mensageria, Fila ou Integração |
 | Hotspot / Dúvida   | vermelho      | Risco, conflito ou pergunta em aberto  | Hotspot (tecla `H`); caixa livre Risco, Pergunta em aberto ou Hipótese                   |
 
-Jornada, capítulo e cena não têm post-it canônico: são a moldura narrativa que o Atlas acrescenta à parede.
+Jornada, capítulo e cena não têm post-it canônico: são a moldura narrativa que o Telos acrescenta à parede.
 
 ### A gramática das setas
 
@@ -169,7 +169,7 @@ Ação → *leva a* → Estado e Estado → *transiciona para* → Estado.
 A gramática vale para o fluxo do Event Storming: setas que envolvem caixas livres ou que ligam dois eventos. As setas
 de rastreabilidade (evento → sistema, tela ou tabela; cena → domínio) e as de hotspot ficam fora dela.
 
-## Roteiro de uma sessão no Atlas
+## Roteiro de uma sessão no Telos
 
 1. **Combine a jornada.** Crie a jornada com o começo e o fim combinados.
 2. **Tempestade de eventos.** Todos escrevem eventos no passado. Com um card selecionado, `Tab` cria o próximo passo à

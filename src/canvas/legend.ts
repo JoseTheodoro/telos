@@ -1,5 +1,5 @@
 // Legenda flutuante das cores do Event Storming, com contagem no recorte atual.
-import { ES_STYLES, esCategory, type EsCategory, keyKind } from "@pep-atlas/domain";
+import { ES_STYLES, esCategory, type EsCategory, keyKind } from "@telos/domain";
 import { queueViewPersist } from "../core/persistence";
 import { getByKey, state } from "../core/state";
 import { $, esc, target } from "../ui/dom";

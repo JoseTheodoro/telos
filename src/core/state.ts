@@ -15,7 +15,7 @@ import {
   type SidebarTab,
   type ToolMode,
   type Workspace,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import type { GuideLines } from "../canvas/guides";
 
 export type Dragging =

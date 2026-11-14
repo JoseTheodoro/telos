@@ -10,7 +10,7 @@ import {
   type FrameItem,
   type NodeKey,
   type Point,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change } from "../core/history";
 import { selectedNodeKeys, state } from "../core/state";
 import { $, notify } from "../ui/dom";

@@ -1,6 +1,8 @@
 # ADR-002 — Framework: NestJS 12 sobre Fastify 5
 
-**Status:** Aceita. **Data:** 2026-11-13. **Decisor:** Tech Lead.
+**Status:** A revisar. Aceita em 2026-11-13 pelo Tech Lead.
+
+**Por que revisar:** O NestJS foi escolhido porque um guardrail corporativo o exigia; para a Telos, Fastify puro volta a ser opção.
 
 - **Decisão:** NestJS 12 com `FastifyAdapter` (Fastify 5), projeto ESM (`"type": "module"`, `module`/`moduleResolution`
   `nodenext`). Estrutura Controller → Service → Repository → Entity/DTO. DTOs com `class-validator`, Swagger fora de

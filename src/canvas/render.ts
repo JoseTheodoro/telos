@@ -27,7 +27,7 @@ import {
   emotionLevel,
   emotionSigned,
   hasEmotion,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { formatLabel, isCodeFormat, jsonError, renderNoteBody } from "../ui/rich";
 import { degree, getByKey, isNodeSelected, label, state } from "../core/state";
 import { $, esc, px, svgNumber } from "../ui/dom";

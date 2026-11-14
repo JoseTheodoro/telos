@@ -1,10 +1,12 @@
 # ADR-001 — Runtime do servidor: Node.js 26 LTS
 
-**Status:** Aceita. **Data:** 2026-11-13. **Decisor:** Tech Lead.
+**Status:** A revisar. Aceita em 2026-11-13 pelo Tech Lead.
+
+**Por que revisar:** A decisão se apoiava no Golden Path (NestJS + Cloud Run), que não vale para a Telos.
 
 ## Contexto
 
-O Atlas passa a ter servidor: ele entrega a SPA, guarda os mapas em banco, autentica pela identidade corporativa e
+O Telos passa a ter servidor: ele entrega a SPA, guarda os mapas em banco, autentica pela identidade corporativa e
 audita os acessos. O padrão da empresa para serviço novo é NestJS com Fastify no Cloud Run, PostgreSQL, OpenTelemetry
 com exportação configurável (ADR-0011 da governança de plataforma da organização, repositório
 `DrConsulta/platform-governance`, não um ADR deste repositório) e o scaffold `/drc-cmd-arch-criar-microservico-nestjs`. O mapa de arquitetura

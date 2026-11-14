@@ -21,7 +21,7 @@ import {
   type Chapter,
   type NodeKind,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change } from "../core/history";
 import { cancelViewPersist, persist, persistViewNow } from "../core/persistence";
 import { get, getByKey, label, setFocus, state } from "../core/state";
@@ -189,7 +189,7 @@ export function listConnections(): void {
     )
     .join("\n");
   $("#modalBody").innerHTML =
-    `<div class="eyebrow">MAPA DE RELAÇÕES</div><h2>Setas do Atlas</h2><p>As conexões de leitura e escrita são evidenciadas em laranja e vermelho.</p><textarea class="input area" style="height:340px" readonly>${esc(txt)}</textarea><div class="modal-foot"><button class="btn" id="cancelModal">Fechar</button></div>`;
+    `<div class="eyebrow">MAPA DE RELAÇÕES</div><h2>Setas do Telos</h2><p>As conexões de leitura e escrita são evidenciadas em laranja e vermelho.</p><textarea class="input area" style="height:340px" readonly>${esc(txt)}</textarea><div class="modal-foot"><button class="btn" id="cancelModal">Fechar</button></div>`;
   modal().showModal();
 }
 

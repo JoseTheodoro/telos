@@ -14,7 +14,7 @@ import {
   type NodeKey,
   type RegistryOption,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change, redo, undo } from "../core/history";
 import { getByKey, label, state } from "../core/state";
 import { ensureVisible, selectNode } from "../actions";

@@ -21,7 +21,7 @@ import {
   type NodeKey,
   type PortSide,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change, refreshUndo } from "./core/history";
 import { get, getByKey, label, related, selectedNodeKeys, setFocus, state } from "./core/state";
 import { refreshAll, refreshTools } from "./app";

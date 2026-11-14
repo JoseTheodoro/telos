@@ -22,7 +22,7 @@ import {
   type NodeKey,
   type NodeKind,
   type Point,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { change } from "../core/history";
 import { getByKey, setFocus, state } from "../core/state";
 import { notify } from "../ui/dom";

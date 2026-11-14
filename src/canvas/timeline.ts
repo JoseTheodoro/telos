@@ -17,7 +17,7 @@ import {
   type Point,
   type Positions,
   type Scene,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { related, state } from "../core/state";
 import { sizeOf } from "./size";
 

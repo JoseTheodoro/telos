@@ -1,4 +1,4 @@
-// Modelo de dados do Atlas (schema persistido "pep-atlas-studio-v4").
+// Modelo de dados do Telos (schema persistido "pep-atlas-studio-v4").
 // Mantido compatível com backups JSON da v1.5 e anteriores.
 
 export type NodeKind =

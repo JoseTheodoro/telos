@@ -10,7 +10,7 @@ import {
   type Journey,
   type NodeKind,
   type SidebarTab,
-} from "@pep-atlas/domain";
+} from "@telos/domain";
 import { queueViewPersist } from "../core/persistence";
 import { get, isNodeSelected, label, related, setFocus, state } from "../core/state";
 import { refreshAll } from "../app";
