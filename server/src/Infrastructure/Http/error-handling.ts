@@ -1,6 +1,6 @@
 import { STATUS_CODES } from "node:http";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { CORRELATION_ID_HEADER } from "./correlation-id.js";
+import { setCorrelationIdHeader } from "./correlation-id.js";
 import { pathnameOf } from "./url.js";
 
 const INTERNAL_ERROR_MESSAGE = "Internal server error";
@@ -8,11 +8,12 @@ const BAD_REQUEST_MESSAGE = "Bad Request";
 const INTERNAL_SERVER_ERROR = 500;
 const NOT_FOUND = 404;
 
-type RequestError = FastifyError & { expose?: boolean };
+type RequestError = FastifyError & { expose?: boolean; status?: number };
 type ClientError = RequestError & { statusCode: number };
 
-const isClientStatus = (statusCode: number | undefined): statusCode is number =>
-  typeof statusCode === "number" && statusCode < INTERNAL_SERVER_ERROR;
+function isClientStatus(statusCode: number): boolean {
+  return statusCode < INTERNAL_SERVER_ERROR;
+}
 
 export function registerErrorHandling(app: FastifyInstance): void {
   app.setErrorHandler(handleError);
@@ -22,8 +23,8 @@ export function registerErrorHandling(app: FastifyInstance): void {
 // Erros antes do roteamento (URL malformada) não passam pelos hooks nem pelo error handler; a mensagem do Fastify ecoa a URL crua.
 export function handleFrameworkError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): void {
   const { statusCode } = error;
-  void reply.header(CORRELATION_ID_HEADER, request.id);
-  if (isClientStatus(statusCode)) sendError(request, reply, statusCode, BAD_REQUEST_MESSAGE);
+  setCorrelationIdHeader(request, reply);
+  if (typeof statusCode === "number" && isClientStatus(statusCode)) sendError(request, reply, statusCode, BAD_REQUEST_MESSAGE);
   else sendError(request, reply, INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MESSAGE);
 }
 
@@ -46,10 +47,11 @@ function handleNotFound(request: FastifyRequest, reply: FastifyReply): void {
   sendError(request, reply, NOT_FOUND, `Cannot ${request.method} ${pathnameOf(request.url)}`);
 }
 
-// Só erros do próprio Fastify (FST_*) e do http-errors trazem mensagem escrita para o cliente; qualquer outro erro de rota vira 500, como no filtro global do Nest, para não vazar detalhe interno.
+// Só erros do Fastify (FST_*) e do http-errors trazem mensagem escrita para o cliente; qualquer outro erro de rota vira 500 para não vazar detalhe interno.
 function isClientError(error: RequestError): error is ClientError {
-  const writtenForClient = error.code?.startsWith("FST_") === true || typeof error.expose === "boolean";
-  return writtenForClient && isClientStatus(error.statusCode);
+  const fromFastify = error.code?.startsWith("FST_") === true;
+  const fromHttpErrors = typeof error.expose === "boolean" && error.status === error.statusCode;
+  return (fromFastify || fromHttpErrors) && typeof error.statusCode === "number" && isClientStatus(error.statusCode);
 }
 
 function sendError(request: FastifyRequest, reply: FastifyReply, statusCode: number, message: string): void {
