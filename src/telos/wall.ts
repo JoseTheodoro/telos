@@ -1,4 +1,14 @@
-import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Point, type Sticky } from "@telos/domain";
+import {
+  STICKY_INK,
+  STICKY_KINDS,
+  STICKY_SIZE,
+  createSticky,
+  stickyStyle,
+  type Board,
+  type Point,
+  type Sticky,
+  type StickyKind,
+} from "@telos/domain";
 import { el } from "./dom";
 import type { BoardStore } from "./store";
 
@@ -8,17 +18,30 @@ interface StickyParts {
   text: HTMLElement;
 }
 
-const CREATE_KEY = "1";
+export interface Wall {
+  create(kind: StickyKind): void;
+}
 
-function renderSticky(sticky: Sticky): HTMLElement {
-  const style = stickyStyle(sticky.kind);
-  const node = el(
-    "div",
-    { class: "sticky", role: "note", tabindex: "0", "aria-label": style.label, "data-id": sticky.id, "data-kind": sticky.kind },
-    el("div", { class: "sticky-text" }, sticky.text),
-  );
+function kindForKey(key: string): StickyKind | null {
+  return STICKY_KINDS[Number(key) - 1] ?? null;
+}
+
+function restyle(node: HTMLElement, kind: StickyKind): void {
+  const style = stickyStyle(kind);
+  node.dataset.kind = kind;
+  node.setAttribute("aria-label", style.label);
   node.style.setProperty("--sticky-bg", style.bg);
   node.style.setProperty("--sticky-outline", style.outline);
+  node.style.setProperty("--sticky-ink", STICKY_INK);
+}
+
+function renderSticky(sticky: Sticky): HTMLElement {
+  const node = el(
+    "div",
+    { class: "sticky", role: "note", tabindex: "0", "data-id": sticky.id },
+    el("div", { class: "sticky-text" }, sticky.text),
+  );
+  restyle(node, sticky.kind);
   node.style.left = `${sticky.x}px`;
   node.style.top = `${sticky.y}px`;
   node.style.width = `${sticky.w}px`;
@@ -39,7 +62,7 @@ const hasModifier = (event: KeyboardEvent): boolean => event.ctrlKey || event.me
 
 const isInsideText = (target: EventTarget | null): boolean => target instanceof Element && target.closest(".sticky-text") !== null;
 
-export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): void {
+export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): Wall {
   const world = el("div", { class: "world" });
   const nodes = new Map<string, HTMLElement>();
   let pointer: Point | null = null;
@@ -94,7 +117,7 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     const parts = partsOf(id);
     if (!parts) return;
     parts.sticky.text = parts.text.innerText;
-    parts.sticky.h = Math.max(STICKY_SIZE.h, Math.round(parts.node.getBoundingClientRect().height));
+    parts.sticky.h = Math.max(STICKY_SIZE.h, parts.node.offsetHeight);
     save();
   };
 
@@ -107,8 +130,8 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     world.append(node);
   };
 
-  const createAt = (center: Point): void => {
-    const sticky = createSticky("domainEvent", {
+  const createAt = (kind: StickyKind, center: Point): void => {
+    const sticky = createSticky(kind, {
       x: Math.round(center.x - STICKY_SIZE.w / 2),
       y: Math.round(center.y - STICKY_SIZE.h / 2),
     });
@@ -116,6 +139,14 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     mount(sticky);
     save();
     startEditing(sticky.id);
+  };
+
+  const changeKind = (id: string, kind: StickyKind): void => {
+    const parts = partsOf(id);
+    if (!parts || parts.sticky.kind === kind) return;
+    parts.sticky.kind = kind;
+    restyle(parts.node, kind);
+    save();
   };
 
   const stickyIdAt = (target: EventTarget | null): string | null =>
@@ -138,36 +169,43 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
   });
 
   wall.addEventListener("focusin", (event) => {
+    if (event.target === wall)
+      wall.classList.toggle("is-entered", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
     if (event.target instanceof HTMLElement && event.target.classList.contains("sticky")) select(event.target.dataset.id ?? null);
   });
+
+  wall.addEventListener("focusout", () => wall.classList.remove("is-entered"));
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);
     if (isEditing(id)) return;
     if (id) startEditing(id);
-    else createAt(toWorld(event.clientX, event.clientY));
+    else createAt("domainEvent", toWorld(event.clientX, event.clientY));
   });
 
   wall.addEventListener("keydown", (event) => {
     if (editingId) {
       if (event.key !== "Escape") return;
-      const id = editingId;
       event.preventDefault();
+      wall.focus();
       stopEditing();
-      nodes.get(id)?.focus();
+      select(null);
       return;
     }
+    const kind = kindForKey(event.key);
     if (event.key === "Escape") {
       select(null);
     } else if (event.key === "Enter" && selectedId) {
       event.preventDefault();
       startEditing(selectedId);
-    } else if (event.key === CREATE_KEY && !hasModifier(event)) {
+    } else if (kind && !hasModifier(event)) {
       event.preventDefault();
-      createAt(pointer ?? wallCenter());
+      if (selectedId) changeKind(selectedId, kind);
+      else createAt(kind, pointer ?? wallCenter());
     }
   });
 
   board.stickies.forEach(mount);
   wall.append(world);
+  return { create: (kind) => createAt(kind, pointer ?? wallCenter()) };
 }
