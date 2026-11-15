@@ -21,6 +21,7 @@ interface StickyParts {
 export interface Wall {
   create(kind: StickyKind): void;
   applyKindShortcut(kind: StickyKind): void;
+  clearSelection(): void;
 }
 
 function applyKind(node: HTMLElement, kind: StickyKind): void {
@@ -188,9 +189,7 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
       select(null);
       return;
     }
-    if (event.key === "Escape") {
-      select(null);
-    } else if (event.key === "Enter" && selectedId) {
+    if (event.key === "Enter" && selectedId) {
       event.preventDefault();
       startEditing(selectedId);
     }
@@ -198,5 +197,5 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
 
   board.stickies.forEach(mount);
   wall.append(world);
-  return { create: createHere, applyKindShortcut };
+  return { create: createHere, applyKindShortcut, clearSelection: () => select(null) };
 }

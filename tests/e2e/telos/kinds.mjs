@@ -105,6 +105,26 @@ try {
   }
   await page.keyboard.press("Escape");
 
+  const countBeforeToolbarRetype = await stickies().count();
+  await stickies().first().click();
+  await toolbar.getByRole("button", { name: "Actor" }).focus();
+  await page.keyboard.press("5");
+  r.retypeFromToolbar = { kind: await stickies().first().getAttribute("data-kind"), count: await stickies().count() };
+  await page.keyboard.press("Escape");
+  r.retypeFromToolbar.selectedAfterEscape = await page.locator(".sticky.is-selected").count();
+  if (r.retypeFromToolbar.kind !== "aggregate" || r.retypeFromToolbar.count !== countBeforeToolbarRetype || r.retypeFromToolbar.selectedAfterEscape !== 0) {
+    fail(`com o foco na toolbar, a tecla 5 deveria trocar o tipo do selecionado e o Esc limpar a seleção: ${JSON.stringify(r.retypeFromToolbar)}`);
+  }
+
+  await page.locator(".canvas-title").click();
+  await page.keyboard.press("3");
+  await stickies().nth(countBeforeToolbarRetype).waitFor({ timeout: 2000 }).catch(() => {});
+  r.keyAfterChromeClick = { count: await stickies().count(), kind: await stickies().last().getAttribute("data-kind"), editing: await editing() };
+  if (r.keyAfterChromeClick.count !== countBeforeToolbarRetype + 1 || r.keyAfterChromeClick.kind !== "actor" || !r.keyAfterChromeClick.editing) {
+    fail(`depois de clicar no título, a tecla 3 deveria criar um Actor em edição: ${JSON.stringify(r.keyAfterChromeClick)}`);
+  }
+  await page.keyboard.press("Escape");
+
   r.ink = await stickies().first().evaluate((node) => {
     const painted = node.style.getPropertyValue("--sticky-ink");
     const probe = document.createElement("span");
