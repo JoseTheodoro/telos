@@ -21,6 +21,7 @@ function kindButton(kind: StickyKind, isTabStop: boolean, onCreate: (kind: Stick
       type: "button",
       class: "toolbar-button",
       tabindex: isTabStop ? "0" : "-1",
+      "aria-label": label,
       "aria-keyshortcuts": shortcut,
       title: `${label} · ${hint} (${shortcut})`,
     },

@@ -205,6 +205,11 @@ describe("stickyStyle", () => {
     expect(contrastRatio(STICKY_INK, stickyStyle(kind).bg)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it.each(STICKY_KINDS)("keeps the %s accent at WCAG AA contrast on its background", (kind) => {
+    const { accent, bg } = stickyStyle(kind);
+    expect(contrastRatio(accent, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("measures contrast like WCAG (black on white is 21:1)", () => {
     expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
   });

@@ -51,7 +51,7 @@ try {
     const wall = document.activeElement;
     return wall?.classList.contains("wall") ? getComputedStyle(wall).outlineStyle : "foco fora da parede";
   });
-  if (r.wallRing !== "none") fail(`depois do Esc o foco volta à parede sem moldura de foco: ${r.wallRing}`);
+  if (r.wallRing !== "solid") fail(`depois do Esc o foco volta à parede, com o foco visível: ${r.wallRing}`);
 
   await page.mouse.dblclick(300, 700);
   await stickies().nth(1).waitFor();

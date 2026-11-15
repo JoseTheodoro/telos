@@ -5,6 +5,7 @@ export const STICKY_KINDS = ["domainEvent", "hotspot", "actor", "externalSystem"
 export const STICKY_SIZE = { w: 200, h: 120 } as const;
 
 export type StickyKind = (typeof STICKY_KINDS)[number];
+export const DEFAULT_STICKY_KIND: StickyKind = "domainEvent";
 
 export interface Sticky {
   id: string;

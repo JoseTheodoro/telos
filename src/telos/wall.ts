@@ -1,6 +1,14 @@
-import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Point, type Sticky, type StickyKind } from "@telos/domain";
+import {
+  DEFAULT_STICKY_KIND,
+  STICKY_SIZE,
+  createSticky,
+  stickyStyle,
+  type Board,
+  type Point,
+  type Sticky,
+  type StickyKind,
+} from "@telos/domain";
 import { el } from "./dom";
-import { kindForKey } from "./shortcuts";
 import { paintSticky } from "./sticky-paint";
 import type { BoardStore } from "./store";
 
@@ -12,6 +20,7 @@ interface StickyParts {
 
 export interface Wall {
   create(kind: StickyKind): void;
+  applyKindShortcut(kind: StickyKind): void;
 }
 
 function applyKind(node: HTMLElement, kind: StickyKind): void {
@@ -42,8 +51,6 @@ function placeCaretAtEnd(element: HTMLElement): void {
   selection?.removeAllRanges();
   selection?.addRange(range);
 }
-
-const hasModifier = (event: KeyboardEvent): boolean => event.ctrlKey || event.metaKey || event.altKey;
 
 const isInsideText = (target: EventTarget | null): boolean => target instanceof Element && target.closest(".sticky-text") !== null;
 
@@ -136,6 +143,12 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
 
   const createHere = (kind: StickyKind): void => createAt(kind, pointer ?? wallCenter());
 
+  const applyKindShortcut = (kind: StickyKind): void => {
+    if (editingId) return;
+    if (selectedId) changeKind(selectedId, kind);
+    else createHere(kind);
+  };
+
   const stickyIdAt = (target: EventTarget | null): string | null =>
     target instanceof Element ? (target.closest<HTMLElement>(".sticky")?.dataset.id ?? null) : null;
 
@@ -156,19 +169,14 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
   });
 
   wall.addEventListener("focusin", (event) => {
-    if (event.target === wall) {
-      wall.classList.toggle("is-entered-from-outside", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
-    }
     if (event.target instanceof HTMLElement && event.target.classList.contains("sticky")) select(event.target.dataset.id ?? null);
   });
-
-  wall.addEventListener("focusout", () => wall.classList.remove("is-entered-from-outside"));
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);
     if (isEditing(id)) return;
     if (id) startEditing(id);
-    else createAt("domainEvent", toWorld(event.clientX, event.clientY));
+    else createAt(DEFAULT_STICKY_KIND, toWorld(event.clientX, event.clientY));
   });
 
   wall.addEventListener("keydown", (event) => {
@@ -180,20 +188,15 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
       select(null);
       return;
     }
-    const kind = kindForKey(event.key);
     if (event.key === "Escape") {
       select(null);
     } else if (event.key === "Enter" && selectedId) {
       event.preventDefault();
       startEditing(selectedId);
-    } else if (kind && !hasModifier(event)) {
-      event.preventDefault();
-      if (selectedId) changeKind(selectedId, kind);
-      else createHere(kind);
     }
   });
 
   board.stickies.forEach(mount);
   wall.append(world);
-  return { create: createHere };
+  return { create: createHere, applyKindShortcut };
 }
