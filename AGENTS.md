@@ -57,6 +57,7 @@ Exceptions:
 - Complex algorithms whose rationale cannot be expressed clearly.
 
 Comments must explain WHY, never merely WHAT.
+
 ## Agent skills
 
 ### Issue tracker
@@ -94,3 +95,20 @@ rewrites it, the "Vocabulário" table of the PRD (#3) is the source of truth. AD
 (`gh issue list --label adr --state all`). Read the glossary and the ADRs that touch the area before exploring, use
 their terms, and flag any conflict with an ADR instead of overriding it. `/domain-modeling` updates
 `docs/glossario.md` and opens ADRs as issues; there is no `GLOSSARY.md` and no `docs/adr/`.
+
+### Workflow
+
+- A `fatia` is implemented by the user running `/mattpocock-skills:implement #<n>`. That skill is user-invoked only:
+  the agent never replicates its steps on its own. `implement-spec` is not used, because it puts a whole spec on one
+  integration branch and this repo ships one PR per slice.
+- Before the skill: branch from an up-to-date `main` in a worktree of its own (another session may share the main
+  checkout), and move the issue to `In progress`.
+- Inside the skill, `tdd` runs at the seams the ticket names: Vitest on `@telos/domain`, Vitest on app modules with
+  the in-memory `Storage` of `store.test.ts`, and e2e against the server build.
+- After the skill commits: `npm run check` and `npm run build && npm run test:e2e:server` green, push, a PR body
+  written with `mattpocock-skills:pr` that says `Closes #<n>`, and the issue in `In review`.
+- After opening a PR and after every later push to it, run `mattpocock-skills:code-review` with `origin/main` as the
+  fixed point. Fix every hard violation and every Spec gap, keep `npm run check` green, and list the judgement calls
+  left as they are in a PR comment. A push made only to apply review findings needs no new review.
+- The `PostToolUse` hook in `.claude/settings.json` reminds the agent of the review after `git push` and
+  `gh pr create`.
