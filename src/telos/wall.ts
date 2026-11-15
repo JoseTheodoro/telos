@@ -1,5 +1,15 @@
-import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Point, type Sticky } from "@telos/domain";
+import {
+  DEFAULT_STICKY_KIND,
+  STICKY_SIZE,
+  createSticky,
+  stickyStyle,
+  type Board,
+  type Point,
+  type Sticky,
+  type StickyKind,
+} from "@telos/domain";
 import { el } from "./dom";
+import { paintSticky } from "./sticky-paint";
 import type { BoardStore } from "./store";
 
 interface StickyParts {
@@ -8,17 +18,25 @@ interface StickyParts {
   text: HTMLElement;
 }
 
-const CREATE_KEY = "1";
+export interface Wall {
+  create(kind: StickyKind): void;
+  applyKindShortcut(kind: StickyKind): void;
+  clearSelection(): void;
+}
+
+function applyKind(node: HTMLElement, kind: StickyKind): void {
+  node.dataset.kind = kind;
+  node.setAttribute("aria-label", stickyStyle(kind).label);
+  paintSticky(node, kind);
+}
 
 function renderSticky(sticky: Sticky): HTMLElement {
-  const style = stickyStyle(sticky.kind);
   const node = el(
     "div",
-    { class: "sticky", role: "note", tabindex: "0", "aria-label": style.label, "data-id": sticky.id, "data-kind": sticky.kind },
+    { class: "sticky", role: "note", tabindex: "0", "data-id": sticky.id },
     el("div", { class: "sticky-text" }, sticky.text),
   );
-  node.style.setProperty("--sticky-bg", style.bg);
-  node.style.setProperty("--sticky-outline", style.outline);
+  applyKind(node, sticky.kind);
   node.style.left = `${sticky.x}px`;
   node.style.top = `${sticky.y}px`;
   node.style.width = `${sticky.w}px`;
@@ -35,11 +53,9 @@ function placeCaretAtEnd(element: HTMLElement): void {
   selection?.addRange(range);
 }
 
-const hasModifier = (event: KeyboardEvent): boolean => event.ctrlKey || event.metaKey || event.altKey;
-
 const isInsideText = (target: EventTarget | null): boolean => target instanceof Element && target.closest(".sticky-text") !== null;
 
-export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): void {
+export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): Wall {
   const world = el("div", { class: "world" });
   const nodes = new Map<string, HTMLElement>();
   let pointer: Point | null = null;
@@ -94,7 +110,7 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     const parts = partsOf(id);
     if (!parts) return;
     parts.sticky.text = parts.text.innerText;
-    parts.sticky.h = Math.max(STICKY_SIZE.h, Math.round(parts.node.getBoundingClientRect().height));
+    parts.sticky.h = Math.max(STICKY_SIZE.h, parts.node.offsetHeight);
     save();
   };
 
@@ -107,8 +123,8 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     world.append(node);
   };
 
-  const createAt = (center: Point): void => {
-    const sticky = createSticky("domainEvent", {
+  const createAt = (kind: StickyKind, center: Point): void => {
+    const sticky = createSticky(kind, {
       x: Math.round(center.x - STICKY_SIZE.w / 2),
       y: Math.round(center.y - STICKY_SIZE.h / 2),
     });
@@ -116,6 +132,22 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     mount(sticky);
     save();
     startEditing(sticky.id);
+  };
+
+  const changeKind = (id: string, kind: StickyKind): void => {
+    const parts = partsOf(id);
+    if (!parts || parts.sticky.kind === kind) return;
+    parts.sticky.kind = kind;
+    applyKind(parts.node, kind);
+    save();
+  };
+
+  const createHere = (kind: StickyKind): void => createAt(kind, pointer ?? wallCenter());
+
+  const applyKindShortcut = (kind: StickyKind): void => {
+    if (editingId) return;
+    if (selectedId) changeKind(selectedId, kind);
+    else createHere(kind);
   };
 
   const stickyIdAt = (target: EventTarget | null): string | null =>
@@ -145,29 +177,25 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): v
     const id = stickyIdAt(event.target);
     if (isEditing(id)) return;
     if (id) startEditing(id);
-    else createAt(toWorld(event.clientX, event.clientY));
+    else createAt(DEFAULT_STICKY_KIND, toWorld(event.clientX, event.clientY));
   });
 
   wall.addEventListener("keydown", (event) => {
     if (editingId) {
       if (event.key !== "Escape") return;
-      const id = editingId;
       event.preventDefault();
+      wall.focus();
       stopEditing();
-      nodes.get(id)?.focus();
+      select(null);
       return;
     }
-    if (event.key === "Escape") {
-      select(null);
-    } else if (event.key === "Enter" && selectedId) {
+    if (event.key === "Enter" && selectedId) {
       event.preventDefault();
       startEditing(selectedId);
-    } else if (event.key === CREATE_KEY && !hasModifier(event)) {
-      event.preventDefault();
-      createAt(pointer ?? wallCenter());
     }
   });
 
   board.stickies.forEach(mount);
   wall.append(world);
+  return { create: createHere, applyKindShortcut, clearSelection: () => select(null) };
 }
