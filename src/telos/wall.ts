@@ -1,15 +1,7 @@
-import {
-  STICKY_INK,
-  STICKY_KINDS,
-  STICKY_SIZE,
-  createSticky,
-  stickyStyle,
-  type Board,
-  type Point,
-  type Sticky,
-  type StickyKind,
-} from "@telos/domain";
+import { STICKY_SIZE, createSticky, stickyStyle, type Board, type Point, type Sticky, type StickyKind } from "@telos/domain";
 import { el } from "./dom";
+import { kindForKey } from "./shortcuts";
+import { paintSticky } from "./sticky-paint";
 import type { BoardStore } from "./store";
 
 interface StickyParts {
@@ -22,17 +14,10 @@ export interface Wall {
   create(kind: StickyKind): void;
 }
 
-function kindForKey(key: string): StickyKind | null {
-  return STICKY_KINDS[Number(key) - 1] ?? null;
-}
-
-function restyle(node: HTMLElement, kind: StickyKind): void {
-  const style = stickyStyle(kind);
+function applyKind(node: HTMLElement, kind: StickyKind): void {
   node.dataset.kind = kind;
-  node.setAttribute("aria-label", style.label);
-  node.style.setProperty("--sticky-bg", style.bg);
-  node.style.setProperty("--sticky-outline", style.outline);
-  node.style.setProperty("--sticky-ink", STICKY_INK);
+  node.setAttribute("aria-label", stickyStyle(kind).label);
+  paintSticky(node, kind);
 }
 
 function renderSticky(sticky: Sticky): HTMLElement {
@@ -41,7 +26,7 @@ function renderSticky(sticky: Sticky): HTMLElement {
     { class: "sticky", role: "note", tabindex: "0", "data-id": sticky.id },
     el("div", { class: "sticky-text" }, sticky.text),
   );
-  restyle(node, sticky.kind);
+  applyKind(node, sticky.kind);
   node.style.left = `${sticky.x}px`;
   node.style.top = `${sticky.y}px`;
   node.style.width = `${sticky.w}px`;
@@ -145,9 +130,11 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
     const parts = partsOf(id);
     if (!parts || parts.sticky.kind === kind) return;
     parts.sticky.kind = kind;
-    restyle(parts.node, kind);
+    applyKind(parts.node, kind);
     save();
   };
+
+  const createHere = (kind: StickyKind): void => createAt(kind, pointer ?? wallCenter());
 
   const stickyIdAt = (target: EventTarget | null): string | null =>
     target instanceof Element ? (target.closest<HTMLElement>(".sticky")?.dataset.id ?? null) : null;
@@ -169,12 +156,13 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
   });
 
   wall.addEventListener("focusin", (event) => {
-    if (event.target === wall)
-      wall.classList.toggle("is-entered", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
+    if (event.target === wall) {
+      wall.classList.toggle("is-keyboard-entered", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
+    }
     if (event.target instanceof HTMLElement && event.target.classList.contains("sticky")) select(event.target.dataset.id ?? null);
   });
 
-  wall.addEventListener("focusout", () => wall.classList.remove("is-entered"));
+  wall.addEventListener("focusout", () => wall.classList.remove("is-keyboard-entered"));
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);
@@ -201,11 +189,11 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
     } else if (kind && !hasModifier(event)) {
       event.preventDefault();
       if (selectedId) changeKind(selectedId, kind);
-      else createAt(kind, pointer ?? wallCenter());
+      else createHere(kind);
     }
   });
 
   board.stickies.forEach(mount);
   wall.append(world);
-  return { create: (kind) => createAt(kind, pointer ?? wallCenter()) };
+  return { create: createHere };
 }

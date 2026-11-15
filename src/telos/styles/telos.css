@@ -164,7 +164,7 @@ a {
   outline: none;
 }
 
-.wall.is-entered:focus-visible {
+.wall.is-keyboard-entered:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: -2px;
 }
@@ -181,7 +181,7 @@ a {
   flex-direction: column;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-s);
-  color: var(--sticky-ink);
+  color: var(--color-ink);
   font-size: var(--text-16);
   line-height: var(--leading-tight);
   cursor: default;
