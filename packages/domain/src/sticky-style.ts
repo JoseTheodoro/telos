@@ -9,7 +9,7 @@ export interface StickyStyle {
   outline: string;
 }
 
-const STICKY_STYLES: Record<StickyKind, StickyStyle> = {
+const STICKY_STYLES: Readonly<Record<StickyKind, Readonly<StickyStyle>>> = {
   domainEvent: { label: "Domain Event", hint: "Fato relevante, sempre no passado", bg: "#ffe3c4", outline: "#f5b97a" },
   hotspot: { label: "Hotspot", hint: "Risco, conflito ou pergunta em aberto", bg: "#ffdedd", outline: "#f3a3a0" },
   actor: { label: "Actor", hint: "Quem age ou decide", bg: "#fff3a8", outline: "#e8d266" },
@@ -17,6 +17,6 @@ const STICKY_STYLES: Record<StickyKind, StickyStyle> = {
   aggregate: { label: "Aggregate", hint: "Quem guarda o estado e as invariantes", bg: "#fbf1d9", outline: "#e6cf95" },
 };
 
-export function stickyStyle(kind: StickyKind): StickyStyle {
+export function stickyStyle(kind: StickyKind): Readonly<StickyStyle> {
   return STICKY_STYLES[kind];
 }

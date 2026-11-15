@@ -157,12 +157,12 @@ export function mountWall(wall: HTMLElement, board: Board, store: BoardStore): W
 
   wall.addEventListener("focusin", (event) => {
     if (event.target === wall) {
-      wall.classList.toggle("is-keyboard-entered", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
+      wall.classList.toggle("is-entered-from-outside", !(event.relatedTarget instanceof Node && wall.contains(event.relatedTarget)));
     }
     if (event.target instanceof HTMLElement && event.target.classList.contains("sticky")) select(event.target.dataset.id ?? null);
   });
 
-  wall.addEventListener("focusout", () => wall.classList.remove("is-keyboard-entered"));
+  wall.addEventListener("focusout", () => wall.classList.remove("is-entered-from-outside"));
 
   wall.addEventListener("dblclick", (event) => {
     const id = stickyIdAt(event.target);

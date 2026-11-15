@@ -55,10 +55,16 @@ try {
 
   const toolbar = page.getByRole("toolbar", { name: "Post-its" });
   r.toolbar = await toolbar.getByRole("button").evaluateAll((buttons) =>
-    buttons.map((b) => ({ label: b.getAttribute("aria-label"), title: b.title, shortcut: b.getAttribute("aria-keyshortcuts"), tabIndex: b.tabIndex })),
+    buttons.map((b) => ({ label: b.textContent.trim(), title: b.title, shortcut: b.getAttribute("aria-keyshortcuts"), tabIndex: b.tabIndex })),
   );
-  const expectedLabels = ["Domain Event", "Hotspot", "Actor", "External System", "Aggregate"];
-  const expectedKinds = ["domainEvent", "hotspot", "actor", "externalSystem", "aggregate"];
+  const toolbarKinds = [
+    { label: "Domain Event", kind: "domainEvent" },
+    { label: "Hotspot", kind: "hotspot" },
+    { label: "Actor", kind: "actor" },
+    { label: "External System", kind: "externalSystem" },
+    { label: "Aggregate", kind: "aggregate" },
+  ];
+  const expectedLabels = toolbarKinds.map(({ label }) => label);
   if (
     JSON.stringify(r.toolbar.map((b) => b.label)) !== JSON.stringify(expectedLabels) ||
     r.toolbar.some((b, i) => !b.title.includes(`(${i + 1})`) || b.shortcut !== String(i + 1))
@@ -70,21 +76,25 @@ try {
   await toolbar.getByRole("button", { name: "Domain Event" }).focus();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
-  r.arrowFocus = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
+  r.arrowFocus = await page.evaluate(() => document.activeElement?.textContent.trim());
   await page.keyboard.press("End");
-  r.endFocus = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
+  r.endFocus = await page.evaluate(() => document.activeElement?.textContent.trim());
   if (r.arrowFocus !== "Actor" || r.endFocus !== "Aggregate") fail(`as setas e End deveriam mover o foco na toolbar: ${JSON.stringify([r.arrowFocus, r.endFocus])}`);
 
   r.byToolbar = [];
-  for (const [index, label] of expectedLabels.entries()) {
+  for (const { label, kind } of toolbarKinds) {
     const before = await stickies().count();
     await toolbar.getByRole("button", { name: label }).click();
     await stickies().nth(before).waitFor();
     const created = { ...(await describe(stickies().last())), editing: await editing() };
     r.byToolbar.push(created.kind);
-    if (created.kind !== expectedKinds[index] || !created.editing) fail(`o botão ${label} deveria criar um ${label} em edição: ${JSON.stringify(created)}`);
+    if (created.kind !== kind || !created.editing) fail(`o botão ${label} deveria criar um ${label} em edição: ${JSON.stringify(created)}`);
     await page.keyboard.press("Escape");
   }
+  await toolbar.getByRole("button", { name: "Actor" }).click();
+  await page.keyboard.press("Escape");
+  r.tabStopAfterClick = await toolbar.getByRole("button").evaluateAll((buttons) => buttons.filter((b) => b.tabIndex === 0).map((b) => b.textContent.trim()));
+  if (JSON.stringify(r.tabStopAfterClick) !== JSON.stringify(["Actor"])) fail(`depois do clique, a parada de Tab da toolbar deveria ser o botão clicado: ${JSON.stringify(r.tabStopAfterClick)}`);
 
   r.ink = await stickies().first().evaluate((node) => getComputedStyle(node.querySelector(".sticky-text")).color);
   if (r.ink !== "rgb(29, 31, 35)") fail(`o texto do post-it deveria usar a tinta testada em AA (#1d1f23): ${r.ink}`);
