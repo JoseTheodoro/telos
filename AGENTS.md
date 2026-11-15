@@ -57,3 +57,40 @@ Exceptions:
 - Complex algorithms whose rationale cannot be expressed clearly.
 
 Comments must explain WHY, never merely WHAT.
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `JoseTheodoro/telos`, through `gh`. The workflow rules are in **GitHub** above.
+
+- Issue kinds by label: `prd` (the PRD, #3, pinned), `fn` (a PRD feature whose body becomes its spec),
+  `fatia` (a vertical slice, sub-issue of its spec) and `adr` (an architecture decision, closed once accepted).
+- Milestones: `P0 · Esqueleto`, `P1` and `P2`. A slice takes its spec's milestone.
+- A spec (`/to-spec`) rewrites the `fn` issue body in place; it never opens a new issue.
+- Tickets (`/to-tickets`) are one `fatia` issue each, titled `FN-xx · Fatia N — <título>`, with the sections Parent,
+  O que entrega, Critérios de aceite (checklist), Testes and Gate.
+  - Sub-issue: `gh api -X POST repos/JoseTheodoro/telos/issues/<spec>/sub_issues -F sub_issue_id=<child-db-id>`.
+  - Blocking uses native dependencies:
+    `gh api -X POST repos/JoseTheodoro/telos/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`.
+  - The database id comes from `gh api repos/JoseTheodoro/telos/issues/<n> --jq .id`, not the `#number`.
+- Every new issue joins the "Telos" board (project 3):
+  `gh project item-add 3 --owner JoseTheodoro --url <issue-url>`, then
+  `gh project item-edit 3 --owner JoseTheodoro --url <issue-url> --field Status --value "<status>"`.
+  A ticket starts in `Ready` only when it has no open blocker; otherwise in `Backlog`.
+- An ADR (`/grill-with-docs`, `/domain-modeling`) is an issue labelled `adr`, titled `ADR-NNN — <decisão>`, with
+  Status and Data, Contexto, Decisão, Alternativas, Consequências and Quando revisitar. It is never a file.
+- External PRs are not a triage surface.
+
+### Triage labels
+
+The default vocabulary, each label named after its role: `needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human` and `wontfix`. `ready-for-agent` goes only on `fatia` issues, never on `prd`, `fn` or `adr`, even
+when a skill says to apply it.
+
+### Domain docs
+
+Single context. The glossary is `docs/glossario.md` (pt-BR, with the Event Storming terms in English); until #23
+rewrites it, the "Vocabulário" table of the PRD (#3) is the source of truth. ADRs are the `adr` issues
+(`gh issue list --label adr --state all`). Read the glossary and the ADRs that touch the area before exploring, use
+their terms, and flag any conflict with an ADR instead of overriding it. `/domain-modeling` updates
+`docs/glossario.md` and opens ADRs as issues; there is no `GLOSSARY.md` and no `docs/adr/`.
