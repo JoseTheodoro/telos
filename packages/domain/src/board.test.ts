@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_SCHEMA, STICKY_SIZE, createBoard, createSticky, parseBoard } from "./board.ts";
-import { stickyStyle } from "./sticky-style.ts";
+import { BOARD_SCHEMA, STICKY_KINDS, STICKY_SIZE, createBoard, createSticky, parseBoard } from "./board.ts";
+import { STICKY_INK, stickyStyle } from "./sticky-style.ts";
 
 const validBoard = () => ({ schema: BOARD_SCHEMA, id: "b-1", title: "Faturamento", stickies: [] });
 
@@ -155,8 +155,57 @@ describe("parseBoard with stickies", () => {
   });
 });
 
+const BIG_PICTURE_LABELS = {
+  domainEvent: "Domain Event",
+  hotspot: "Hotspot",
+  actor: "Actor",
+  externalSystem: "External System",
+  aggregate: "Aggregate",
+};
+
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((start) => {
+    const channel = parseInt(hex.slice(start, start + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const [light, dark] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
+  return ((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05);
+}
+
+describe("Big Picture kinds", () => {
+  it("lists the five kinds in keyboard order", () => {
+    expect(STICKY_KINDS).toEqual(["domainEvent", "hotspot", "actor", "externalSystem", "aggregate"]);
+  });
+
+  it.each(STICKY_KINDS)("parseBoard accepts a %s sticky", (kind) => {
+    expect(parseBoard(boardWith({ ...validSticky(), kind })).ok).toBe(true);
+  });
+});
+
 describe("stickyStyle", () => {
   it("gives the Domain Event its canonical orange", () => {
-    expect(stickyStyle("domainEvent")).toEqual({ label: "Domain Event", bg: "#ffe3c4", outline: "#f5b97a" });
+    expect(stickyStyle("domainEvent")).toMatchObject({ label: "Domain Event", bg: "#ffe3c4", outline: "#f5b97a" });
+  });
+
+  it.each(STICKY_KINDS)("labels %s in English with a Portuguese hint", (kind) => {
+    const style = stickyStyle(kind);
+    expect(style.label).toBe(BIG_PICTURE_LABELS[kind]);
+    expect(style.hint.length).toBeGreaterThan(0);
+  });
+
+  it("gives each kind its own background", () => {
+    expect(new Set(STICKY_KINDS.map((kind) => stickyStyle(kind).bg)).size).toBe(STICKY_KINDS.length);
+  });
+
+  it.each(STICKY_KINDS)("keeps the text on %s at WCAG AA contrast", (kind) => {
+    expect(contrastRatio(STICKY_INK, stickyStyle(kind).bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("measures contrast like WCAG (black on white is 21:1)", () => {
+    expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
   });
 });
