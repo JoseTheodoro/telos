@@ -71,7 +71,7 @@ try {
     {
       name: "defeituoso",
       file: jsonFile("defeituoso.json", defective),
-      expect: ["post-it 1, posição: deveria ser um número", "post-it 2, tipo: desconhecido", "post-it 3, id: id repetido", "e mais 2 problemas"],
+      expect: ["post-it 1, posição x: deveria ser um número", "post-it 2, tipo: desconhecido", "post-it 3, id: id repetido", "e mais 2 problemas"],
     },
   ];
   r.rejected = {};

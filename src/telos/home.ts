@@ -41,6 +41,7 @@ function importButton(store: BoardStore, problems: ProblemsRegion): HTMLElement 
     if (!file) return;
     problems.clear();
     const result = await importBoardFile(file, store);
+    if (!problems.region.isConnected) return;
     if (result.ok) go({ name: "canvas", id: result.board.id });
     else problems.show(result.messages);
   });
