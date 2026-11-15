@@ -42,9 +42,16 @@ export function createLocalBoardStore(storage: Storage = localStorage): BoardSto
   };
 
   const save = (board: Board): void => {
-    storage.setItem(boardKey(board.id), JSON.stringify(board));
+    const key = boardKey(board.id);
+    const isNew = storage.getItem(key) === null;
+    storage.setItem(key, JSON.stringify(board));
     const summary: BoardSummary = { id: board.id, title: board.title, updatedAt: new Date().toISOString() };
-    storage.setItem(INDEX_KEY, JSON.stringify([summary, ...readIndex().filter(({ id }) => id !== board.id)]));
+    try {
+      storage.setItem(INDEX_KEY, JSON.stringify([summary, ...readIndex().filter(({ id }) => id !== board.id)]));
+    } catch (error) {
+      if (isNew) storage.removeItem(key);
+      throw error;
+    }
   };
 
   return {

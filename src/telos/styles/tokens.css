@@ -9,6 +9,8 @@
   --color-focus: #2f6bed;
   --color-accent: #1d1f23;
   --color-on-accent: #ffffff;
+  --color-danger: #a3271f;
+  --color-danger-surface: #fdeceb;
 
   --space-1: 4px;
   --space-2: 8px;

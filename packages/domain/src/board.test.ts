@@ -148,6 +148,26 @@ describe("parseBoard with stickies", () => {
     });
   });
 
+  it("rejects a repeated sticky id", () => {
+    expect(parseBoard(boardWith(validSticky(), { ...validSticky(), x: 400 }))).toEqual({
+      ok: false,
+      issues: [{ path: "stickies.1.id", code: "duplicate_id" }],
+    });
+  });
+
+  it("reports every repetition of a sticky id", () => {
+    const sticky = (id: string) => ({ ...validSticky(), id });
+    const result = parseBoard(boardWith(sticky("a"), sticky("b"), sticky("a"), sticky("b"), sticky("a")));
+    expect(result.ok ? [] : result.issues).toEqual(
+      ["stickies.2.id", "stickies.3.id", "stickies.4.id"].map((path) => ({ path, code: "duplicate_id" })),
+    );
+  });
+
+  it("accepts stickies with distinct ids", () => {
+    const board = boardWith({ ...validSticky(), id: "a" }, { ...validSticky(), id: "b" });
+    expect(parseBoard(board)).toEqual({ ok: true, board });
+  });
+
   it("keeps markup in text as plain text", () => {
     const text = '<img src=x onerror="alert(1)">';
     const result = parseBoard(boardWith({ ...validSticky(), text }));

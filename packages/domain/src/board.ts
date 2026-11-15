@@ -26,7 +26,16 @@ export interface Board {
 
 export interface BoardIssue {
   path: string;
-  code: "invalid_structure" | "unknown_schema" | "unknown_kind" | "not_string" | "not_number" | "not_finite" | "empty" | "not_array";
+  code:
+    | "invalid_structure"
+    | "unknown_schema"
+    | "unknown_kind"
+    | "not_string"
+    | "not_number"
+    | "not_finite"
+    | "empty"
+    | "not_array"
+    | "duplicate_id";
 }
 
 export type BoardParseResult = { ok: true; board: Board } | { ok: false; issues: BoardIssue[] };
@@ -98,7 +107,15 @@ function readStickies(record: JsonRecord, report: ReportIssue): Sticky[] {
     report("stickies", "not_array");
     return [];
   }
-  return value.flatMap((item, index) => readSticky(item, pathOf("stickies", index), report) ?? []);
+  const seen = new Set<string>();
+  return value.flatMap((item, index) => {
+    const path = pathOf("stickies", index);
+    const sticky = readSticky(item, path, report);
+    if (!sticky) return [];
+    if (sticky.id && seen.has(sticky.id)) report(pathOf(path, "id"), "duplicate_id");
+    seen.add(sticky.id);
+    return [sticky];
+  });
 }
 
 export function parseBoard(input: unknown): BoardParseResult {
